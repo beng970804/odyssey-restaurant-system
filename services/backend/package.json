@@ -7,7 +7,7 @@
     "gen:openapi": "tsx scripts/generate-openapi.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:seed": "tsx src/db/seed-cli.ts",
     "db:reset": "tsx src/db/reset.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -15,6 +15,7 @@
   "dependencies": {
     "@hono/zod-openapi": "^1.5.3",
     "@neondatabase/serverless": "^1.1.0",
+    "@repo/shared": "workspace:*",
     "@repo/types": "workspace:*",
     "@scalar/hono-api-reference": "^0.11.14",
     "drizzle-orm": "^0.45.2",
