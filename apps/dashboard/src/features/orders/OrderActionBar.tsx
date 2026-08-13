@@ -1,10 +1,8 @@
-import { ORDER_ACTION_LABELS, type OrderAction, type OrderStatus } from '@repo/types'
+import { ORDER_ACTION_LABELS, type OrderAction } from '@repo/types'
 import { Button, Inline, Text } from '@repo/ui'
 import { useState } from 'react'
 import { CancelOrderModal } from './CancelOrderModal'
-import { useOrderActions } from './useOrderActions'
-
-type ActionableOrder = { id: string; orderNumber: number; status: OrderStatus }
+import { useOrderActions, type ActionableOrder } from './useOrderActions'
 
 /**
  * Invalid actions are absent, not disabled: a disabled button invites the user

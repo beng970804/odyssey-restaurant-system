@@ -1,24 +1,16 @@
-import { unwrap, useListOrders } from '@repo/api-client'
+import { unwrap, useListOrders, type OrderRow } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
-import { ORDER_STATUS_LABELS, type OrderStatus } from '@repo/types'
+import { ORDER_STATUS_LABELS } from '@repo/types'
 import { Badge, Button, Card, Inline, Stack, Table, Text, type Column } from '@repo/ui'
 import { useRouter } from 'expo-router'
 import { toneForStatus } from '../orders/formatting'
 
-type Row = {
-  id: string
-  orderNumber: number
-  status: string
-  customerName: string | null
-  totalCents: number
-}
-
 export function RecentOrdersCard({ currency }: { currency: string }) {
   const router = useRouter()
   const { data, isLoading, error, refetch } = useListOrders({ pageSize: 5 })
-  const rows = (unwrap(data)?.data ?? []) as Row[]
+  const rows = unwrap(data)?.data ?? []
 
-  const columns: Column<Row>[] = [
+  const columns: Column<OrderRow>[] = [
     {
       key: 'orderNumber',
       header: 'Order',
@@ -35,9 +27,7 @@ export function RecentOrdersCard({ currency }: { currency: string }) {
       header: 'Status',
       width: 130,
       render: (row) => (
-        <Badge tone={toneForStatus(row.status as OrderStatus)}>
-          {ORDER_STATUS_LABELS[row.status as OrderStatus]}
-        </Badge>
+        <Badge tone={toneForStatus(row.status)}>{ORDER_STATUS_LABELS[row.status]}</Badge>
       ),
     },
     {

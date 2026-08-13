@@ -1,24 +1,17 @@
-import { unwrap, useGetSettings, useListOrders } from '@repo/api-client'
 import { Button, Pagination, Stack } from '@repo/ui'
 import { useState } from 'react'
 import { PageHeader } from '../../../src/components/PageHeader'
 import { NewOrderModal } from '../../../src/features/orders/NewOrderModal'
 import { OrderDetailDrawer } from '../../../src/features/orders/OrderDetailDrawer'
 import { OrderFilterBar } from '../../../src/features/orders/OrderFilterBar'
-import { OrdersTable, type OrderRow } from '../../../src/features/orders/OrdersTable'
-import { useOrderFilters } from '../../../src/features/orders/useOrderFilters'
+import { OrdersTable } from '../../../src/features/orders/OrdersTable'
+import { useOrders } from '../../../src/features/orders/useOrders'
 
 export default function OrdersScreen() {
-  const filters = useOrderFilters()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const { data, isLoading, error, refetch } = useListOrders(filters.query)
-  const list = unwrap(data)
-  const settings = unwrap(useGetSettings().data)
-
-  const currency = settings?.currency ?? 'SGD'
-  const timezone = settings?.timezone ?? 'Asia/Singapore'
+  const { filters, orders, meta, isLoading, error, refetch, currency, timezone } = useOrders()
 
   return (
     <>
@@ -32,9 +25,9 @@ export default function OrdersScreen() {
         <OrderFilterBar filters={filters} />
 
         <OrdersTable
-          rows={(list?.data ?? []) as OrderRow[]}
+          rows={orders}
           loading={isLoading}
-          error={error as Error | null}
+          error={error}
           onRetry={refetch}
           onRowPress={(row) => setOpenOrderId(row.id)}
           currency={currency}
@@ -42,11 +35,11 @@ export default function OrdersScreen() {
           filtered={filters.activeCount > 0}
         />
 
-        {list && list.meta.total > list.meta.pageSize ? (
+        {meta && meta.total > meta.pageSize ? (
           <Pagination
-            page={list.meta.page}
-            pageSize={list.meta.pageSize}
-            total={list.meta.total}
+            page={meta.page}
+            pageSize={meta.pageSize}
+            total={meta.total}
             onPageChange={filters.setPage}
           />
         ) : null}

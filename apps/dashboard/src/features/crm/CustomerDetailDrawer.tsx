@@ -1,6 +1,6 @@
 import { getGetCustomerQueryKey, unwrap, useGetCustomer } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
-import { ORDER_STATUS_LABELS, type OrderStatus } from '@repo/types'
+import { ORDER_STATUS_LABELS } from '@repo/types'
 import {
   Badge,
   Button,
@@ -70,8 +70,8 @@ export function CustomerDetailDrawer({
               customer.recentOrders.map((order) => (
                 <Inline key={order.id} justify="space-between">
                   <Text>{`#${order.orderNumber}`}</Text>
-                  <Badge tone={toneForStatus(order.status as OrderStatus)}>
-                    {ORDER_STATUS_LABELS[order.status as OrderStatus]}
+                  <Badge tone={toneForStatus(order.status)}>
+                    {ORDER_STATUS_LABELS[order.status]}
                   </Badge>
                   <Text>{formatMoney(order.totalCents, currency)}</Text>
                 </Inline>

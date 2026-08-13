@@ -8,6 +8,7 @@ import {
   useCompleteOrder,
   useMarkOrderReady,
   useStartPreparingOrder,
+  type Order,
 } from '@repo/api-client'
 import {
   getAvailableActions,
@@ -18,7 +19,8 @@ import {
 import { useToast } from '@repo/ui'
 import { useQueryClient } from '@tanstack/react-query'
 
-type ActionableOrder = { id: string; orderNumber: number; status: OrderStatus }
+/** The three fields an action needs, taken from the generated `Order`. */
+export type ActionableOrder = Pick<Order, 'id' | 'orderNumber' | 'status'>
 
 /**
  * The buttons come from the same transition map the server enforces, so the UI

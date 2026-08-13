@@ -1,6 +1,5 @@
 import { getGetOrderQueryKey, unwrap, useGetOrder } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
-import type { OrderStatus } from '@repo/types'
 import {
   Badge,
   Divider,
@@ -43,7 +42,7 @@ export function OrderDetailDrawer({ orderId, onClose, currency, timezone }: Prop
             order={{
               id: order.id,
               orderNumber: order.orderNumber,
-              status: order.status as OrderStatus,
+              status: order.status,
             }}
           />
         ) : null
@@ -60,7 +59,7 @@ export function OrderDetailDrawer({ orderId, onClose, currency, timezone }: Prop
       ) : order ? (
         <Stack gap="xl">
           <Inline gap="sm" wrap>
-            <OrderStatusBadge status={order.status as OrderStatus} />
+            <OrderStatusBadge status={order.status} />
             <Badge tone="neutral">{CHANNEL_LABELS[order.channel] ?? order.channel}</Badge>
             <Text variant="caption" color="muted">
               {formatTime(order.placedAt, timezone)}

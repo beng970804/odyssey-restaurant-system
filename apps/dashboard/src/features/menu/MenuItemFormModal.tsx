@@ -4,19 +4,20 @@ import {
   useCreateMenuItem,
   useListCategories,
   useUpdateMenuItem,
+  type MenuItem,
 } from '@repo/api-client'
 import { Button, Field, Input, Modal, Select, Switch, useToast } from '@repo/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
-export type EditableItem = {
-  id: string
-  name: string
-  categoryId: string
-  description: string | null
-  priceCents: number
-  isAvailable: boolean
-}
+/**
+ * Derived from the generated `MenuItem`, not redeclared: the form edits the
+ * fields the API accepts, and a renamed column breaks the build here.
+ */
+export type EditableItem = Pick<
+  MenuItem,
+  'id' | 'name' | 'categoryId' | 'description' | 'priceCents' | 'isAvailable'
+>
 
 /**
  * One component for create and edit. A create form and an edit form that start

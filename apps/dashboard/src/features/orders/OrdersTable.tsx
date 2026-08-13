@@ -1,19 +1,8 @@
+import type { OrderRow } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
-import type { OrderStatus } from '@repo/types'
 import { EmptyState, Table, Text, type Column } from '@repo/ui'
 import { CHANNEL_LABELS, formatTime } from './formatting'
 import { OrderStatusBadge } from './OrderStatusBadge'
-
-export type OrderRow = {
-  id: string
-  orderNumber: number
-  status: string
-  channel: string
-  customerName: string | null
-  itemCount: number
-  totalCents: number
-  placedAt: string
-}
 
 export function OrdersTable({
   rows,
@@ -76,7 +65,7 @@ export function OrdersTable({
       key: 'status',
       header: 'Status',
       width: 130,
-      render: (row) => <OrderStatusBadge status={row.status as OrderStatus} />,
+      render: (row) => <OrderStatusBadge status={row.status} />,
     },
   ]
 
