@@ -1,5 +1,6 @@
 import type { App } from '../app'
 import { registerCategoryRoutes } from './categories'
+import { registerCustomerRoutes } from './customers'
 import { registerHealthRoutes } from './health'
 import { registerMenuRoutes } from './menu'
 
@@ -12,4 +13,5 @@ export function registerAllRoutes(app: App) {
   registerHealthRoutes(app)
   registerCategoryRoutes(app)
   registerMenuRoutes(app)
+  registerCustomerRoutes(app)
 }
