@@ -194,7 +194,32 @@ Root `package.json`:
 
 `noUncheckedIndexedAccess` is deliberate: it forces you to handle `array[0]` possibly being undefined, which is exactly the class of bug that shows up in list rendering.
 
-- [ ] **Step 4: Add the local Postgres fallback**
+- [ ] **Step 4: Wire up ESLint so `pnpm lint` actually runs**
+
+`pnpm lint` is one of the scripts the brief explicitly asks for, so it must work rather than exist. Install `eslint`, `typescript-eslint`, `eslint-plugin-react-hooks` and `eslint-config-prettier` at the root, and export a flat config from `packages/config/eslint.config.mjs`:
+
+```js
+import tseslint from 'typescript-eslint'
+import reactHooks from 'eslint-plugin-react-hooks'
+import prettier from 'eslint-config-prettier'
+
+export default tseslint.config(
+  { ignores: ['**/dist/**', '**/.expo/**', '**/generated/**'] },   // never lint Orval output
+  ...tseslint.configs.recommended,
+  { plugins: { 'react-hooks': reactHooks }, rules: { ...reactHooks.configs.recommended.rules } },
+  {
+    rules: {
+      // Guardrail: the dashboard must not call fetch directly (spec §3, "Avoid").
+      'no-restricted-globals': ['error', { name: 'fetch', message: 'Use generated hooks from @repo/api-client.' }],
+    },
+  },
+  prettier,
+)
+```
+
+Each package gets a two-line `eslint.config.mjs` re-exporting it and a `"lint": "eslint ."` script. The `generated/**` ignore matters: linting Orval output produces noise you cannot fix without hand-editing generated files, which ADR 0002 forbids. The `no-restricted-globals` rule turns one of the brief's "avoid" bullets into a build failure — add an override for `packages/api-client/src/fetcher.ts`, the one file allowed to call `fetch`.
+
+- [ ] **Step 5: Add the local Postgres fallback**
 
 `docker-compose.yml`:
 ```yaml
@@ -210,10 +235,10 @@ services:
 volumes: { pgdata: {} }
 ```
 
-- [ ] **Step 5: Verify and commit**
+- [ ] **Step 6: Verify and commit**
 
-Run: `pnpm install && pnpm typecheck`
-Expected: install succeeds; typecheck passes trivially (no packages with source yet).
+Run: `pnpm install && pnpm typecheck && pnpm lint`
+Expected: install succeeds; typecheck and lint both pass trivially (no packages with source yet). If `pnpm lint` errors with "no configuration found", fix it now — discovering it on day 2 with 60 files to clean up is how a required script ends up missing from a submission.
 
 ```bash
 git init
@@ -1837,8 +1862,32 @@ export type Theme = {
     { fontSize: number; fontWeight: '400'|'500'|'600'|'700'; lineHeight: number; fontFamily?: string }>
   elevation: Record<'flat'|'raised'|'overlay'|'modal', object>
   borderWidth: Record<'thin'|'medium'|'thick', number>
+  layout: {
+    breakpoints: { sm: number; md: number; lg: number; xl: number }   // 640 / 900 / 1280 / 1600
+    sidebarWidth: number
+    sidebarCollapsedWidth: number
+    contentMaxWidth: number
+    gridColumns: number          // 12
+    gutter: number               // references space.lg
+  }
 }
 ```
+
+The `layout` block is the brief's "layout/grid rules" requirement. Putting sidebar width in the token file rather than in `Sidebar.tsx` is what makes the answer to "how wide is the sidebar" singular — the content area computes its offset from the same number.
+
+Add `useBreakpoint()` alongside `useTheme()`:
+```ts
+export function useBreakpoint() {
+  const { width } = useWindowDimensions()
+  const { breakpoints } = useTheme().layout
+  return {
+    isCompact: width < breakpoints.md,
+    isWide: width >= breakpoints.lg,
+    width,
+  }
+}
+```
+Screens ask `isCompact`, never `width < 900`. One place decides what "compact" means.
 
 - [ ] **Step 2: Write the light and dark token sets**
 
@@ -1884,6 +1933,10 @@ describe('theme tokens', () => {
   it('spacing follows a 4px grid', () => {
     for (const v of Object.values(lightTheme.space)) expect(v % 4).toBe(0)
   })
+  it('breakpoints ascend', () => {
+    const { sm, md, lg, xl } = lightTheme.layout.breakpoints
+    expect([sm, md, lg, xl]).toEqual([sm, md, lg, xl].sort((a, b) => a - b))
+  })
 })
 ```
 
@@ -1911,21 +1964,37 @@ git add -A && git commit -m "feat(ui): design tokens with light and dark themes"
 
 Every primitive follows this shape — a themed style factory plus explicit interaction states:
 ```tsx
-export function Button({ variant = 'primary', size = 'md', loading, disabled, children, onPress }: ButtonProps) {
-  const t = useTheme()
+// packages/ui/src/hooks/useInteractionState.ts — written ONCE, consumed by every
+// interactive primitive. This is what guarantees the four states are uniform.
+export function useInteractionState() {
   const [hovered, setHovered] = useState(false)
   const [pressed, setPressed] = useState(false)
+  const [focused, setFocused] = useState(false)
+  return {
+    state: { hovered, pressed, focused },
+    handlers: {
+      onHoverIn: () => setHovered(true),
+      onHoverOut: () => setHovered(false),
+      onPressIn: () => setPressed(true),
+      onPressOut: () => setPressed(false),
+      onFocus: () => setFocused(true),
+      onBlur: () => setFocused(false),
+    },
+  }
+}
+
+export function Button({ variant = 'primary', size = 'md', loading, disabled, children, onPress }: ButtonProps) {
+  const t = useTheme()
+  const { state, handlers } = useInteractionState()
   const isDisabled = disabled || loading
-  const s = buttonStyles(t, variant, size, { hovered, pressed, disabled: isDisabled })
+  const s = buttonStyles(t, variant, size, { ...state, disabled: isDisabled })
   return (
     <Pressable
       role="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      onHoverIn={() => setHovered(true)}
-      onHoverOut={() => setHovered(false)}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      focusable
+      {...handlers}
       onPress={onPress}
       style={s.container}
     >
@@ -1935,7 +2004,9 @@ export function Button({ variant = 'primary', size = 'md', loading, disabled, ch
 }
 ```
 
-`onHoverIn`/`onHoverOut` are React Native Web's hover support. Because every interactive primitive handles hover, focus, press and disabled here, no screen ever writes an interaction state — which is precisely what the brief is checking for.
+`onHoverIn`/`onHoverOut` are React Native Web's hover support; `onFocus`/`onBlur` plus `focusable` give keyboard focus, which RN does not provide by default. **The focus ring is not optional** — the brief lists focus among the required states, and without it the dashboard cannot be operated by keyboard at all. Draw it from `theme.color.border.focus` as an outline, and suppress it on mouse press by only applying it when `focused && !pressed`.
+
+Because every interactive primitive consumes `useInteractionState`, no screen ever writes an interaction state — which is precisely what the brief is checking for.
 
 - [ ] **Step 2: Write the Button test**
 
@@ -1983,11 +2054,14 @@ git add -A && git commit -m "feat(ui): layout, text, surface, badge and button p
 
 ---
 
-## Task 17: Form and overlay primitives
+## Task 17: Form, overlay and navigation primitives
 
 **Files:**
 - Create: `packages/ui/src/primitives/{Input,Textarea,Select,Switch,Field,Modal,Drawer,Toast,ToastProvider,Skeleton,EmptyState,ErrorState,Table,Tabs,Pagination,Avatar,SearchInput,DateRangePicker}.tsx`
-- Test: `packages/ui/test/Select.test.tsx`, `test/Table.test.tsx`
+- Create: `packages/ui/src/primitives/{NavItem,NavGroup,SideNav,Breadcrumbs}.tsx`
+- Test: `packages/ui/test/Select.test.tsx`, `test/Table.test.tsx`, `test/NavItem.test.tsx`
+
+Navigation primitives belong in `@repo/ui`, not in the app. The brief lists "navigation elements" among the required design-system primitives, which means they have to appear in the UI Library route with their states — and they can only do that if they live in the package. `SideNav` takes `items: { href, label, icon, badge? }[]` and an `activeHref`; it knows nothing about routing. The app's `Sidebar` becomes a thin adapter that supplies the route list and reads `usePathname()`.
 
 **Interfaces:**
 - Produces: `<Field label error hint>`, `<Input value onChangeText error>`, `<Select options value onChange>`, `<Modal open onClose title footer>`, `<Drawer open onClose title width>`, `useToast(): { show(message, tone) }`, `<Table columns data loading empty error onRowPress>`, `<Skeleton width height>`, `<EmptyState icon title description action>`, `<ErrorState error onRetry>`.
@@ -2031,6 +2105,17 @@ it('renders an error state with a working retry', () => {
   wrap(<Table columns={cols} data={[]} error={new Error('boom')} onRetry={onRetry} keyExtractor={(r) => r.id} />)
   fireEvent.press(screen.getByText('Try again'))
   expect(onRetry).toHaveBeenCalledOnce()
+})
+
+it('marks the active nav item and shows a focus ring on keyboard focus', () => {
+  wrap(<NavItem href="/orders" label="Orders" active />)
+  const item = screen.getByText('Orders')
+  expect(item).toBeTruthy()
+  fireEvent(item, 'focus')
+  // the focus ring is a token-driven border, asserted via testID on the wrapper
+  expect(screen.getByTestId('nav-item-orders').props.style).toEqual(
+    expect.objectContaining({ borderColor: expect.any(String) }),
+  )
 })
 
 it('selects an option', () => {
@@ -2101,7 +2186,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
 
 `app/_layout.tsx` nests `ThemeProvider` → `ApiProvider` → `ToastProvider` → `Slot`.
 
-`app/(dashboard)/_layout.tsx` renders a persistent sidebar (nav items with active state derived from `usePathname()`, a theme toggle at the bottom) and a content area. On narrow viewports the sidebar collapses to icons — one `useWindowDimensions` breakpoint, not a responsive framework.
+`app/(dashboard)/_layout.tsx` renders `<SideNav>` from `@repo/ui`, fed the route list and an `activeHref` from `usePathname()`, plus a theme toggle at the bottom and a content area. Widths come from `theme.layout.sidebarWidth` / `sidebarCollapsedWidth`; the collapse decision comes from `useBreakpoint().isCompact`. No raw pixel comparison anywhere in the app.
 
 - [ ] **Step 4: Verify navigation end to end**
 
@@ -2138,7 +2223,11 @@ Hardcoding the swatch list would make this page a lie the first time a token is 
 
 - [ ] **Step 2: Build the sections**
 
-Tokens (color swatches with names and values), Typography (every variant with its specimen and metrics), Spacing (bars scaled to each step), Radius & Elevation (surfaces demonstrating each level), then a section per primitive showing **every state side by side**: default, hover (annotated), focus, active, disabled, loading, error.
+Tokens (color swatches with names and values), Typography (every variant with its specimen and metrics), Spacing (bars scaled to each step), Radius, Border & Elevation (surfaces demonstrating each level), **Layout & Grid** (the breakpoint table, the 12-column grid with its gutter, sidebar and container widths rendered to scale), then a section per primitive showing **every state side by side**: default, hover (annotated), focus, active, disabled, loading, error.
+
+Include the navigation primitives — `NavItem` in default/hover/focus/active states, `SideNav` in both expanded and collapsed form, `Tabs`, `Breadcrumbs`. The brief lists navigation among the required primitives, so omitting it from this page reads as an incomplete design system even if the app's sidebar looks fine.
+
+Add a keyboard pass to this page's verification: tab through every interactive example and confirm a visible focus ring on each. This route is the cheapest place to catch a primitive that forgot focus.
 
 - [ ] **Step 3: Verify and commit**
 
@@ -2544,9 +2633,10 @@ Sections, in this order:
 3. **Architecture** — the chain diagram from spec §2.2, the one-paragraph explanation, and the sentence that proves it: *"Rename a column in `schema.ts`, run `pnpm gen:contract`, and the dashboard stops typechecking. CI enforces this on every push."*
 4. **Where the interesting code is** — direct links to `schema.ts`, `services/orders.ts` (the validation pipeline), `packages/types/src/order-status.ts` (the shared map), `packages/ui/src/theme/tokens.ts`. A reviewer has limited time; point them at the four files that carry the argument.
 5. **Decisions** — link `CONTEXT.md` and each ADR with a one-line summary.
-6. **Trade-offs and what's incomplete** — spec §14, stated plainly: no auth and why; no modifiers, plus the two-sentence sketch of how they'd be modelled; revenue vs lifetime spend not reconciling and why that's correct; native untested.
-7. **Testing** — what's covered and the reasoning for targeted-over-exhaustive.
-8. **Scripts** — the table from spec §12.
+6. **How AI was used** — condensed from spec §15. The brief states it grades "how well you use AI: setting good guardrails, steering it clearly, reviewing output critically", so this is a scored deliverable and needs to be visible, not implied. Cover: the glossary and spec written before any code; decisions recorded as ADRs with their rejected alternatives; the plan written test-first so "looks done" was never the standard; and — the strongest point — the guardrails that are **machine-enforced rather than intended**: the CI contract-drift check, the light/dark token parity test, transition tests that iterate the shared map, and the lint rule banning `fetch` outside the api-client. Link to the commit history, where the first commit is documentation and no code.
+7. **Trade-offs and what's incomplete** — spec §14, stated plainly: no auth and why; no modifiers, plus the two-sentence sketch of how they'd be modelled; revenue vs lifetime spend not reconciling and why that's correct; native untested.
+8. **Testing** — what's covered and the reasoning for targeted-over-exhaustive.
+9. **Scripts** — the table from spec §12.
 
 - [ ] **Step 2: Verify the instructions on a clean clone**
 
@@ -2560,6 +2650,16 @@ Then follow the README literally, changing nothing. Any step that fails is a REA
 ```bash
 git add -A && git commit -m "docs: readme with setup, architecture and trade-offs"
 ```
+
+- [ ] **Step 4 (optional): Record the Loom walkthrough**
+
+The brief lists this as optional, and it is worth 10 minutes if they remain. Five beats, in this order, because it front-loads the graded material:
+
+1. **The contract chain** (2 min) — open `schema.ts`, rename a column, run `pnpm gen:contract`, show the dashboard failing to typecheck, revert. This is the single most convincing thing in the project and most candidates cannot demonstrate it.
+2. **Settings driving the backend** (2 min) — turn delivery off, show New Order refusing it.
+3. **The state machine** (2 min) — advance an order, show Cancel disappearing at `ready`, show a 409 in the network tab.
+4. **The UI Library route** (2 min) — toggle dark mode live to show the tokens are real.
+5. **Trade-offs** (2 min) — say out loud what you cut and why. Scope judgement is a named criterion.
 
 ---
 

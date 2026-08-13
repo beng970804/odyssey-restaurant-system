@@ -323,7 +323,8 @@ One file, `packages/ui/src/theme/tokens.ts`, typed with `as const` so autocomple
 - **Color** — a small primitive ramp (neutral, brand, plus green/amber/red/blue), then **semantic** aliases on top: `bg.canvas`, `bg.surface`, `bg.raised`, `text.primary`, `text.muted`, `border.subtle`, `status.success.bg` / `.fg` / `.border`. Components only ever reference semantic names. This indirection is what makes dark mode a token swap instead of a rewrite.
 - **Spacing** — a 4px scale: `xs 4, sm 8, md 12, lg 16, xl 24, 2xl 32, 3xl 48`. Every gap and padding in the app comes from here. No literal pixel values in screens.
 - **Typography** — `display, h1, h2, h3, body, bodyStrong, caption, mono`, each bundling size + weight + line height together, so text is chosen by role rather than assembled ad hoc.
-- **Radius / border / shadow / elevation** — an `elevation` scale (`flat, raised, overlay, modal`) that maps to shadow on web and elevation on Android, so surfaces are chosen by intent.
+- **Radius / border / shadow / elevation** — an `elevation` scale (`flat, raised, overlay, modal`) that maps to shadow on web and elevation on Android, so surfaces are chosen by intent. `borderWidth` is a three-step scale (`thin, medium, thick`).
+- **Layout / grid** — `breakpoints` (`sm 640, md 900, lg 1280, xl 1600`), `container` max widths, a 12-column `grid` with a token-derived gutter, and the fixed sidebar/content dimensions. These live in the token file like everything else, so "how wide is the sidebar" has one answer rather than one per screen. A `useBreakpoint()` hook reads them; screens never compare raw numbers against `useWindowDimensions`.
 
 ### 9.2 Theming
 
@@ -331,11 +332,14 @@ A `ThemeProvider` puts the resolved token set in context; `useTheme()` reads it.
 
 ### 9.3 Primitives
 
-`Button` (variants × sizes × loading/disabled), `Input`, `Select`, `Textarea`, `Switch`, `Modal`, `Drawer`, `Card`/`Surface`, `Table`, `Badge`/`StatusBadge`, `Toast`, `Skeleton`, `EmptyState`, `ErrorState`, `Tabs`, `Pagination`, `Avatar`, `Stack`/`Inline`/`Grid`, `Text`, `Heading`.
+`Button` (variants × sizes × loading/disabled), `IconButton`, `Input`, `Select`, `Textarea`, `Switch`, `Field`, `Modal`, `Drawer`, `Card`/`Surface`, `Table`, `Badge`/`StatusBadge`, `Toast`, `Skeleton`, `EmptyState`, `ErrorState`, `Pagination`, `Avatar`, `Stack`/`Inline`/`Grid`, `Text`, `Heading`.
 
-Two rules keep this from decaying:
+**Navigation primitives** live here too, not in the app: `NavItem` (icon + label + active/hover/focus states), `NavGroup`, `SideNav`, `Tabs`, `Breadcrumbs`. The app's `Sidebar` is then just a list of routes fed into `SideNav` — the *styling* of navigation is design-system work, and the brief lists navigation elements among the required primitives, so they must appear in the UI Library route alongside everything else.
+
+Three rules keep this from decaying:
 - **Primitives take no business types.** `StatusBadge` takes a tone and a label, not an `Order`. It is reused by Menu availability and CRM without knowing what an Order is.
 - **Every interactive primitive implements hover, focus, active and disabled** at the primitive level, so no screen ever hand-rolls a hover state.
+- **Focus is keyboard focus, and it is visible.** On web this means a real focus ring drawn from `color.border.focus`, appearing on keyboard navigation but not on mouse press (`:focus-visible` semantics). This is easy to skip under React Native Web because RN has no focus concept on most components, and skipping it makes the dashboard unusable by keyboard — so it is implemented once in a shared `useInteractionState()` hook that every primitive consumes.
 
 ### 9.4 The UI Library route
 
@@ -487,7 +491,27 @@ pnpm test
 
 ---
 
-## 15. How this maps to the evaluation criteria
+## 15. How AI was used — and how it was constrained
+
+The brief states outright that it is grading *how well AI was used*: "setting good guardrails, steering it clearly, reviewing output critically". That is a graded deliverable, so it needs an artifact, not a claim. The artifact is this repo's `docs/` directory and its commit history.
+
+**The guardrails, in the order they were built:**
+
+1. **A glossary before any code** — `CONTEXT.md` fixes the vocabulary. Without it, an AI will happily call the same thing an order, a ticket, and a transaction in three files.
+2. **Decisions recorded as ADRs, with the rejected options** — so the reasoning survives, and so a later session cannot quietly reverse a deliberate choice by "fixing" it.
+3. **This spec, written before implementation** — every rule paired with why it exists and what breaks without it. Ambiguity in a spec is where generated code invents things.
+4. **A task-by-task plan with the tests written first** — each task has a failing test, an expected failure message, and an implementation. The test is the acceptance criterion, so "it looks done" is never the standard.
+5. **Mechanical enforcement over good intentions** — the constraints that matter are checked by machines, not remembered: `pnpm gen:contract && git diff --exit-code` in CI proves the contract is generated rather than hand-maintained; the light/dark token parity test proves the theme is centralised; the transition tests iterate the shared map rather than restating it; `noUncheckedIndexedAccess` catches a whole class of list bugs.
+
+**The steering method:** the design was settled through an adversarial questioning pass — each decision put as an explicit choice with a recommendation and a stated trade-off, answered one at a time, before a line of code existed. Decisions that were accepted by default rather than actively chosen were flagged as such (for instance, that a `ready` Order cannot be cancelled).
+
+**What this is designed to avoid:** the failure mode the brief names — "generic or poorly integrated AI-generated work". Generic output comes from generic instructions. Every constraint in this document exists to make the correct implementation the only one that satisfies it.
+
+The README carries a condensed version of this section, because it is part of what is being assessed.
+
+---
+
+## 16. How this maps to the evaluation criteria
 
 | Criterion | Where it's answered |
 |---|---|
@@ -500,3 +524,4 @@ pnpm test
 | End-to-end integration | §7.2 — one transition map governs both the UI's buttons and the server's rules |
 | Testing rigor | §11 — real Postgres via PGlite, each case traceable to the brief |
 | Speed / scope management | §14 — explicit out-of-scope list with reasons |
+| Quality of AI usage | §15 — glossary, ADRs, spec and plan written before code; constraints enforced by CI and tests rather than by intention |
