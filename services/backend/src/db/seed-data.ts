@@ -1,4 +1,4 @@
-import type { OpeningHours } from './schema'
+import type { OpeningHours } from '@repo/shared'
 
 export const seedCategories = [
   { name: 'Starters', sortOrder: 1 },

@@ -114,7 +114,7 @@ apps/dashboard/
 - Create: `docker-compose.yml`
 
 **Interfaces:**
-- Produces: workspace names `@repo/config`, and the root scripts `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` delegating to turbo.
+- Produces: workspace names `@repo/config`, and the root scripts `pnpm typecheck`, `pnpm test`, `pnpm build` delegating to turbo, plus `pnpm lint` and `pnpm format` as single repo-wide oxlint/oxfmt runs (see the toolchain note in the README — oxlint covers the monorepo in milliseconds, so a per-package turbo task would be machinery without a payoff).
 
 - [ ] **Step 1: Initialise the workspace root**
 

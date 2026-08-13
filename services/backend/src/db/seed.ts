@@ -1,5 +1,5 @@
 import { calcTaxCents, sumCents } from '@repo/shared'
-import type { OrderStatus } from '@repo/types'
+import { ORDER_CHANNELS, type OrderStatus } from '@repo/types'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import { categories, customers, menuItems, orderItems, orders, settings } from './schema'
 import type * as schema from './schema'
@@ -50,7 +50,11 @@ const STATUS_WEIGHTS: [OrderStatus, number][] = [
   ['ready', 5],
 ]
 
-const CHANNELS = ['dine_in', 'takeaway', 'delivery'] as const
+// Statuses an order can still move out of. These belong to today's service,
+// not to last month — a four-week-old order sitting in `pending` is what a
+// seed looks like when nobody thought about time.
+const LIVE_STATUSES: readonly OrderStatus[] = ['pending', 'accepted', 'preparing', 'ready']
+const LIVE_HOURS_BACK = 6
 
 function pick<T>(rng: () => number, list: readonly T[]): T {
   return list[Math.floor(rng() * list.length)]!
@@ -60,8 +64,37 @@ function weightedStatuses(): OrderStatus[] {
   return STATUS_WEIGHTS.flatMap(([status, weight]) => Array<OrderStatus>(weight).fill(status))
 }
 
+/**
+ * Zipf-ish weights: customer i is picked roughly 1/(i+1) as often as the
+ * first. The spec asks for "a realistic long-tail spend distribution so CRM
+ * has variety" — picking uniformly gives every customer the same lifetime
+ * spend, which is the one shape that makes the CRM screen look generated.
+ */
+function makeLongTailPicker<T>(rng: () => number, list: readonly T[]) {
+  const weights = list.map((_, i) => 1 / (i + 1))
+  const total = weights.reduce((a, b) => a + b, 0)
+  return (): T => {
+    let target = rng() * total
+    for (const [i, weight] of weights.entries()) {
+      target -= weight
+      if (target <= 0) return list[i]!
+    }
+    return list.at(-1)!
+  }
+}
+
 export async function seed(db: SeedDb): Promise<SeedSummary> {
   const rng = makeRng(20260813)
+
+  // Idempotent: `pnpm db:seed` on an already-seeded database replaces its
+  // contents rather than dying on the settings primary key. Order matters —
+  // children before parents.
+  await db.delete(orderItems)
+  await db.delete(orders)
+  await db.delete(menuItems)
+  await db.delete(categories)
+  await db.delete(customers)
+  await db.delete(settings)
 
   const insertedCategories = await db
     .insert(categories)
@@ -97,17 +130,19 @@ export async function seed(db: SeedDb): Promise<SeedSummary> {
   // Only available items can be ordered — the same rule the API enforces.
   const orderableItems = insertedMenuItems.filter((i) => i.isAvailable)
   const statusPool = weightedStatuses()
+  const pickCustomer = makeLongTailPicker(rng, insertedCustomers)
   const now = Date.now()
   let cancellationIndex = 0
 
   for (let n = 0; n < ORDER_COUNT; n++) {
     const status = statusPool[n % statusPool.length]!
-    const channel = pick(rng, CHANNELS)
+    const channel = pick(rng, ORDER_CHANNELS)
     // ~20% walk-ins: an order that belongs to nobody, counting toward revenue
     // but appearing in no customer's history.
-    const customer = rng() < 0.2 ? null : pick(rng, insertedCustomers)
+    const customer = rng() < 0.2 ? null : pickCustomer()
 
-    const placedAt = new Date(now - rng() * DAYS_BACK * 24 * 60 * 60 * 1000)
+    const hoursBack = LIVE_STATUSES.includes(status) ? LIVE_HOURS_BACK : DAYS_BACK * 24
+    const placedAt = new Date(now - rng() * hoursBack * 60 * 60 * 1000)
 
     const lineCount = 1 + Math.floor(rng() * 4)
     const chosen = Array.from({ length: lineCount }, () => pick(rng, orderableItems))

@@ -11,6 +11,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
+import type { OpeningHours } from '@repo/shared'
 
 export const orderStatusValues = [
   'pending',
@@ -21,11 +22,6 @@ export const orderStatusValues = [
   'cancelled',
 ] as const
 export const orderChannelValues = ['dine_in', 'takeaway', 'delivery'] as const
-
-export type OpeningHours = Record<
-  'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun',
-  { closed: true } | { closed?: false; open: string; close: string }
->
 
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),

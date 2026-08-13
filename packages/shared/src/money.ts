@@ -5,7 +5,7 @@
  * substituted. Everything else — grouping, decimals, sign placement — still
  * comes from Intl.
  */
-const CURRENCY_SYMBOL_OVERRIDES: Record<string, string> = { SGD: 'S$' }
+const CURRENCY_SYMBOL_OVERRIDES = { SGD: 'S$' } as const satisfies Record<string, string>
 
 /**
  * Divides by 100 *only at the display boundary*. This division is the single
@@ -18,7 +18,8 @@ export function formatMoney(cents: number, currency = 'SGD', locale = 'en-SG'): 
     currencyDisplay: 'narrowSymbol',
   }).formatToParts(cents / 100)
 
-  const override = CURRENCY_SYMBOL_OVERRIDES[currency]
+  const override: string | undefined =
+    CURRENCY_SYMBOL_OVERRIDES[currency as keyof typeof CURRENCY_SYMBOL_OVERRIDES]
   return parts.map((p) => (p.type === 'currency' && override ? override : p.value)).join('')
 }
 

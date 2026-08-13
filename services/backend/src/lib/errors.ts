@@ -11,6 +11,9 @@ export const errorSchema = z
   .openapi('Error')
 
 export type ErrorCode =
+  // Emitted by the onError catch-all rather than thrown as an AppError — it is
+  // the one failure that is not a domain failure.
+  | 'INTERNAL'
   | 'VALIDATION_FAILED'
   | 'NOT_FOUND'
   | 'ITEM_UNAVAILABLE'
