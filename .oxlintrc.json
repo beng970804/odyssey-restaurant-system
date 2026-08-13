@@ -7,6 +7,9 @@
   },
   "ignorePatterns": ["**/dist/**", "**/.expo/**", "**/generated/**"],
   "rules": {
+    // Obsolete under the automatic JSX runtime (`"jsx": "react-jsx"`), which
+    // every package here uses — React does not need to be in scope.
+    "react/react-in-jsx-scope": "off",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "no-restricted-globals": [
