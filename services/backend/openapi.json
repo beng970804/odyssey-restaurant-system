@@ -1254,6 +1254,76 @@
         "required": [
           "reason"
         ]
+      },
+      "StatsSummary": {
+        "type": "object",
+        "properties": {
+          "totalOrders": {
+            "type": "integer"
+          },
+          "revenueCents": {
+            "type": "integer"
+          },
+          "pendingOrders": {
+            "type": "integer"
+          },
+          "averageOrderValueCents": {
+            "type": "integer"
+          },
+          "topItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "menuItemId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "quantitySold": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "menuItemId",
+                "name",
+                "quantitySold"
+              ]
+            }
+          },
+          "dailyTrend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "orderCount": {
+                  "type": "integer"
+                },
+                "revenueCents": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "orderCount",
+                "revenueCents"
+              ]
+            }
+          }
+        },
+        "required": [
+          "totalOrders",
+          "revenueCents",
+          "pendingOrders",
+          "averageOrderValueCents",
+          "topItems",
+          "dailyTrend"
+        ]
       }
     },
     "parameters": {}
@@ -2426,6 +2496,36 @@
           },
           "422": {
             "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats/summary": {
+      "get": {
+        "operationId": "getStatsSummary",
+        "tags": [
+          "Stats"
+        ],
+        "responses": {
+          "200": {
+            "description": "Headline numbers for the home screen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Settings row is missing",
             "content": {
               "application/json": {
                 "schema": {
