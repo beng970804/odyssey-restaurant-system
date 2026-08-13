@@ -21,7 +21,7 @@ export type ColorTokens = {
 export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 
 export type SpaceToken = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
-export type RadiusToken = 'none' | 'sm' | 'md' | 'lg' | 'full'
+export type RadiusToken = 'none' | 'sm' | 'md' | 'lg' | 'screen' | 'full'
 export type TypographyToken =
   | 'display'
   | 'h1'

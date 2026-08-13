@@ -12,7 +12,9 @@ import type { Theme } from './types'
 
 const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32, '3xl': 48 } as const
 
-const radius = { none: 0, sm: 4, md: 8, lg: 12, full: 9999 } as const
+// `screen` is the device's own corner radius, not a component's: it is the
+// radius of a surface that reads as the whole screen sliding aside.
+const radius = { none: 0, sm: 4, md: 8, lg: 12, screen: 28, full: 9999 } as const
 
 const borderWidth = { thin: 1, medium: 2, thick: 4 } as const
 

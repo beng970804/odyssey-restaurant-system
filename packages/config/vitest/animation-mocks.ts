@@ -27,7 +27,22 @@ vi.mock('react-native-reanimated', async () => {
     withSpring: (toValue: number) => toValue,
     withTiming: (toValue: number) => toValue,
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
-    interpolate: (value: number) => value,
+    // A real piecewise-linear interpolation, not a passthrough: the reveal
+    // styles are built out of it, so stubbing it would make every assertion
+    // about them meaningless.
+    interpolate: (value: number, input: number[], output: number[]) => {
+      const last = input.length - 1
+      if (value <= input[0]!) return output[0]!
+      if (value >= input[last]!) return output[last]!
+
+      const i = input.findIndex((stop, index) => index > 0 && value <= stop)
+      const [from, to] = [input[i - 1]!, input[i]!]
+      const span = to - from
+
+      return span === 0
+        ? output[i]!
+        : output[i - 1]! + ((value - from) / span) * (output[i]! - output[i - 1]!)
+    },
     Extrapolation: { CLAMP: 'clamp' },
   }
 })

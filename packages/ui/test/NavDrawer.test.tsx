@@ -132,6 +132,52 @@ describe('NavDrawer', () => {
     expect(onOpenChange).not.toHaveBeenCalled()
   })
 
+  it('hides the menu content behind a closed drawer', () => {
+    wrap(
+      <NavDrawer {...props} mode="drawer" open={false}>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    // The menu emerges as the surface travels rather than sitting there fully
+    // painted behind it — that reveal is what gives the slide its depth.
+    expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '0' })
+  })
+
+  it('fully reveals the menu content once the drawer is open', () => {
+    wrap(
+      <NavDrawer {...props} mode="drawer" open>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '1' })
+  })
+
+  it('leaves the pinned nav fully painted, with nothing to reveal', () => {
+    wrap(
+      <NavDrawer {...props} mode="pinned" open={false}>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '1' })
+  })
+
+  it('rounds the sliding surface with the screen radius token', () => {
+    wrap(
+      <NavDrawer {...props} mode="drawer" open>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    // React Native Web expands borderRadius into the four longhands.
+    expect(screen.getByTestId('nav-drawer-surface')).toHaveStyle({
+      borderTopLeftRadius: `${lightTheme.radius.screen}px`,
+      borderBottomLeftRadius: `${lightTheme.radius.screen}px`,
+    })
+  })
+
   it('sizes the pinned nav from the expanded width token', () => {
     wrap(
       <NavDrawer {...props} mode="pinned" open={false}>
