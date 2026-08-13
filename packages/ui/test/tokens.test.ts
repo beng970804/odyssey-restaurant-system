@@ -20,6 +20,28 @@ function contrast(a: string, b: string): number {
   return (lighter! + 0.05) / (darker! + 0.05)
 }
 
+function rgb(hex: string): [number, number, number] {
+  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
+  return [r!, g!, b!]
+}
+
+/** Degrees on the colour wheel: 0 is red, 60 yellow, 240 blue. */
+function hue(hex: string): number {
+  const [r, g, b] = rgb(hex).map((c) => c / 255) as [number, number, number]
+  const max = Math.max(r, g, b)
+  const chroma = max - Math.min(r, g, b)
+  if (chroma === 0) return 0
+  const sixth =
+    max === r ? ((g - b) / chroma + 6) % 6 : max === g ? (b - r) / chroma + 2 : (r - g) / chroma + 4
+  return sixth * 60
+}
+
+/** How far a colour leans warm. Positive is warm, negative is cool. */
+function warmth(hex: string): number {
+  const [r, , b] = rgb(hex)
+  return r - b
+}
+
 const THEMES: [string, Theme][] = [
   ['light', lightTheme],
   ['dark', darkTheme],
@@ -116,5 +138,46 @@ describe('palette discipline', () => {
         lightTheme.elevation[level].shadowOpacity,
       )
     }
+  })
+})
+
+describe('warmth', () => {
+  // The palette is warm on purpose, and warmth is the kind of decision that
+  // erodes one well-meaning hex at a time. These tests are what stop a cool
+  // slate grey being pasted back in six commits from now.
+
+  it.each(THEMES)('%s: every surface leans warm', (_name, theme) => {
+    for (const [role, value] of Object.entries(theme.color.bg)) {
+      expect(warmth(value), `bg.${role}`).toBeGreaterThan(0)
+    }
+  })
+
+  it.each(THEMES)('%s: the text ramp is warm grey, never cool grey', (_name, theme) => {
+    for (const role of ['primary', 'secondary', 'muted'] as const) {
+      expect(warmth(theme.color.text[role]), `text.${role}`).toBeGreaterThan(0)
+    }
+  })
+
+  it.each(THEMES)('%s: the brand is an orange', (_name, theme) => {
+    // Narrow on purpose: at 45 degrees it has become yellow and stops reading
+    // as a brand, and below 15 it is a red and starts reading as danger.
+    for (const role of ['default', 'hover', 'active'] as const) {
+      expect(hue(theme.color.brand[role]), `brand.${role}`).toBeGreaterThanOrEqual(15)
+      expect(hue(theme.color.brand[role]), `brand.${role}`).toBeLessThanOrEqual(45)
+    }
+  })
+
+  it.each(THEMES)('%s: the neutral status tone sits on the canvas, not against it', (_n, theme) => {
+    // A cool grey chip on a cream canvas is the loudest possible tell that two
+    // palettes were merged, and neutral is on screen more than any other tone.
+    expect(warmth(theme.color.status.neutral.bg)).toBeGreaterThan(0)
+    expect(warmth(theme.color.status.neutral.fg)).toBeGreaterThan(0)
+  })
+
+  it.each(THEMES)('%s: warning stays clear of the brand hue', (_name, theme) => {
+    // Once the brand is orange, an amber Pending badge reads as a button. The
+    // gap is what keeps "needs attention" and "press me" telling apart.
+    const gap = Math.abs(hue(theme.color.status.warning.fg) - hue(theme.color.brand.default))
+    expect(gap).toBeGreaterThanOrEqual(12)
   })
 })

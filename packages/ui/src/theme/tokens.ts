@@ -1,18 +1,28 @@
 import type { Theme } from './types'
 
 /**
- * Slate neutrals with a single electric-blue accent.
+ * Warm cream neutrals with a single burnt-orange accent.
  *
- * One palette, one accent: the neutrals are uniformly cool, so nothing warm
- * creeps in later, and blue is the only saturated brand colour on screen. That
- * leaves the status tones as the loudest thing in the interface, which is the
- * point — on an operations board a Pending order should catch the eye before
- * the branding does.
+ * One palette, one accent: the neutrals are uniformly warm, so nothing cool
+ * creeps in later, and orange is the only saturated brand colour on screen.
+ * That leaves the status tones as the loudest thing in the interface, which is
+ * the point — on an operations board a Pending order should catch the eye
+ * before the branding does.
+ *
+ * The orange is burnt (`#C2410C`) rather than the brighter orange it is drawn
+ * from. A saturated `#F97316` carries white label text at 2.9:1, which fails
+ * AA outright; darkening the brand until white clears 4.5:1 is what makes the
+ * accent usable on a button rather than only on decoration.
  */
 
 const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32, '3xl': 48 } as const
 
-const radius = { none: 0, sm: 4, md: 8, lg: 12, full: 9999 } as const
+/**
+ * Softer than the slate original: `lg` carries cards and modals, and 16 is what
+ * separates "a rounded rectangle" from a surface that looks deliberately drawn.
+ * `sm` stays tight so dense things — table cells, badges — do not go pillowy.
+ */
+const radius = { none: 0, sm: 4, md: 10, lg: 16, full: 9999 } as const
 
 const borderWidth = { thin: 1, medium: 2, thick: 4 } as const
 
@@ -44,40 +54,50 @@ export const lightTheme: Theme = {
   mode: 'light',
   color: {
     bg: {
-      canvas: '#F8FAFC',
-      surface: '#FFFFFF',
-      raised: '#FFFFFF',
-      overlay: '#FFFFFF',
-      inset: '#F1F5F9',
+      // Cream canvas, near-white surfaces. Cards lift off the page by being
+      // *lighter* than it, which is why the canvas is the tinted one.
+      canvas: '#FAF6F0',
+      surface: '#FFFDFA',
+      // Not pure white. It is the lightest surface in the theme, but a hard
+      // #FFFFFF against a cream canvas reads as a hole punched in the page.
+      raised: '#FFFEFC',
+      overlay: '#FFFDFA',
+      inset: '#F2EBE1',
     },
     text: {
-      primary: '#0F172A',
-      secondary: '#475569',
-      muted: '#64748B',
-      inverse: '#F8FAFC',
+      // A warm-grey ramp. Cool slate text on a cream canvas is the single most
+      // obvious sign that two palettes were merged.
+      primary: '#1C1917',
+      secondary: '#57534E',
+      muted: '#78716C',
+      inverse: '#FAF6F0',
       onBrand: '#FFFFFF',
     },
     border: {
-      subtle: '#F1F5F9',
-      default: '#E2E8F0',
-      strong: '#CBD5E1',
-      focus: '#2563EB',
+      subtle: '#F2EBE1',
+      default: '#E7DED1',
+      strong: '#D6C9B8',
+      focus: '#C2410C',
     },
     brand: {
-      default: '#2563EB',
-      hover: '#1D4ED8',
-      active: '#1E40AF',
-      subtle: '#EFF6FF',
+      default: '#C2410C',
+      hover: '#9A3412',
+      active: '#7C2D12',
+      // The soft peach behind an active nav item. Brand text on it clears AA at
+      // 4.6:1, so the pill is legible rather than merely decorative.
+      subtle: '#FDF0E6',
       onBrand: '#FFFFFF',
     },
     status: {
-      success: { bg: '#DCFCE7', fg: '#15803D', border: '#BBF7D0' },
-      warning: { bg: '#FEF3C7', fg: '#B45309', border: '#FDE68A' },
-      danger: { bg: '#FEE2E2', fg: '#B91C1C', border: '#FECACA' },
-      // Sky rather than the brand blue: an Info badge that matched the brand
+      success: { bg: '#DFF3E4', fg: '#166534', border: '#BBE5C6' },
+      // Gold, not amber. The old `#B45309` sat 6 degrees off the brand hue, so
+      // once the brand turned orange a Pending badge read as a button.
+      warning: { bg: '#FDF3D3', fg: '#854D0E', border: '#F7E3A8' },
+      danger: { bg: '#FCE7E4', fg: '#B91C1C', border: '#F6C9C4' },
+      // Sky rather than the brand orange: an Info badge that matched the brand
       // would read as a button.
-      info: { bg: '#E0F2FE', fg: '#0369A1', border: '#BAE6FD' },
-      neutral: { bg: '#F1F5F9', fg: '#475569', border: '#E2E8F0' },
+      info: { bg: '#E2EFF6', fg: '#0369A1', border: '#C3DEEC' },
+      neutral: { bg: '#F2EBE1', fg: '#57534E', border: '#E7DED1' },
     },
   },
   space,
@@ -85,35 +105,36 @@ export const lightTheme: Theme = {
   typography,
   borderWidth,
   layout,
-  // Diffuse and barely there. A hard drop shadow is the fastest way to make an
-  // interface look cheap, so depth comes mostly from the border tokens.
+  // Diffuse and barely there, and now warm: a blue-black shadow on cream reads
+  // as grime. Depth is shared between these and the border tokens — the borders
+  // softened when the palette warmed, so the shadows pick up the difference.
   elevation: {
     flat: {
-      shadowColor: '#0F172A',
+      shadowColor: '#42302B',
       shadowOpacity: 0,
       shadowRadius: 0,
       shadowOffset: { width: 0, height: 0 },
       elevation: 0,
     },
     raised: {
-      shadowColor: '#0F172A',
-      shadowOpacity: 0.04,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 1 },
+      shadowColor: '#42302B',
+      shadowOpacity: 0.06,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 2 },
       elevation: 1,
     },
     overlay: {
-      shadowColor: '#0F172A',
-      shadowOpacity: 0.08,
-      shadowRadius: 16,
-      shadowOffset: { width: 0, height: 4 },
+      shadowColor: '#42302B',
+      shadowOpacity: 0.1,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 8 },
       elevation: 4,
     },
     modal: {
-      shadowColor: '#0F172A',
-      shadowOpacity: 0.12,
-      shadowRadius: 32,
-      shadowOffset: { width: 0, height: 12 },
+      shadowColor: '#42302B',
+      shadowOpacity: 0.14,
+      shadowRadius: 40,
+      shadowOffset: { width: 0, height: 16 },
       elevation: 12,
     },
   },
