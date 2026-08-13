@@ -29,6 +29,11 @@ export const createOrderSchema = z
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>
 
+/** Cancelling is the one Action that carries a payload — a reason is required. */
+export const cancelOrderSchema = z
+  .object({ reason: z.string().min(1, 'A reason is required').max(500) })
+  .openapi('CancelOrder')
+
 export const orderItemSchema = createSelectSchema(orderItems).openapi('OrderItem')
 
 export const orderSchema = createSelectSchema(orders, {

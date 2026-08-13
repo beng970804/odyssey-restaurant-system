@@ -1,6 +1,9 @@
 import { eq } from 'drizzle-orm'
 import type { OpeningHours } from '@repo/shared'
-import { categories, customers, menuItems, settings } from '../../src/db/schema'
+import type { OrderStatus } from '@repo/types'
+import { categories, customers, menuItems, orderItems, orders, settings } from '../../src/db/schema'
+
+type OrderInsert = typeof orders.$inferInsert
 import type { TestDb } from './db'
 
 const openingHours: OpeningHours = {
@@ -55,5 +58,35 @@ export async function seedMinimal(db: TestDb) {
       db.update(settings).set(patch).where(eq(settings.id, 1)),
     setMenuItemPrice: (id: string, priceCents: number) =>
       db.update(menuItems).set({ priceCents }).where(eq(menuItems.id, id)),
+
+    /**
+     * Writes an order straight into a given status. The API deliberately offers
+     * no way to do this — status is a consequence of an Action — so a test that
+     * needs to start from `ready` has to reach past it.
+     */
+    orderInStatus: async (status: OrderStatus, overrides: Partial<OrderInsert> = {}) => {
+      const [order] = await db
+        .insert(orders)
+        .values({
+          channel: 'takeaway',
+          status,
+          subtotalCents: 320,
+          taxCents: 29,
+          deliveryFeeCents: 0,
+          totalCents: 349,
+          ...overrides,
+        })
+        .returning()
+
+      await db.insert(orderItems).values({
+        orderId: order!.id,
+        menuItemId: tehTarik!.id,
+        nameSnapshot: tehTarik!.name,
+        unitPriceCents: tehTarik!.priceCents,
+        quantity: 1,
+      })
+
+      return order!
+    },
   }
 }

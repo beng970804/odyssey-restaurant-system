@@ -1,6 +1,11 @@
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { addMinutes, calcTaxCents, isWithinOpeningHours, sumCents } from '@repo/shared'
-import type { OrderChannel } from '@repo/types'
+import {
+  getAvailableActions,
+  resolveTransition,
+  type OrderAction,
+  type OrderChannel,
+} from '@repo/types'
 import { customers, menuItems, orderItems, orders } from '../db/schema'
 import { AppError } from '../lib/errors'
 import { getSettings } from './settings'
@@ -30,6 +35,44 @@ export async function requireOrderDetail(db: Db, id: string) {
 /** Filtering and pagination arrive in Task 13. */
 export function listOrders(db: Db) {
   return db.select().from(orders).orderBy(desc(orders.placedAt))
+}
+
+/**
+ * Five routes, one function — they differ only in path, operationId and whether
+ * they carry a reason. Staff perform Actions; the status is a consequence the
+ * server derives from the shared map, never a field the client sets (ADR 0004).
+ */
+export async function performAction(
+  db: Db,
+  orderId: string,
+  action: OrderAction,
+  reason?: string,
+  now = new Date(),
+) {
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1)
+  if (!order) throw new AppError('NOT_FOUND', `No order with id ${orderId}`, 404)
+
+  const next = resolveTransition(order.status, action)
+  if (!next) {
+    // 409 rather than 400: the request is well-formed, the state is not.
+    throw new AppError(
+      'INVALID_TRANSITION',
+      `Cannot ${action} an order that is ${order.status}`,
+      409,
+      { currentStatus: order.status, allowedActions: getAvailableActions(order.status) },
+    )
+  }
+
+  await db
+    .update(orders)
+    .set({
+      status: next,
+      updatedAt: now,
+      ...(action === 'cancel' ? { cancellationReason: reason } : {}),
+    })
+    .where(eq(orders.id, orderId))
+
+  return requireOrderDetail(db, orderId)
 }
 
 /**

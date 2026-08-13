@@ -19,6 +19,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CancelOrder,
   CreateOrder,
   Error,
   OrderDetail,
@@ -217,7 +218,503 @@ export function useListOrders<TData = Awaited<ReturnType<typeof listOrders>>, TE
 
 
 
-export type getOrderResponse200 = {
+export type acceptOrderResponse200 = {
+  data: OrderDetail
+  status: 200
+}
+
+export type acceptOrderResponse404 = {
+  data: Error
+  status: 404
+}
+
+export type acceptOrderResponse409 = {
+  data: Error
+  status: 409
+}
+
+export type acceptOrderResponse422 = {
+  data: Error
+  status: 422
+}
+
+export type acceptOrderResponseSuccess = (acceptOrderResponse200) & {
+  headers: Headers;
+};
+export type acceptOrderResponseError = (acceptOrderResponse404 | acceptOrderResponse409 | acceptOrderResponse422) & {
+  headers: Headers;
+};
+
+export type acceptOrderResponse = (acceptOrderResponseSuccess | acceptOrderResponseError)
+
+export const getAcceptOrderUrl = (id: string,) => {
+
+
+
+
+  return `/orders/${id}/accept`
+}
+
+/**
+ * @summary Accept an order
+ */
+export const acceptOrder = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<acceptOrderResponse> => {
+
+  return customFetch<acceptOrderResponse>(getAcceptOrderUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAcceptOrderMutationOptions = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptOrder>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['acceptOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptOrder>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  acceptOrder(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptOrderMutationResult = NonNullable<Awaited<ReturnType<typeof acceptOrder>>>
+
+    export type AcceptOrderMutationError = Error
+
+    /**
+ * @summary Accept an order
+ */
+export const useAcceptOrder = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acceptOrder>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getAcceptOrderMutationOptions(options));
+    }
+    export type startPreparingOrderResponse200 = {
+  data: OrderDetail
+  status: 200
+}
+
+export type startPreparingOrderResponse404 = {
+  data: Error
+  status: 404
+}
+
+export type startPreparingOrderResponse409 = {
+  data: Error
+  status: 409
+}
+
+export type startPreparingOrderResponse422 = {
+  data: Error
+  status: 422
+}
+
+export type startPreparingOrderResponseSuccess = (startPreparingOrderResponse200) & {
+  headers: Headers;
+};
+export type startPreparingOrderResponseError = (startPreparingOrderResponse404 | startPreparingOrderResponse409 | startPreparingOrderResponse422) & {
+  headers: Headers;
+};
+
+export type startPreparingOrderResponse = (startPreparingOrderResponseSuccess | startPreparingOrderResponseError)
+
+export const getStartPreparingOrderUrl = (id: string,) => {
+
+
+
+
+  return `/orders/${id}/start-preparing`
+}
+
+/**
+ * @summary Start preparing an order
+ */
+export const startPreparingOrder = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<startPreparingOrderResponse> => {
+
+  return customFetch<startPreparingOrderResponse>(getStartPreparingOrderUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartPreparingOrderMutationOptions = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPreparingOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startPreparingOrder>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['startPreparingOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startPreparingOrder>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  startPreparingOrder(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartPreparingOrderMutationResult = NonNullable<Awaited<ReturnType<typeof startPreparingOrder>>>
+
+    export type StartPreparingOrderMutationError = Error
+
+    /**
+ * @summary Start preparing an order
+ */
+export const useStartPreparingOrder = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startPreparingOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startPreparingOrder>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getStartPreparingOrderMutationOptions(options));
+    }
+    export type markOrderReadyResponse200 = {
+  data: OrderDetail
+  status: 200
+}
+
+export type markOrderReadyResponse404 = {
+  data: Error
+  status: 404
+}
+
+export type markOrderReadyResponse409 = {
+  data: Error
+  status: 409
+}
+
+export type markOrderReadyResponse422 = {
+  data: Error
+  status: 422
+}
+
+export type markOrderReadyResponseSuccess = (markOrderReadyResponse200) & {
+  headers: Headers;
+};
+export type markOrderReadyResponseError = (markOrderReadyResponse404 | markOrderReadyResponse409 | markOrderReadyResponse422) & {
+  headers: Headers;
+};
+
+export type markOrderReadyResponse = (markOrderReadyResponseSuccess | markOrderReadyResponseError)
+
+export const getMarkOrderReadyUrl = (id: string,) => {
+
+
+
+
+  return `/orders/${id}/mark-ready`
+}
+
+/**
+ * @summary Mark an order ready
+ */
+export const markOrderReady = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<markOrderReadyResponse> => {
+
+  return customFetch<markOrderReadyResponse>(getMarkOrderReadyUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMarkOrderReadyMutationOptions = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markOrderReady>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markOrderReady>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['markOrderReady'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markOrderReady>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markOrderReady(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkOrderReadyMutationResult = NonNullable<Awaited<ReturnType<typeof markOrderReady>>>
+
+    export type MarkOrderReadyMutationError = Error
+
+    /**
+ * @summary Mark an order ready
+ */
+export const useMarkOrderReady = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markOrderReady>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markOrderReady>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getMarkOrderReadyMutationOptions(options));
+    }
+    export type completeOrderResponse200 = {
+  data: OrderDetail
+  status: 200
+}
+
+export type completeOrderResponse404 = {
+  data: Error
+  status: 404
+}
+
+export type completeOrderResponse409 = {
+  data: Error
+  status: 409
+}
+
+export type completeOrderResponse422 = {
+  data: Error
+  status: 422
+}
+
+export type completeOrderResponseSuccess = (completeOrderResponse200) & {
+  headers: Headers;
+};
+export type completeOrderResponseError = (completeOrderResponse404 | completeOrderResponse409 | completeOrderResponse422) & {
+  headers: Headers;
+};
+
+export type completeOrderResponse = (completeOrderResponseSuccess | completeOrderResponseError)
+
+export const getCompleteOrderUrl = (id: string,) => {
+
+
+
+
+  return `/orders/${id}/complete`
+}
+
+/**
+ * @summary Complete an order
+ */
+export const completeOrder = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<completeOrderResponse> => {
+
+  return customFetch<completeOrderResponse>(getCompleteOrderUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteOrderMutationOptions = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeOrder>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['completeOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeOrder>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  completeOrder(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteOrderMutationResult = NonNullable<Awaited<ReturnType<typeof completeOrder>>>
+
+    export type CompleteOrderMutationError = Error
+
+    /**
+ * @summary Complete an order
+ */
+export const useCompleteOrder = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOrder>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeOrder>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getCompleteOrderMutationOptions(options));
+    }
+    export type cancelOrderResponse200 = {
+  data: OrderDetail
+  status: 200
+}
+
+export type cancelOrderResponse404 = {
+  data: Error
+  status: 404
+}
+
+export type cancelOrderResponse409 = {
+  data: Error
+  status: 409
+}
+
+export type cancelOrderResponse422 = {
+  data: Error
+  status: 422
+}
+
+export type cancelOrderResponseSuccess = (cancelOrderResponse200) & {
+  headers: Headers;
+};
+export type cancelOrderResponseError = (cancelOrderResponse404 | cancelOrderResponse409 | cancelOrderResponse422) & {
+  headers: Headers;
+};
+
+export type cancelOrderResponse = (cancelOrderResponseSuccess | cancelOrderResponseError)
+
+export const getCancelOrderUrl = (id: string,) => {
+
+
+
+
+  return `/orders/${id}/cancel`
+}
+
+/**
+ * @summary Cancel an order
+ */
+export const cancelOrder = async (id: string,
+    cancelOrderBody: CancelOrder, options?: Parameters<typeof customFetch>[1]): Promise<cancelOrderResponse> => {
+
+  return customFetch<cancelOrderResponse>(getCancelOrderUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(cancelOrderBody)
+  }
+);}
+
+
+
+
+
+export const getCancelOrderMutationOptions = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelOrder>>, TError,{id: string;data: CancelOrder}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelOrder>>, TError,{id: string;data: CancelOrder}, TContext> => {
+
+const mutationKey = ['cancelOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelOrder>>, {id: string;data: CancelOrder}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelOrder(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelOrderMutationResult = NonNullable<Awaited<ReturnType<typeof cancelOrder>>>
+    export type CancelOrderMutationBody = CancelOrder
+    export type CancelOrderMutationError = Error
+
+    /**
+ * @summary Cancel an order
+ */
+export const useCancelOrder = <TError = Error,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelOrder>>, TError,{id: string;data: CancelOrder}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelOrder>>,
+        TError,
+        {id: string;data: CancelOrder},
+        TContext
+      > => {
+      return useMutation(getCancelOrderMutationOptions(options));
+    }
+    export type getOrderResponse200 = {
   data: OrderDetail
   status: 200
 }
