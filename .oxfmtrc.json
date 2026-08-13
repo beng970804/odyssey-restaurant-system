@@ -3,5 +3,5 @@
   "semi": false,
   "singleQuote": true,
   "printWidth": 100,
-  "ignorePatterns": ["docs/**", "CONTEXT.md", "**/generated/**"]
+  "ignorePatterns": ["docs/**", "CONTEXT.md", "**/generated/**", "services/backend/openapi.json"]
 }

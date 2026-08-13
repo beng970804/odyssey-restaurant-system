@@ -1,0 +1,35 @@
+{
+  "name": "@repo/backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "gen:openapi": "tsx scripts/generate-openapi.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:reset": "tsx src/db/reset.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.5.3",
+    "@neondatabase/serverless": "^1.1.0",
+    "@scalar/hono-api-reference": "^0.11.14",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "hono": "^4.13.2",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260101.0",
+    "@electric-sql/pglite": "^0.5.4",
+    "@repo/config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.23.12",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.122.0"
+  }
+}

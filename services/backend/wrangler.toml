@@ -1,0 +1,8 @@
+name = "restaurant-backend"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Not optional: this is what lets the postgres-js local driver open a TCP socket
+# inside `wrangler dev` (ADR 0003). Without it, local development against the
+# docker Postgres cannot connect at all.
+compatibility_flags = ["nodejs_compat"]
