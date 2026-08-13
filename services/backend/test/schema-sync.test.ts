@@ -7,9 +7,9 @@ import { orderChannelValues, orderStatusValues } from '../src/db/schema'
 // the frontend cannot import the Drizzle schema — so nothing but this test
 // stops them diverging.
 it('database status enum matches the shared status list', () => {
-  expect([...orderStatusValues].sort()).toEqual([...ORDER_STATUSES].sort())
+  expect(orderStatusValues.toSorted()).toEqual(ORDER_STATUSES.toSorted())
 })
 
 it('database channel enum matches the shared channel list', () => {
-  expect([...orderChannelValues].sort()).toEqual([...ORDER_CHANNELS].sort())
+  expect(orderChannelValues.toSorted()).toEqual(ORDER_CHANNELS.toSorted())
 })

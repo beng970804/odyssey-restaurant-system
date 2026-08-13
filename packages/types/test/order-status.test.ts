@@ -9,7 +9,7 @@ import {
 
 describe('order transitions', () => {
   it('allows accept and cancel from pending', () => {
-    expect(getAvailableActions('pending').sort()).toEqual(['accept', 'cancel'])
+    expect(getAvailableActions('pending').toSorted()).toEqual(['accept', 'cancel'])
   })
 
   it('does not allow cancelling a ready order', () => {
