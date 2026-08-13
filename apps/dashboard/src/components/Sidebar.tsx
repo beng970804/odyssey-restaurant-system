@@ -1,12 +1,10 @@
 import { NavDrawer, type NavItemIcon, Text, useTheme, useThemeMode, Button, Stack } from '@repo/ui'
-import {
-  IconLayoutDashboard,
-  IconPalette,
-  IconReceipt2,
-  IconSettings,
-  IconToolsKitchen2,
-  IconUsers,
-} from '@tabler/icons-react-native'
+import IconLayoutDashboard from '@tabler/icons-react-native/IconLayoutDashboard'
+import IconPalette from '@tabler/icons-react-native/IconPalette'
+import IconReceipt2 from '@tabler/icons-react-native/IconReceipt2'
+import IconSettings from '@tabler/icons-react-native/IconSettings'
+import IconToolsKitchen2 from '@tabler/icons-react-native/IconToolsKitchen2'
+import IconUsers from '@tabler/icons-react-native/IconUsers'
 import { usePathname, useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
 

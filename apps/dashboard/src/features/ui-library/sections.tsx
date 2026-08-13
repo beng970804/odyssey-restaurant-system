@@ -22,12 +22,10 @@ import {
   useTheme,
   type StatusTone,
 } from '@repo/ui'
-import {
-  IconBowlChopsticks,
-  IconCake,
-  IconCoffee,
-  IconToolsKitchen2,
-} from '@tabler/icons-react-native'
+import IconBowlChopsticks from '@tabler/icons-react-native/IconBowlChopsticks'
+import IconCake from '@tabler/icons-react-native/IconCake'
+import IconCoffee from '@tabler/icons-react-native/IconCoffee'
+import IconToolsKitchen2 from '@tabler/icons-react-native/IconToolsKitchen2'
 import { useState, type ReactNode } from 'react'
 
 type IconProps = { color: string; size: number }

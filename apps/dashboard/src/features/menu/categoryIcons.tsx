@@ -1,15 +1,13 @@
-import {
-  IconBowlChopsticks,
-  IconCake,
-  IconCoffee,
-  IconMeat,
-  IconSalad,
-  IconSoup,
-  IconToolsKitchen2,
-} from '@tabler/icons-react-native'
+import IconBowlChopsticks from '@tabler/icons-react-native/IconBowlChopsticks'
+import IconCake from '@tabler/icons-react-native/IconCake'
+import IconCoffee from '@tabler/icons-react-native/IconCoffee'
+import IconMeat from '@tabler/icons-react-native/IconMeat'
+import IconSalad from '@tabler/icons-react-native/IconSalad'
+import IconSoup from '@tabler/icons-react-native/IconSoup'
+import IconToolsKitchen2 from '@tabler/icons-react-native/IconToolsKitchen2'
 import type { ComponentType, ReactElement } from 'react'
 
-type TablerIcon = ComponentType<{ color: string; size: number }>
+type TablerIcon = ComponentType<{ color?: string; size?: number | string; stroke?: number }>
 
 /**
  * Categories are free text in the database, so this is a keyword match rather

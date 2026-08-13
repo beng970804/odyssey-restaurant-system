@@ -1,6 +1,6 @@
 import type { Category } from '@repo/api-client'
 import { ChipGroup } from '@repo/ui'
-import { IconToolsKitchen2 } from '@tabler/icons-react-native'
+import IconToolsKitchen2 from '@tabler/icons-react-native/IconToolsKitchen2'
 import { categoryIcon } from './categoryIcons'
 
 export const ALL_CATEGORIES = 'all'
