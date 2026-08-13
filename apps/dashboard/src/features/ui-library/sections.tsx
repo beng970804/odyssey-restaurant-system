@@ -2,6 +2,7 @@ import {
   Badge,
   Button,
   Card,
+  ChipGroup,
   Divider,
   IconButton,
   Inline,
@@ -21,8 +22,33 @@ import {
   useTheme,
   type StatusTone,
 } from '@repo/ui'
+import {
+  IconBowlChopsticks,
+  IconCake,
+  IconCoffee,
+  IconToolsKitchen2,
+} from '@tabler/icons-react-native'
 import { useState, type ReactNode } from 'react'
+
+type IconProps = { color: string; size: number }
 import { View } from 'react-native'
+
+/** Hoisted: an icon render prop defined during render is a new component each pass. */
+const CATEGORY_CHIPS = [
+  { value: 'all', label: 'All', icon: (props: IconProps) => <IconToolsKitchen2 {...props} /> },
+  {
+    value: 'noodles',
+    label: 'Noodles & Rice',
+    icon: (props: IconProps) => <IconBowlChopsticks {...props} />,
+  },
+  { value: 'desserts', label: 'Desserts', icon: (props: IconProps) => <IconCake {...props} /> },
+  { value: 'drinks', label: 'Drinks', icon: (props: IconProps) => <IconCoffee {...props} /> },
+]
+
+const PLAIN_CHIPS = [
+  { value: 'all', label: 'Without icons' },
+  { value: 'plain', label: 'Also fine' },
+]
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   const theme = useTheme()
@@ -189,6 +215,7 @@ export function ComponentGallery() {
   const [inputValue, setInputValue] = useState('')
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [tab, setTab] = useState('all')
+  const [chip, setChip] = useState('all')
 
   return (
     <Stack gap="xl">
@@ -304,6 +331,17 @@ export function ComponentGallery() {
           ]}
           value={tab}
           onChange={setTab}
+        />
+        {/*
+          Beside Tabs on purpose: the pair is what shows why both exist. Tabs
+          switch panels and announce themselves as a tablist; ChipGroup filters
+          a list that stays put and announces a radiogroup.
+        */}
+        <ChipGroup chips={CATEGORY_CHIPS} value={chip} onChange={setChip} />
+        <ChipGroup
+          chips={PLAIN_CHIPS}
+          value={chip === 'all' ? 'all' : 'plain'}
+          onChange={setChip}
         />
       </Stack>
 

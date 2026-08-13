@@ -1,6 +1,6 @@
 import { unwrap, useListCategories, useListMenuItems } from '@repo/api-client'
 import { useState } from 'react'
-import { ALL_CATEGORIES } from './CategoryTabs'
+import { ALL_CATEGORIES } from './CategoryFilter'
 import { useToggleAvailability } from './useToggleAvailability'
 
 const PAGE_SIZE = 100

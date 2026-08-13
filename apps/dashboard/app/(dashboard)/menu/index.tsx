@@ -3,7 +3,7 @@ import { Button, Stack } from '@repo/ui'
 import { useState } from 'react'
 import { PageHeader } from '../../../src/components/PageHeader'
 import { ArchiveItemModal } from '../../../src/features/menu/ArchiveItemModal'
-import { CategoryTabs } from '../../../src/features/menu/CategoryTabs'
+import { CategoryFilter } from '../../../src/features/menu/CategoryFilter'
 import { MenuItemFormModal, type EditableItem } from '../../../src/features/menu/MenuItemFormModal'
 import { MenuItemTable } from '../../../src/features/menu/MenuItemTable'
 import { useMenuItems } from '../../../src/features/menu/useMenuItems'
@@ -35,7 +35,7 @@ export default function MenuScreen() {
       />
 
       <Stack gap="lg">
-        <CategoryTabs categories={categories} value={category} onChange={setCategory} />
+        <CategoryFilter categories={categories} value={category} onChange={setCategory} />
 
         <MenuItemTable
           items={items}
