@@ -15,6 +15,7 @@
   "dependencies": {
     "@hono/zod-openapi": "^1.5.3",
     "@neondatabase/serverless": "^1.1.0",
+    "@repo/types": "workspace:*",
     "@scalar/hono-api-reference": "^0.11.14",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
