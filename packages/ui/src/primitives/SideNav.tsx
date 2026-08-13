@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
 import { useTheme } from '../theme/ThemeProvider'
-import { NavItem } from './NavItem'
+import { NavItem, type NavItemIcon } from './NavItem'
 import { Stack } from './Stack'
 
 export type SideNavItem = {
   href: string
   label: string
-  icon?: ReactNode
+  icon?: NavItemIcon
   badge?: number
 }
 

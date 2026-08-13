@@ -5,15 +5,25 @@ import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
 import { Text } from './Text'
 
+/**
+ * A node when the icon is fixed, or a function when it should take its colour
+ * from the row it sits in. The render prop is what keeps the icon *set* an
+ * application choice while the icon *colour* stays a design-system one.
+ */
+export type NavItemIcon = ReactNode | ((state: { color: string; size: number }) => ReactNode)
+
 export type NavItemProps = {
   href: string
   label: string
-  icon?: ReactNode
+  icon?: NavItemIcon
   badge?: number
   active?: boolean
   collapsed?: boolean
   onPress?: (href: string) => void
 }
+
+/** Matched to the 20px body line height, so label and icon share a baseline. */
+const ICON_SIZE = 20
 
 /** Knows nothing about routing: it reports an href and renders a state. */
 export function NavItem({
@@ -33,6 +43,8 @@ export function NavItem({
     : state.hovered
       ? theme.color.bg.inset
       : 'transparent'
+
+  const iconColor = active ? theme.color.brand.default : theme.color.text.secondary
 
   return (
     <Pressable
@@ -57,7 +69,7 @@ export function NavItem({
         focusRingStyle(theme, state),
       ]}
     >
-      {icon}
+      {typeof icon === 'function' ? icon({ color: iconColor, size: ICON_SIZE }) : icon}
       {collapsed ? null : (
         <Text variant="bodyStrong" color={active ? 'brand' : 'secondary'}>
           {label}

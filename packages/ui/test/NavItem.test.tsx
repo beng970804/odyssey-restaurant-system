@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react'
+import { Text } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { hexToRgb, wrap } from './helpers'
 import { NavItem } from '../src/primitives/NavItem'
@@ -37,6 +38,31 @@ describe('NavItem', () => {
   it('renders a badge count when given one', () => {
     wrap(<NavItem href="/orders" label="Orders" badge={4} onPress={vi.fn()} />)
     expect(screen.getByText('4')).toBeTruthy()
+  })
+
+  it('tints a render-prop icon to match the state it sits in', () => {
+    // The icon set is the app's choice, but what colour an icon takes in an
+    // active row is the design system's. A render prop is what lets both be
+    // true without @repo/ui depending on an icon library.
+    const seen: string[] = []
+    const icon = ({ color }: { color: string }) => {
+      seen.push(color)
+      return null
+    }
+
+    wrap(
+      <>
+        <NavItem href="/orders" label="Orders" icon={icon} active onPress={vi.fn()} />
+        <NavItem href="/menu" label="Menu" icon={icon} onPress={vi.fn()} />
+      </>,
+    )
+
+    expect(seen).toEqual([lightTheme.color.brand.default, lightTheme.color.text.secondary])
+  })
+
+  it('still takes a plain node icon', () => {
+    wrap(<NavItem href="/orders" label="Orders" icon={<Text>*</Text>} onPress={vi.fn()} />)
+    expect(screen.getByText('*')).toBeTruthy()
   })
 })
 

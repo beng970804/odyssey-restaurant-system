@@ -1,4 +1,12 @@
-import { NavDrawer, Text, useTheme, useThemeMode, Button, Stack } from '@repo/ui'
+import { NavDrawer, type NavItemIcon, Text, useTheme, useThemeMode, Button, Stack } from '@repo/ui'
+import {
+  IconLayoutDashboard,
+  IconPalette,
+  IconReceipt2,
+  IconSettings,
+  IconToolsKitchen2,
+  IconUsers,
+} from '@tabler/icons-react-native'
 import { usePathname, useRouter } from 'expo-router'
 import type { ReactNode } from 'react'
 
@@ -6,14 +14,18 @@ import type { ReactNode } from 'react'
  * A thin adapter over the design system's NavDrawer: it supplies the route
  * list and the active path, and nothing else. All the styling and the motion
  * live in @repo/ui.
+ *
+ * The icons are functions rather than elements so NavItem can colour them for
+ * the state they land in — the icon set is this app's choice, its colour is
+ * not.
  */
-const ROUTES = [
-  { href: '/', label: 'Home' },
-  { href: '/orders', label: 'Orders' },
-  { href: '/menu', label: 'Menu' },
-  { href: '/crm', label: 'Customers' },
-  { href: '/settings', label: 'Settings' },
-  { href: '/ui-library', label: 'UI Library' },
+const ROUTES: { href: string; label: string; icon: NavItemIcon }[] = [
+  { href: '/', label: 'Home', icon: (props) => <IconLayoutDashboard {...props} /> },
+  { href: '/orders', label: 'Orders', icon: (props) => <IconReceipt2 {...props} /> },
+  { href: '/menu', label: 'Menu', icon: (props) => <IconToolsKitchen2 {...props} /> },
+  { href: '/crm', label: 'Customers', icon: (props) => <IconUsers {...props} /> },
+  { href: '/settings', label: 'Settings', icon: (props) => <IconSettings {...props} /> },
+  { href: '/ui-library', label: 'UI Library', icon: (props) => <IconPalette {...props} /> },
 ]
 
 export function Sidebar({
@@ -51,7 +63,14 @@ export function Sidebar({
           gap="xs"
           style={{ paddingHorizontal: theme.space.md, paddingVertical: theme.space.sm }}
         >
-          <Text variant="bodyStrong">Restaurant Ops</Text>
+          {/*
+            A wordmark, not a label: set in the brand colour, tracked out and
+            upper-cased so the top of the sidebar reads as an identity rather
+            than as the first nav item.
+          */}
+          <Text variant="h2" color="brand" style={{ letterSpacing: 1.5, fontWeight: '700' }}>
+            RESTAURANT OPS
+          </Text>
           <Text variant="caption" color="muted">
             Operations dashboard
           </Text>
