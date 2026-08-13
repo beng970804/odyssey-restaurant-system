@@ -19,11 +19,13 @@ const ROUTES = [
 export function Sidebar({
   open,
   onOpenChange,
+  persistent,
   pendingCount,
   children,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  persistent: boolean
   pendingCount?: number
   children: ReactNode
 }) {
@@ -42,6 +44,7 @@ export function Sidebar({
       activeHref={pathname}
       open={open}
       onOpenChange={onOpenChange}
+      persistent={persistent}
       onNavigate={(href) => router.push(href as '/')}
       header={
         <Stack

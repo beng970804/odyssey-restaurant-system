@@ -133,6 +133,55 @@ describe('NavDrawer', () => {
     expect(screen.getByTestId('nav-drawer-surface').getAttribute('style')).not.toMatch(/radius/i)
   })
 
+  it('slides the surface over the menu by default', () => {
+    wrap(
+      <NavDrawer {...props} open>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    expect(screen.getByTestId('nav-drawer-surface')).toHaveStyle({
+      transform: `translateX(${lightTheme.layout.sidebarWidth}px)`,
+    })
+  })
+
+  it('shrinks the surface beside the menu when persistent', () => {
+    wrap(
+      <NavDrawer {...props} open persistent>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    // Sliding would push the right-hand side of the dashboard off screen and
+    // leave it there, which is fine for a drawer you dismiss and not for one
+    // you work alongside.
+    expect(screen.getByTestId('nav-drawer-surface')).toHaveStyle({
+      marginLeft: `${lightTheme.layout.sidebarWidth}px`,
+    })
+  })
+
+  it('drops the scrim when persistent, so the content stays clickable', () => {
+    wrap(
+      <NavDrawer {...props} open persistent>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    expect(screen.queryByTestId('nav-drawer-scrim')).toBeNull()
+  })
+
+  it('stays open after navigating when persistent', () => {
+    const onOpenChange = vi.fn()
+    wrap(
+      <NavDrawer {...props} open persistent onOpenChange={onOpenChange}>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    fireEvent.click(screen.getByTestId('nav-item-orders'))
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
   it('sizes the menu from the sidebar width token', () => {
     wrap(
       <NavDrawer {...props} open>

@@ -18,6 +18,12 @@ export type NavDrawerProps = {
   onNavigate: (href: string) => void
   open: boolean
   onOpenChange: (open: boolean) => void
+  /**
+   * Keep the menu alongside the content rather than over it: the surface
+   * shrinks instead of sliding, nothing dismisses the menu automatically, and
+   * only a deliberate toggle or swipe closes it.
+   */
+  persistent?: boolean
   header?: ReactNode
   footer?: ReactNode
   children: ReactNode
@@ -68,8 +74,9 @@ const SURFACE_SHADOW = {
  * content to the right rather than covering it. The app's Sidebar stays a thin
  * adapter — this is where the motion lives.
  *
- * It behaves the same at every width. A dashboard that hides its navigation on
- * a phone and pins it on a desktop is two interfaces to learn; this is one.
+ * The gesture is the same at every width. What changes with `persistent` is
+ * only what the open state costs: over the content and dismissed on the next
+ * tap, or beside it and left alone until you say otherwise.
  */
 export function NavDrawer({
   items,
@@ -77,6 +84,7 @@ export function NavDrawer({
   onNavigate,
   open,
   onOpenChange,
+  persistent = false,
   header,
   footer,
   children,
@@ -123,9 +131,12 @@ export function NavDrawer({
       runOnJS(onOpenChange)(shouldOpen)
     })
 
-  const surfaceStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }))
+  const surfaceStyle = useAnimatedStyle(() =>
+    // Both read the same shared value, so the gesture drives either one.
+    persistent
+      ? { marginLeft: translateX.value }
+      : { transform: [{ translateX: translateX.value }] },
+  )
 
   const revealStyle = useAnimatedStyle(() => {
     const progress = translateX.value / openWidth
@@ -168,8 +179,9 @@ export function NavDrawer({
             activeHref={activeHref}
             onNavigate={(href) => {
               onNavigate(href)
-              // A drawer that stays open hides the screen it just navigated to.
-              onOpenChange(false)
+              // A drawer sitting over the content hides the screen it just
+              // navigated to; one sitting beside it does not.
+              if (!persistent) onOpenChange(false)
             }}
             header={header}
             footer={footer}
@@ -193,7 +205,7 @@ export function NavDrawer({
           ]}
         >
           {children}
-          {open ? (
+          {open && !persistent ? (
             <Pressable
               testID="nav-drawer-scrim"
               aria-label="Close navigation"

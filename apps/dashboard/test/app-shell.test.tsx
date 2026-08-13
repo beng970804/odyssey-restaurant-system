@@ -39,11 +39,35 @@ const shell = () => (
 beforeEach(() => setViewport(1440))
 
 describe('AppShell', () => {
-  it('starts with the drawer closed on a wide viewport', () => {
+  it('starts with the drawer open on a wide viewport', () => {
     wrap(shell())
 
-    expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
     expect(screen.getByTestId('nav-drawer-toggle')).toBeTruthy()
+  })
+
+  it('keeps the drawer open after navigating on a wide viewport', () => {
+    wrap(shell())
+
+    fireEvent.click(screen.getByTestId('nav-item-menu'))
+    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
+  })
+
+  it('closes on a wide viewport only from the toggle', () => {
+    wrap(shell())
+
+    fireEvent.click(screen.getByTestId('nav-drawer-toggle'))
+    expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('closes after navigating below the wide breakpoint', () => {
+    setViewport(1000)
+    wrap(shell())
+
+    fireEvent.click(screen.getByTestId('nav-drawer-toggle'))
+    fireEvent.click(screen.getByTestId('nav-item-menu'))
+
+    expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('starts with the drawer closed on a narrow viewport', () => {
@@ -52,13 +76,6 @@ describe('AppShell', () => {
 
     expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByTestId('nav-drawer-toggle')).toBeTruthy()
-  })
-
-  it('opens from the toggle on a wide viewport', () => {
-    wrap(shell())
-
-    fireEvent.click(screen.getByTestId('nav-drawer-toggle'))
-    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
   })
 
   it('opens from the toggle on a narrow viewport', () => {
