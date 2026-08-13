@@ -22,8 +22,8 @@
     "orval": "^8.24.0",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
-    "turbo": "^2.10.0",
-    "typescript": "^7.0.0"
+    "turbo": "^2.10.9",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=24"
