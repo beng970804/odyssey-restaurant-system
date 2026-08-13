@@ -41,7 +41,8 @@ docs/superpowers/{specs,plans}/              this plan and its spec
 turbo.json, pnpm-workspace.yaml, package.json
 docker-compose.yml                           local Postgres fallback
 
-packages/config/                             shared tsconfig + eslint bases
+packages/config/                             shared tsconfig base
+.oxlintrc.json, .oxfmtrc.json                lint and format config (repo root)
 packages/types/src/
   order-status.ts                            OrderStatus, ORDER_TRANSITIONS, helpers
   order-channel.ts                           OrderChannel
@@ -736,7 +737,8 @@ export default defineConfig({
       client: 'react-query',
       httpClient: 'fetch',
       clean: true,
-      prettier: true,
+      // No `prettier: true` — this repo uses oxfmt, and Prettier is not installed.
+      // Generated output is excluded from formatting and linting either way (ADR 0002).
       override: {
         mutator: { path: './packages/api-client/src/fetcher.ts', name: 'customFetch' },
         query: { useQuery: true, useMutation: true, signal: true },

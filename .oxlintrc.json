@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "unicorn"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "ignorePatterns": ["**/dist/**", "**/.expo/**", "**/generated/**"],
+  "rules": {
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "fetch",
+        "message": "Use generated hooks from @repo/api-client."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      // The Orval mutator is the one file allowed to call fetch.
+      "files": ["packages/api-client/src/fetcher.ts"],
+      "rules": { "no-restricted-globals": "off" }
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 {
   "name": "restaurant-ops",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
-  "engines": { "node": ">=24" },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "dev:backend": "pnpm --filter @repo/backend dev",
     "dev:dashboard": "pnpm --filter @repo/dashboard dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "oxlint --deny-warnings",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "gen:contract": "pnpm --filter @repo/backend gen:openapi && orval --config ./orval.config.ts",
@@ -19,13 +19,14 @@
     "db:reset": "pnpm --filter @repo/backend db:reset"
   },
   "devDependencies": {
-    "eslint": "^10.8.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.1.1",
     "orval": "^8.24.0",
-    "prettier": "^3.9.0",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "turbo": "^2.10.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.67.0"
-  }
+    "typescript": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.20.0"
 }

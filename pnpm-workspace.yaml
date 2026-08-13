@@ -1,14 +1,14 @@
 packages:
-  - "apps/*"
-  - "services/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'services/*'
+  - 'packages/*'
 
 # Load-bearing, not tidiness: `.openapi()` only exists on schemas built from the
 # zod instance that @hono/zod-openapi extends. Two zod copies (one for
 # drizzle-zod, one for @hono/zod-openapi) silently strips `.openapi()` at
 # runtime from every derived schema. This forces a single instance.
 overrides:
-  zod: "^4.4.0"
+  zod: '^4.4.0'
 
 allowBuilds:
   esbuild: true
