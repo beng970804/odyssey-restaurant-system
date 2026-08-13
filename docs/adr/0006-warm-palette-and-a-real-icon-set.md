@@ -20,6 +20,7 @@ The spec's stack is React Native Web, where there are no HTML tags, so a DOM-SVG
 
 ## Consequences
 
+- **Icons are imported one subpath at a time**, never from the package barrel. Metro does not tree-shake it, so a barrel import ships all ~5,900 icons: it took the exported web bundle from 3.7MB to 9.1MB and put `IconZeppelin` in production. The subpaths are untyped because the package's `exports` map points per-icon types at a path they are not published at, so `apps/dashboard/src/types/tabler-icons.d.ts` supplies the shape.
 - `react-native-svg` ships separate native and web builds. Metro picks the web one from `platform=web`; Vitest has no such notion, so `apps/dashboard/vitest.config.ts` needs both an alias to the web entry and those packages inlined. Removing either brings back a Flow parse error from the native build.
 - `ChipGroup` is a new primitive rather than a `Tabs` variant. Tabs switch panels and announce a `tablist`; chips filter a list that stays put and announce a `radiogroup`. One component would have to lie to assistive technology about which is happening.
 - Dark mode's `brand.onBrand` differs from light's. Any component that hardcodes white on the brand colour instead of reading the token will be unreadable in one of the two modes.
