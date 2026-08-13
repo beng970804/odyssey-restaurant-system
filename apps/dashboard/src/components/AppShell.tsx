@@ -4,13 +4,10 @@ import { ScrollView, View } from 'react-native'
 import { Sidebar } from './Sidebar'
 
 /**
- * Navigation plus scrolling content. Every dimension comes from the layout
- * tokens and the drawer/pinned decision from useBreakpoint — no raw pixel
- * comparison here.
- *
- * Narrow viewports get the swipe-out drawer; wide ones keep the nav in the row
- * with a toggle to collapse it to icons, since a dashboard the user is reading
- * all shift should not hide its navigation by default.
+ * Navigation plus scrolling content. The drawer behaves the same at every
+ * width — swipe the surface sideways or use the toggle — so there is one
+ * interface to learn rather than one per breakpoint. useBreakpoint is left
+ * deciding only how much padding the content gets.
  */
 export function AppShell({
   children,
@@ -22,37 +19,20 @@ export function AppShell({
   const theme = useTheme()
   const { isCompact } = useBreakpoint()
   const [open, setOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.color.bg.canvas }}>
-      <Sidebar
-        mode={isCompact ? 'drawer' : 'pinned'}
-        open={open}
-        onOpenChange={setOpen}
-        collapsed={collapsed}
-        pendingCount={pendingCount}
-      >
+      <Sidebar open={open} onOpenChange={setOpen} pendingCount={pendingCount}>
         <Inline style={{ paddingHorizontal: theme.space.lg, paddingTop: theme.space.lg }}>
-          {isCompact ? (
-            <IconButton
-              testID="nav-drawer-toggle"
-              label={open ? 'Close navigation' : 'Open navigation'}
-              onPress={() => setOpen(!open)}
-            >
-              {/* A bare string here is a text node inside a View, which React
-                  Native rejects — every glyph has to be wrapped. */}
-              <Text>☰</Text>
-            </IconButton>
-          ) : (
-            <IconButton
-              testID="sidebar-pin-toggle"
-              label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-              onPress={() => setCollapsed(!collapsed)}
-            >
-              <Text>{collapsed ? '»' : '«'}</Text>
-            </IconButton>
-          )}
+          <IconButton
+            testID="nav-drawer-toggle"
+            label={open ? 'Close navigation' : 'Open navigation'}
+            onPress={() => setOpen(!open)}
+          >
+            {/* A bare string here is a text node inside a View, which React
+                Native rejects — every glyph has to be wrapped. */}
+            <Text>☰</Text>
+          </IconButton>
         </Inline>
         <ScrollView
           style={{ flex: 1 }}

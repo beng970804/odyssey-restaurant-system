@@ -12,18 +12,12 @@ import Animated, {
 import { useTheme } from '../theme/ThemeProvider'
 import { SideNav, type SideNavItem } from './SideNav'
 
-export type NavDrawerMode = 'drawer' | 'pinned'
-
 export type NavDrawerProps = {
   items: SideNavItem[]
   activeHref: string
   onNavigate: (href: string) => void
-  /** `pinned` keeps the nav in the row; `drawer` hides it under the content. */
-  mode: NavDrawerMode
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Icons-only nav. Only meaningful when pinned. */
-  collapsed?: boolean
   header?: ReactNode
   footer?: ReactNode
   children: ReactNode
@@ -50,14 +44,6 @@ const GESTURE = {
 const SPRING = { damping: 26, mass: 0.8, stiffness: 220, overshootClamping: true } as const
 
 /**
- * The same spring, used for the pinned nav's width. Kept separate because a
- * width and a translation are not obliged to settle alike, and this one must
- * never overshoot: the icon rail squeezing past its target and springing back
- * reads as a glitch rather than as life.
- */
-const WIDTH_SPRING = { damping: 30, stiffness: 220, overshootClamping: true } as const
-
-/**
  * The menu emerges rather than sitting fully painted behind the surface: it
  * fades in over the first half of the travel while rising and scaling up. This
  * is most of what gives the slide its depth — without it the surface just
@@ -79,45 +65,39 @@ const SURFACE_SHADOW = {
 
 /**
  * The nav sits mounted underneath a single moving surface: opening slides the
- * content to the right rather than covering it, and the surface keeps its
- * corner radius the whole way across instead of animating it. The app's
- * Sidebar stays a thin adapter — this is where the motion lives.
+ * content to the right rather than covering it. The app's Sidebar stays a thin
+ * adapter — this is where the motion lives.
+ *
+ * It behaves the same at every width. A dashboard that hides its navigation on
+ * a phone and pins it on a desktop is two interfaces to learn; this is one.
  */
 export function NavDrawer({
   items,
   activeHref,
   onNavigate,
-  mode,
   open,
   onOpenChange,
-  collapsed = false,
   header,
   footer,
   children,
 }: NavDrawerProps) {
   const theme = useTheme()
-  const isDrawer = mode === 'drawer'
   const openWidth = theme.layout.sidebarWidth
-  const pinnedWidth = collapsed ? theme.layout.sidebarCollapsedWidth : openWidth
 
   // Initialised from the current props so the first paint is already settled;
-  // the effects below only animate later changes.
-  const translateX = useSharedValue(isDrawer && open ? openWidth : 0)
-  const navWidth = useSharedValue(pinnedWidth)
-  /** Where the surface was when the finger landed, so a mid-flight grab picks
-   * the animation up instead of snapping to one end of it. */
+  // the effect below only animates later changes.
+  const translateX = useSharedValue(open ? openWidth : 0)
+  /**
+   * Where the surface was when the finger landed, so a mid-flight grab picks
+   * the animation up instead of snapping to one end of it.
+   */
   const gestureStartX = useSharedValue(0)
 
   useEffect(() => {
-    translateX.value = withSpring(isDrawer && open ? openWidth : 0, SPRING)
-  }, [isDrawer, open, openWidth, translateX])
-
-  useEffect(() => {
-    navWidth.value = withSpring(pinnedWidth, WIDTH_SPRING)
-  }, [pinnedWidth, navWidth])
+    translateX.value = withSpring(open ? openWidth : 0, SPRING)
+  }, [open, openWidth, translateX])
 
   const pan = Gesture.Pan()
-    .enabled(isDrawer)
     // Let a vertical scroll through untouched; only claim clear sideways drags.
     .activeOffsetX([-GESTURE.activationDistance, GESTURE.activationDistance])
     .failOffsetY([-GESTURE.verticalTolerance, GESTURE.verticalTolerance])
@@ -147,11 +127,7 @@ export function NavDrawer({
     transform: [{ translateX: translateX.value }],
   }))
 
-  const navStyle = useAnimatedStyle(() => ({ width: navWidth.value }))
-
   const revealStyle = useAnimatedStyle(() => {
-    if (!isDrawer) return { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] }
-
     const progress = translateX.value / openWidth
 
     return {
@@ -177,37 +153,6 @@ export function NavDrawer({
     }
   })
 
-  const nav = (
-    <Animated.View testID="nav-drawer-reveal" style={[{ flex: 1 }, revealStyle]}>
-      <SideNav
-        items={items}
-        activeHref={activeHref}
-        onNavigate={(href) => {
-          onNavigate(href)
-          // A drawer that stays open hides the screen it just navigated to.
-          if (isDrawer) onOpenChange(false)
-        }}
-        collapsed={isDrawer ? false : collapsed}
-        header={header}
-        footer={footer}
-        // The wrapper owns the width in both modes, so SideNav must not also
-        // set one — otherwise it snaps while the spring is still running.
-        width="100%"
-      />
-    </Animated.View>
-  )
-
-  if (!isDrawer) {
-    return (
-      <View style={{ flex: 1, flexDirection: 'row' }}>
-        <Animated.View testID="nav-drawer-menu" style={[{ overflow: 'hidden' }, navStyle]}>
-          {nav}
-        </Animated.View>
-        <View style={{ flex: 1 }}>{children}</View>
-      </View>
-    )
-  }
-
   return (
     <View style={{ flex: 1, overflow: 'hidden', backgroundColor: theme.color.bg.surface }}>
       <View
@@ -217,7 +162,21 @@ export function NavDrawer({
         aria-hidden={open ? undefined : true}
         style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: openWidth }}
       >
-        {nav}
+        <Animated.View testID="nav-drawer-reveal" style={[{ flex: 1 }, revealStyle]}>
+          <SideNav
+            items={items}
+            activeHref={activeHref}
+            onNavigate={(href) => {
+              onNavigate(href)
+              // A drawer that stays open hides the screen it just navigated to.
+              onOpenChange(false)
+            }}
+            header={header}
+            footer={footer}
+            // The wrapper owns the width, so SideNav must not also set one.
+            width="100%"
+          />
+        </Animated.View>
       </View>
 
       <GestureDetector gesture={pan}>
@@ -227,7 +186,6 @@ export function NavDrawer({
             {
               flex: 1,
               backgroundColor: theme.color.bg.canvas,
-              borderRadius: theme.radius.screen,
               shadowColor: theme.elevation.modal.shadowColor,
               ...SURFACE_SHADOW,
             },

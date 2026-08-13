@@ -13,9 +13,8 @@ vi.mock('expo-router', () => ({
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
 /**
- * The shell's whole job is picking a mode from the viewport, so the tests drive
- * the real window rather than stubbing useBreakpoint — otherwise they would be
- * asserting on the mock instead of on the breakpoint.
+ * The shell reads the viewport for its padding, so the tests drive the real
+ * window rather than stubbing useBreakpoint.
  */
 function setViewport(width: number) {
   // React Native Web measures documentElement.clientWidth, which jsdom reports
@@ -40,14 +39,14 @@ const shell = () => (
 beforeEach(() => setViewport(1440))
 
 describe('AppShell', () => {
-  it('pins the sidebar on a wide viewport', () => {
+  it('starts with the drawer closed on a wide viewport', () => {
     wrap(shell())
 
-    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
-    expect(screen.queryByTestId('nav-drawer-toggle')).toBeNull()
+    expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByTestId('nav-drawer-toggle')).toBeTruthy()
   })
 
-  it('turns the sidebar into a closed drawer below the md breakpoint', () => {
+  it('starts with the drawer closed on a narrow viewport', () => {
     setViewport(600)
     wrap(shell())
 
@@ -55,7 +54,14 @@ describe('AppShell', () => {
     expect(screen.getByTestId('nav-drawer-toggle')).toBeTruthy()
   })
 
-  it('opens the drawer from the toggle on a narrow viewport', () => {
+  it('opens from the toggle on a wide viewport', () => {
+    wrap(shell())
+
+    fireEvent.click(screen.getByTestId('nav-drawer-toggle'))
+    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
+  })
+
+  it('opens from the toggle on a narrow viewport', () => {
     setViewport(600)
     wrap(shell())
 
@@ -63,17 +69,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
   })
 
-  it('collapses the pinned sidebar to icons from the pin toggle', () => {
-    wrap(shell())
-    expect(screen.getByText('Orders')).toBeTruthy()
-
-    fireEvent.click(screen.getByTestId('sidebar-pin-toggle'))
-
-    expect(screen.queryByText('Orders')).toBeNull()
-    expect(screen.getByTestId('nav-item-orders')).toHaveAttribute('aria-label', 'Orders')
-  })
-
-  it('renders its content in both modes', () => {
+  it('renders its content', () => {
     wrap(shell())
     expect(screen.getByText("Today's orders")).toBeTruthy()
   })

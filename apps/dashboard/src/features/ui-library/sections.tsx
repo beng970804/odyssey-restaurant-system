@@ -19,7 +19,6 @@ import {
   Tabs,
   Text,
   useTheme,
-  type NavDrawerMode,
   type StatusTone,
 } from '@repo/ui'
 import { useState, type ReactNode } from 'react'
@@ -339,14 +338,14 @@ export function ComponentGallery() {
 
 /**
  * The drawer only makes sense in motion, so this shows both resting states and
- * lets you drive the transition — the same component the shell uses below the
- * md breakpoint, at a size that fits on the page.
+ * lets you drive the transition — the same component the shell uses at every
+ * width, at a size that fits on the page.
  */
 function NavDrawerStates() {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
 
-  const demo = (mode: NavDrawerMode, isOpen: boolean, onOpenChange: (next: boolean) => void) => (
+  const demo = (isOpen: boolean, onOpenChange: (next: boolean) => void) => (
     <View
       style={{
         width: 360,
@@ -364,7 +363,6 @@ function NavDrawerStates() {
         ]}
         activeHref="/orders"
         onNavigate={() => {}}
-        mode={mode}
         open={isOpen}
         onOpenChange={onOpenChange}
       >
@@ -384,8 +382,8 @@ function NavDrawerStates() {
         NavDrawer — swipe the surface sideways, or use the button
       </Text>
       <Inline gap="xl" align="flex-start" wrap>
-        {demo('drawer', open, setOpen)}
-        {demo('pinned', true, () => {})}
+        {demo(open, setOpen)}
+        {demo(true, () => {})}
       </Inline>
     </Stack>
   )

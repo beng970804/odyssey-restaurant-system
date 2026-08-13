@@ -18,20 +18,9 @@ const props = {
 }
 
 describe('NavDrawer', () => {
-  it('renders the nav and the content side by side when pinned', () => {
+  it('renders the nav underneath the content surface', () => {
     wrap(
-      <NavDrawer {...props} mode="pinned" open={false}>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    expect(screen.getByTestId('nav-item-orders')).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByText("Today's orders")).toBeTruthy()
-  })
-
-  it('renders the nav underneath the content surface when a drawer', () => {
-    wrap(
-      <NavDrawer {...props} mode="drawer" open>
+      <NavDrawer {...props} open>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -42,29 +31,19 @@ describe('NavDrawer', () => {
 
   it('keeps a closed drawer out of the accessibility tree', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open={false}>
+      <NavDrawer {...props} open={false}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
 
     // Mounted underneath, but offscreen — reachable by tab order would put the
-    // whole nav ahead of the visible content on a phone.
+    // whole nav ahead of the visible content.
     expect(screen.getByTestId('nav-drawer-menu')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('exposes an open drawer to the accessibility tree', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    expect(screen.getByTestId('nav-drawer-menu')).not.toHaveAttribute('aria-hidden')
-  })
-
-  it('never hides the nav when pinned, whatever open says', () => {
-    wrap(
-      <NavDrawer {...props} mode="pinned" open={false}>
+      <NavDrawer {...props} open>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -75,7 +54,7 @@ describe('NavDrawer', () => {
   it('closes when the content surface is tapped while open', () => {
     const onOpenChange = vi.fn()
     wrap(
-      <NavDrawer {...props} mode="drawer" open onOpenChange={onOpenChange}>
+      <NavDrawer {...props} open onOpenChange={onOpenChange}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -86,7 +65,7 @@ describe('NavDrawer', () => {
 
   it('leaves the content interactive when closed', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open={false}>
+      <NavDrawer {...props} open={false}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -99,7 +78,7 @@ describe('NavDrawer', () => {
   it('reports navigation without knowing about routing', () => {
     const onNavigate = vi.fn()
     wrap(
-      <NavDrawer {...props} mode="drawer" open onNavigate={onNavigate}>
+      <NavDrawer {...props} open onNavigate={onNavigate}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -108,10 +87,10 @@ describe('NavDrawer', () => {
     expect(onNavigate).toHaveBeenCalledWith('/orders')
   })
 
-  it('closes the drawer after navigating, so the destination is visible', () => {
+  it('closes after navigating, so the destination is visible', () => {
     const onOpenChange = vi.fn()
     wrap(
-      <NavDrawer {...props} mode="drawer" open onOpenChange={onOpenChange}>
+      <NavDrawer {...props} open onOpenChange={onOpenChange}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -120,21 +99,9 @@ describe('NavDrawer', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('stays put after navigating when pinned', () => {
-    const onOpenChange = vi.fn()
-    wrap(
-      <NavDrawer {...props} mode="pinned" open={false} onOpenChange={onOpenChange}>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    fireEvent.click(screen.getByTestId('nav-item-orders'))
-    expect(onOpenChange).not.toHaveBeenCalled()
-  })
-
   it('hides the menu content behind a closed drawer', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open={false}>
+      <NavDrawer {...props} open={false}>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -144,9 +111,9 @@ describe('NavDrawer', () => {
     expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '0' })
   })
 
-  it('fully reveals the menu content once the drawer is open', () => {
+  it('fully reveals the menu content once open', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open>
+      <NavDrawer {...props} open>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -154,33 +121,21 @@ describe('NavDrawer', () => {
     expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '1' })
   })
 
-  it('leaves the pinned nav fully painted, with nothing to reveal', () => {
+  it('leaves the sliding surface square', () => {
     wrap(
-      <NavDrawer {...props} mode="pinned" open={false}>
+      <NavDrawer {...props} open>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
 
-    expect(screen.getByTestId('nav-drawer-reveal')).toHaveStyle({ opacity: '1' })
+    // Absence, not zero: with no radius set React Native Web emits no
+    // border-radius property at all, so there is nothing to compare against.
+    expect(screen.getByTestId('nav-drawer-surface').getAttribute('style')).not.toMatch(/radius/i)
   })
 
-  it('rounds the sliding surface with the screen radius token', () => {
+  it('sizes the menu from the sidebar width token', () => {
     wrap(
-      <NavDrawer {...props} mode="drawer" open>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    // React Native Web expands borderRadius into the four longhands.
-    expect(screen.getByTestId('nav-drawer-surface')).toHaveStyle({
-      borderTopLeftRadius: `${lightTheme.radius.screen}px`,
-      borderBottomLeftRadius: `${lightTheme.radius.screen}px`,
-    })
-  })
-
-  it('sizes the pinned nav from the expanded width token', () => {
-    wrap(
-      <NavDrawer {...props} mode="pinned" open={false}>
+      <NavDrawer {...props} open>
         <Text>Today's orders</Text>
       </NavDrawer>,
     )
@@ -188,30 +143,5 @@ describe('NavDrawer', () => {
     expect(screen.getByTestId('nav-drawer-menu')).toHaveStyle({
       width: `${lightTheme.layout.sidebarWidth}px`,
     })
-  })
-
-  it('sizes the pinned nav from the collapsed width token', () => {
-    wrap(
-      <NavDrawer {...props} mode="pinned" open={false} collapsed>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    // The width is what animates, so it has to be the drawer's to drive —
-    // SideNav's own width would snap independently of the spring.
-    expect(screen.getByTestId('nav-drawer-menu')).toHaveStyle({
-      width: `${lightTheme.layout.sidebarCollapsedWidth}px`,
-    })
-  })
-
-  it('collapses the pinned nav to icons when asked', () => {
-    wrap(
-      <NavDrawer {...props} mode="pinned" open={false} collapsed>
-        <Text>Today's orders</Text>
-      </NavDrawer>,
-    )
-
-    expect(screen.queryByText('Orders')).toBeNull()
-    expect(screen.getByTestId('nav-item-orders')).toHaveAttribute('aria-label', 'Orders')
   })
 })
