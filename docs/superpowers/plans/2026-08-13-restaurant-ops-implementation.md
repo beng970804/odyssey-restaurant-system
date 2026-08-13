@@ -25,7 +25,7 @@ These apply to **every** task. They are not repeated per task.
 - **No raw `fetch` in screens.** Data access goes through generated hooks only.
 - **Screens compose; they do not compute.** No screen file contains a conditional branching on order status, and no screen file imports a generated hook directly. Both live in feature components/hooks one layer down.
 - **No literal pixel values or hex colors in `apps/dashboard`.** Everything comes from `@repo/ui` tokens.
-- **Timezone:** all timestamps stored and transported as UTC ISO 8601. Opening-hours comparisons use the timezone from the settings row (`Asia/Singapore`), never the server clock's local time.
+- **Timezone:** all timestamps stored and transported as UTC ISO 8601. Opening-hours comparisons use the timezone from the settings row (`Asia/Singapore`), never the server clock's local time. Any grouping of orders into calendar days (the Home trend) buckets by the settings timezone via `localDateKey` (Task 6), never by the UTC date — an order placed at 17:00 UTC belongs to the *next* Singapore day.
 - **Currency:** single currency, `SGD`, held in settings. Tax default `9`.
 - **Package manager:** pnpm only. Node 24. Commit `pnpm-lock.yaml`.
 - **Commit after every task**, using conventional commit prefixes (`feat:`, `test:`, `chore:`, `docs:`).
@@ -130,7 +130,7 @@ Root `package.json`:
 {
   "name": "restaurant-ops",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@11.21.0",
   "engines": { "node": ">=24" },
   "scripts": {
     "dev": "turbo run dev --parallel",
@@ -148,13 +148,23 @@ Root `package.json`:
     "db:reset": "pnpm --filter @repo/backend db:reset"
   },
   "devDependencies": {
-    "turbo": "^2.3.0",
-    "typescript": "^5.7.0",
-    "orval": "^7.3.0",
-    "prettier": "^3.4.0"
+    "turbo": "^2.10.0",
+    "typescript": "^7.0.0",
+    "orval": "^8.24.0",
+    "prettier": "^3.9.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "zod": "^4.4.0"
+    }
   }
 }
 ```
+
+Version notes (resolved as latest from npm on 2026-08-13):
+- **The `zod` override is load-bearing, not tidiness.** `.openapi()` only exists on schemas built from the zod instance that `@hono/zod-openapi` extends. If pnpm resolves two zod copies (one for `drizzle-zod`, one for `@hono/zod-openapi`), every derived schema loses `.openapi()` at runtime. The override forces a single instance.
+- **TypeScript 7** is the native (Go) compiler with drop-in `tsc` parity. If any tool in the chain (typescript-eslint, Expo) rejects it, fall back to the latest 5.x line and record that in the README — do not burn hours on it.
+- Current majors used throughout: `@hono/zod-openapi` 1.x and `drizzle-zod` 0.8.x are built against **zod 4** — the zod 4 API differences are already reflected in the snippets below (`z.uuid()`, `z.iso.datetime()`, `z.flattenError()`).
 
 - [ ] **Step 2: Configure Turborepo**
 
@@ -206,7 +216,7 @@ import prettier from 'eslint-config-prettier'
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/.expo/**', '**/generated/**'] },   // never lint Orval output
   ...tseslint.configs.recommended,
-  { plugins: { 'react-hooks': reactHooks }, rules: { ...reactHooks.configs.recommended.rules } },
+  reactHooks.configs['recommended-latest'],   // the plugin's flat-config preset (v6+ key; check its README if this moves)
   {
     rules: {
       // Guardrail: the dashboard must not call fetch directly (spec §3, "Avoid").
@@ -277,24 +287,34 @@ git commit -m "chore: monorepo skeleton with pnpm workspace and turborepo"
     "test": "vitest run"
   },
   "dependencies": {
-    "hono": "^4.6.0",
-    "@hono/zod-openapi": "^0.18.0",
-    "@scalar/hono-api-reference": "^0.5.0",
-    "zod": "^3.24.0",
-    "drizzle-orm": "^0.38.0",
-    "drizzle-zod": "^0.6.0",
-    "@neondatabase/serverless": "^0.10.0",
+    "hono": "^4.13.0",
+    "@hono/zod-openapi": "^1.5.0",
+    "@scalar/hono-api-reference": "^0.11.0",
+    "zod": "^4.4.0",
+    "drizzle-orm": "^0.45.0",
+    "drizzle-zod": "^0.8.0",
+    "@neondatabase/serverless": "^1.1.0",
     "postgres": "^3.4.0"
   },
   "devDependencies": {
-    "wrangler": "^3.95.0",
-    "drizzle-kit": "^0.30.0",
-    "@electric-sql/pglite": "^0.2.0",
-    "vitest": "^2.1.0",
-    "tsx": "^4.19.0"
+    "wrangler": "^4.122.0",
+    "drizzle-kit": "^0.31.0",
+    "@electric-sql/pglite": "^0.5.0",
+    "vitest": "^4.1.0",
+    "tsx": "^4.23.0"
   }
 }
 ```
+
+`wrangler.toml`:
+```toml
+name = "restaurant-backend"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+```
+
+`nodejs_compat` is not optional: it is what lets the `postgres` (postgres-js) local driver open a TCP socket inside `wrangler dev` (ADR 0003). Without it, local development against docker Postgres cannot connect at all.
 
 - [ ] **Step 2: Write the error envelope**
 
@@ -336,7 +356,7 @@ Every failure in this codebase throws `AppError`; a single Hono `onError` handle
 
 `src/app.ts`:
 ```ts
-import { OpenAPIHono } from '@hono/zod-openapi'
+import { OpenAPIHono, z } from '@hono/zod-openapi'
 import { apiReference } from '@scalar/hono-api-reference'
 import { cors } from 'hono/cors'
 import { AppError } from './lib/errors'
@@ -348,7 +368,7 @@ export function createApp() {
     defaultHook: (result, c) => {
       if (!result.success) {
         return c.json(
-          { error: { code: 'VALIDATION_FAILED', message: 'Request validation failed', details: result.error.flatten() } },
+          { error: { code: 'VALIDATION_FAILED', message: 'Request validation failed', details: z.flattenError(result.error) } },   // zod 4: flattenError() replaces .flatten()
           422,
         )
       }
@@ -369,7 +389,7 @@ export function createApp() {
     openapi: '3.1.0',
     info: { title: 'Restaurant Operations API', version: '1.0.0' },
   })
-  app.get('/reference', apiReference({ spec: { url: '/doc' } }))
+  app.get('/reference', apiReference({ url: '/doc' }))   // Scalar's current config shape (spec.url in old majors)
 
   return app
 }
@@ -568,24 +588,40 @@ export const customersRelations = relations(customers, ({ many }) => ({ orders: 
 
 Note `check('settings_singleton', sql\`id = 1\`)` — the database itself refuses a second settings row. Enforcing a rule in the schema rather than in application code means it holds even against a mistaken seed script.
 
+**Timestamps stay in Drizzle's default `Date` mode.** Handlers return `Date` objects and `c.json()` serialises them to true ISO 8601 strings (`2026-08-13T06:00:00.000Z`), which is exactly what the spec's timestamp rule demands and what every JS engine (including Hermes, for the native stretch goal) parses reliably. The one thing `Date` mode gets wrong is the *contract*: drizzle-zod derives `z.date()` for these columns, which is unrepresentable in an OpenAPI document. Task 4 fixes that once, in the zod layer, with the `isoDateTime` override — every derived select schema swaps its timestamp columns to `z.iso.datetime()`.
+
 - [ ] **Step 2: Write the driver factory (ADR 0003)**
 
 `src/db/client.ts`:
 ```ts
-import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
-import { neon } from '@neondatabase/serverless'
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless'
+import { Pool } from '@neondatabase/serverless'
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import * as schema from './schema'
 import type { Env } from '../app'
 
-export function createDb(env: Env) {
-  // Local development points DATABASE_URL at docker Postgres; production uses Neon.
-  // Both expose the same Drizzle API, so nothing above this file knows the difference.
-  return drizzleNeon(neon(env.DATABASE_URL), { schema })
+// The one shape both drivers satisfy. Nothing above this file knows which is in use.
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>
+
+export function createDb(env: Env): Db {
+  if (env.DATABASE_DRIVER === 'postgres') {
+    // Local dev: docker Postgres over TCP. Works inside wrangler dev because of
+    // the nodejs_compat flag (Task 2). max: 1 — a Worker isolate is single-request.
+    return drizzlePostgres(postgres(env.DATABASE_URL, { max: 1 }), { schema })
+  }
+  // Production: Neon over WebSocket. Chosen over neon-http because this driver
+  // supports interactive transactions, which order creation (Task 11) requires —
+  // neon-http would throw at runtime on db.transaction(). A fresh Pool per
+  // request is the standard Workers pattern and fine at this scale.
+  return drizzleNeon(new Pool({ connectionString: env.DATABASE_URL }), { schema })
 }
-export type Db = ReturnType<typeof createDb>
 ```
 
-For the Node-side scripts (migrate, seed, tests) create a sibling `src/db/node-client.ts` using `drizzle-orm/postgres-js`, because those run in Node, not in the Worker.
+If the two drivers' return types don't unify onto `Db` cleanly (their query-result HKT generics differ), cast at the `return` — the cast is confined to this factory, and the factory is exactly the seam ADR 0003 defines. `.env.example` documents both variables: `DATABASE_URL=postgres://postgres:postgres@localhost:5432/restaurant` and `DATABASE_DRIVER=postgres` for local dev; production sets only `DATABASE_URL` (Neon) and omits the driver override.
+
+For the Node-side scripts (migrate, seed) create a sibling `src/db/node-client.ts` using `drizzle-orm/postgres-js`, because those run in Node, not in the Worker. Tests use PGlite (Task 7) and never touch this factory.
 
 - [ ] **Step 3: Generate and apply the first migration**
 
@@ -612,7 +648,7 @@ git add -A && git commit -m "feat(backend): drizzle schema, migrations and drive
 **Files:**
 - Create: `orval.config.ts` (repo root)
 - Create: `packages/api-client/package.json`, `src/fetcher.ts`, `src/query-client.tsx`, `src/index.ts`
-- Create: `services/backend/src/schemas/categories.ts`, `src/routes/categories.ts` (read-only, one endpoint)
+- Create: `services/backend/src/schemas/common.ts`, `src/schemas/categories.ts`, `src/routes/categories.ts` (read-only, one endpoint)
 - Modify: `services/backend/src/routes/index.ts`
 
 **Interfaces:**
@@ -621,13 +657,27 @@ git add -A && git commit -m "feat(backend): drizzle schema, migrations and drive
 
 - [ ] **Step 1: Derive Zod schemas from the Drizzle table**
 
+`src/schemas/common.ts` — the timestamp override every select schema uses:
+```ts
+import { z } from '@hono/zod-openapi'
+
+// Drizzle returns Date objects; c.json() serialises them to ISO strings. Derived
+// select schemas must swap every timestamp column to this, or the OpenAPI document
+// gets an unrepresentable z.date() and the generated frontend types are wrong.
+// Forgetting one is loud, not silent: the generator throws on z.date().
+export const isoDateTime = z.iso.datetime()
+```
+
 `src/schemas/categories.ts`:
 ```ts
 import { createSelectSchema, createInsertSchema } from 'drizzle-zod'
 import { categories } from '../db/schema'
 import { z } from '@hono/zod-openapi'
+import { isoDateTime } from './common'
 
-export const categorySchema = createSelectSchema(categories).openapi('Category')
+export const categorySchema = createSelectSchema(categories, {
+  createdAt: isoDateTime,
+}).openapi('Category')
 export const createCategorySchema = createInsertSchema(categories, {
   name: (s) => s.min(1, 'Name is required'),
 }).pick({ name: true, sortOrder: true }).openapi('CreateCategory')
@@ -728,7 +778,7 @@ Unwrapping the error envelope here means every screen gets a typed `ApiError` wi
 - [ ] **Step 5: Run the chain and verify the gate**
 
 Run: `pnpm gen:contract`
-Expected: `services/backend/openapi.json` contains `listCategories`; `packages/api-client/src/generated/endpoints/menu/menu.ts` exports `useListCategories`.
+Expected: `services/backend/openapi.json` contains `listCategories`; `packages/api-client/src/generated/endpoints/menu/menu.ts` exports `useListCategories`; the `Category` schema's `createdAt` is `type: string, format: date-time` (proof the `isoDateTime` override reached the document), and the generated `Category` type has `createdAt: string`, not `Date`. If Orval chokes on the OpenAPI **3.1** document, the escape hatch is emitting 3.0 instead (`app.getOpenAPIDocument` with `openapi: '3.0.0'`) — a one-line change; decide it here at the gate, not on day 2.
 
 **Now prove it's live, not decorative:**
 1. In `schema.ts`, rename `categories.sortOrder` → `categories.displayOrder`.
@@ -878,7 +928,7 @@ git add -A && git commit -m "feat(types): shared order status enum and transitio
 - Test: `packages/shared/test/money.test.ts`, `test/datetime.test.ts`
 
 **Interfaces:**
-- Produces: `formatMoney(cents, currency)`, `calcTaxCents(subtotalCents, ratePercent)`, `sumCents(values)`, `isWithinOpeningHours(date, hours, timezone)`, `addMinutes(date, n)`.
+- Produces: `formatMoney(cents, currency)`, `calcTaxCents(subtotalCents, ratePercent)`, `sumCents(values)`, `isWithinOpeningHours(date, hours, timezone)`, `addMinutes(date, n)`, `localDateKey(date, timeZone)`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -920,7 +970,7 @@ describe('sumCents', () => {
 `packages/shared/test/datetime.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest'
-import { isWithinOpeningHours } from '../src/datetime'
+import { isWithinOpeningHours, localDateKey } from '../src/datetime'
 import type { OpeningHours } from '../src/datetime'
 
 const hours: OpeningHours = {
@@ -942,6 +992,16 @@ describe('isWithinOpeningHours', () => {
   it('rejects a closed day', () => {
     // 2026-08-16 is a Sunday
     expect(isWithinOpeningHours(new Date('2026-08-16T06:00:00Z'), hours, 'Asia/Singapore')).toBe(false)
+  })
+})
+
+describe('localDateKey', () => {
+  it('buckets a late-UTC instant into the next Singapore day', () => {
+    // 17:00 UTC on the 12th is 01:00 on the 13th in Singapore.
+    expect(localDateKey(new Date('2026-08-12T17:00:00Z'), 'Asia/Singapore')).toBe('2026-08-13')
+  })
+  it('agrees with UTC when the instant is mid-day', () => {
+    expect(localDateKey(new Date('2026-08-13T06:00:00Z'), 'Asia/Singapore')).toBe('2026-08-13')
   })
 })
 ```
@@ -1003,6 +1063,11 @@ export function isWithinOpeningHours(date: Date, hours: OpeningHours, timeZone: 
 export function addMinutes(date: Date, n: number): Date {
   return new Date(date.getTime() + n * 60_000)
 }
+
+/** The calendar date (YYYY-MM-DD) of `date` as seen in `timeZone`. en-CA formats as ISO. */
+export function localDateKey(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+}
 ```
 
 `Intl.DateTimeFormat` is used rather than a date library because it works identically in Node, the browser, and `workerd`, with no dependency.
@@ -1010,7 +1075,7 @@ export function addMinutes(date: Date, n: number): Date {
 - [ ] **Step 4: Run the tests**
 
 Run: `pnpm --filter @repo/shared test`
-Expected: PASS, 9 tests.
+Expected: PASS, 11 tests.
 
 - [ ] **Step 5: Commit**
 
@@ -1052,16 +1117,24 @@ PGlite is real Postgres compiled to WebAssembly. Constraints, transactions and S
 
 - [ ] **Step 2: Make the app testable by injecting the db**
 
-Refactor route registration so handlers obtain the db from `c.get('db')`, set by middleware, rather than calling `createDb(c.env)` directly:
+Refactor route registration so handlers obtain the db from `c.get('db')`, set by middleware, rather than calling `createDb(c.env)` directly.
+
+**`createApp()` stays pure — it must NOT register a db middleware.** Hono runs middleware in registration order, so a db middleware inside `createApp()` would run *before* the test's override, find no db, and call `createDb(undefined)` — every test would crash on an env that doesn't exist. The env-based middleware lives in the Worker entrypoint only:
 
 `src/app.ts` addition:
 ```ts
-export type Vars = { db: Db }
-// in createApp():
-app.use('*', async (c, next) => {
-  if (!c.get('db')) c.set('db', createDb(c.env))
-  await next()
-})
+export type Vars = { db: Db }   // createApp() is typed with { Bindings: Env; Variables: Vars }
+```
+`src/index.ts` (the only place the real driver is wired):
+```ts
+import { createApp } from './app'
+import { createDb } from './db/client'
+import { registerAllRoutes } from './routes'
+
+const app = createApp()
+app.use('*', async (c, next) => { c.set('db', createDb(c.env)); await next() })
+registerAllRoutes(app)
+export default app
 ```
 `test/helpers/app.ts`:
 ```ts
@@ -1172,9 +1245,11 @@ Expected: FAIL — 404s, routes don't exist.
 
 - [ ] **Step 3: Implement the schemas and routes**
 
-`src/schemas/menu.ts` derives from the tables exactly as Task 4 did:
+`src/schemas/menu.ts` derives from the tables exactly as Task 4 did (timestamp columns overridden with `isoDateTime`, per Task 4's rule):
 ```ts
-export const menuItemSchema = createSelectSchema(menuItems).openapi('MenuItem')
+export const menuItemSchema = createSelectSchema(menuItems, {
+  createdAt: isoDateTime, updatedAt: isoDateTime,
+}).openapi('MenuItem')
 export const createMenuItemSchema = createInsertSchema(menuItems, {
   name: (s) => s.min(1),
   priceCents: (s) => s.int().nonnegative(),
@@ -1256,7 +1331,7 @@ export async function listCustomers(db: Db, search?: string) {
 
 The `::int` casts matter: Postgres returns `count()` and `sum()` as bigint, which arrives in JavaScript as a **string**. Without the cast, `lifetimeSpendCents` reaches the frontend as `"4820"` and every calculation silently concatenates. This is the same class of problem that ruled out `numeric` for prices.
 
-The response schema for these computed fields is hand-written Zod extending the derived `customerSchema` — that's legitimate, because `orderCount` is a query result, not a column.
+The response schema for these computed fields is hand-written Zod extending the derived `customerSchema` (`createSelectSchema(customers, { createdAt: isoDateTime })`) — that's legitimate, because `orderCount` is a query result, not a column.
 
 - [ ] **Step 4: Run tests, regenerate contract, commit**
 
@@ -1321,6 +1396,15 @@ export const openingHoursSchema = z.object({
   fri: dayHoursSchema, sat: dayHoursSchema, sun: dayHoursSchema,
 }).openapi('OpeningHours')
 ```
+
+The *select* schema needs the same treatment — drizzle-zod types the `jsonb` column as `unknown` on responses too, so substitute it (and the timestamp) explicitly:
+```ts
+export const settingsSchema = createSelectSchema(settings, {
+  openingHours: openingHoursSchema,
+  updatedAt: isoDateTime,
+}).openapi('Settings')
+```
+
 `updateSettings` is `PATCH`, always targeting `id = 1`, always setting `updatedAt`.
 
 - [ ] **Step 4: Run tests, regenerate contract, commit**
@@ -1362,7 +1446,9 @@ describe('POST /orders', () => {
   let fixtures: Awaited<ReturnType<typeof seedMinimal>>
 
   beforeEach(async () => {
-    vi.useFakeTimers(); vi.setSystemTime(NOW)
+    // toFake: ['Date'] fakes ONLY the clock. Faking all timers (the default) stalls
+    // PGlite, whose async machinery awaits real setTimeout/setImmediate — tests hang.
+    vi.useFakeTimers({ now: NOW, toFake: ['Date'] })
     const { db } = await createTestDb()
     fixtures = await seedMinimal(db)   // nasiLemak @ 850, tehTarik @ 320, soldOut item, settings tax 9%, delivery fee 400
     app = createTestApp(db)
@@ -1476,15 +1562,17 @@ Expected: FAIL — 13 failures, route missing.
 ```ts
 export const createOrderSchema = z.object({
   channel: z.enum(orderChannelValues).openapi({ example: 'takeaway' }),
-  customerId: z.string().uuid().nullish(),
+  customerId: z.uuid().nullish(),          // zod 4: z.uuid(), not z.string().uuid()
   notes: z.string().max(500).nullish(),
   items: z.array(z.object({
-    menuItemId: z.string().uuid(),
+    menuItemId: z.uuid(),
     quantity: z.number().int().positive().max(99),
     notes: z.string().max(200).nullish(),
   })).min(1, 'An order must contain at least one item'),
 }).openapi('CreateOrder')
 ```
+
+The order *response* schemas derive from the tables with the usual timestamp overrides — `createSelectSchema(orders, { placedAt: isoDateTime, updatedAt: isoDateTime, estimatedReadyAt: isoDateTime.nullable() })` — extended with the items array and optional customer.
 
 Note what is *absent*: no price, no total, no status. The client cannot express them, so it cannot influence them. This is the "never trust the client for money" rule enforced by the type rather than by a runtime check someone might forget.
 
@@ -1811,7 +1899,20 @@ it('reports zero average order value when there are no orders', async () => {
   const summary = await (await emptyApp.request('/stats/summary')).json()
   expect(summary.averageOrderValueCents).toBe(0)
 })
+
+it('buckets trend days in the settings timezone, not UTC', async () => {
+  const { db } = await createTestDb()
+  await seedSettingsOnly(db)                   // timezone: Asia/Singapore
+  // 17:00 UTC "yesterday" is 01:00 "today" in Singapore — must count toward today.
+  await insertOrder(db, { placedAt: new Date('2026-08-12T17:00:00Z'), totalCents: 1000 })
+  const emptyApp = createTestApp(db)
+  const { dailyTrend } = await (await emptyApp.request('/stats/summary')).json()
+  const day = dailyTrend.find((d: { date: string }) => d.date === '2026-08-13')
+  expect(day.orderCount).toBe(1)
+  expect(dailyTrend.find((d: { date: string }) => d.date === '2026-08-12').orderCount).toBe(0)
+})
 ```
+(Fix "now" to `2026-08-13T06:00:00Z` with the same `toFake: ['Date']` pattern as Task 11 so the seven-day window is deterministic.)
 
 The empty case matters: `sum / count` with no orders is `NaN`, which serialises to `null` in JSON and renders as a blank KPI card. Handling it here means the frontend never has to.
 
@@ -1819,7 +1920,11 @@ The empty case matters: `sum / count` with no orders is `NaN`, which serialises 
 
 - [ ] **Step 3: Implement**
 
-One handler, several aggregate queries run with `Promise.all`. Remember `::int` casts on every `count`/`sum` (Task 9). The 7-day trend must emit a row for days with **zero** orders — generate the seven date keys in JavaScript and left-join the grouped results onto them, rather than returning only days that happen to have data, or the chart will have gaps.
+One handler, several aggregate queries run with `Promise.all`. Remember `::int` casts on every `count`/`sum` (Task 9).
+
+The 7-day trend has two rules, both timezone-driven:
+- **Emit a row for days with zero orders** — generate the seven date keys in JavaScript, rather than returning only days that happen to have data, or the chart will have gaps.
+- **A "day" is a Singapore day, not a UTC day.** Fetch the `(placedAt, totalCents)` pairs for non-cancelled orders in the window and bucket them in JavaScript with `localDateKey(placedAt, settings.timezone)` from `@repo/shared` — the same tested helper, one timezone implementation in the whole system. At ~60 seeded orders, aggregating this one query in JS costs nothing and avoids hand-writing `AT TIME ZONE` SQL that nothing else exercises. Generate the seven day keys the same way (`localDateKey(now - n days, settings.timezone)`).
 
 - [ ] **Step 4: Run tests, regenerate, commit**
 
@@ -1955,10 +2060,29 @@ git add -A && git commit -m "feat(ui): design tokens with light and dark themes"
 
 **Files:**
 - Create: `packages/ui/src/primitives/{Text,Heading,Stack,Inline,Grid,Surface,Card,Divider,Badge,Button,IconButton,Spinner}.tsx`
+- Create: `packages/ui/vitest.config.ts`
 - Test: `packages/ui/test/Button.test.tsx`
 
 **Interfaces:**
 - Produces: `<Button variant="primary|secondary|ghost|danger" size="sm|md|lg" loading disabled onPress>`, `<Badge tone="success|warning|danger|info|neutral">`, `<Stack gap="md">`, `<Card elevation="raised" padding="lg">`, `<Text variant="body" color="muted">`.
+
+- [ ] **Step 0: Component-test setup — react-native-web under Vitest**
+
+Raw `react-native` source does not parse under Vitest (Flow types, untranspiled JSX), and wiring babel transforms for it is a day-long yak-shave. Since every primitive runs through React Native **Web** in the browser anyway, test the web rendering directly: jsdom, alias `react-native` to `react-native-web`, and use `@testing-library/react` (so interactions are `fireEvent.click`, not `.press` — RNW's `Pressable` handles DOM clicks):
+
+```ts
+// packages/ui/vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  test: { environment: 'jsdom' },
+  resolve: { alias: { 'react-native': 'react-native-web' } },
+})
+```
+
+Dev deps for this package: `react`, `react-dom`, `react-native-web`, `@testing-library/react`, `@vitejs/plugin-react`, `jsdom`, `vitest`. `apps/dashboard` reuses the identical config for its tests (Task 26).
 
 - [ ] **Step 1: Establish the styling pattern once**
 
@@ -2011,7 +2135,7 @@ Because every interactive primitive consumes `useInteractionState`, no screen ev
 - [ ] **Step 2: Write the Button test**
 
 ```tsx
-import { render, screen, fireEvent } from '@testing-library/react-native'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { Button } from '../src/primitives/Button'
 import { ThemeProvider } from '../src/theme/ThemeProvider'
 
@@ -2020,14 +2144,14 @@ const wrap = (ui: React.ReactElement) => render(<ThemeProvider>{ui}</ThemeProvid
 it('calls onPress when enabled', () => {
   const onPress = vi.fn()
   wrap(<Button onPress={onPress}>Accept</Button>)
-  fireEvent.press(screen.getByText('Accept'))
+  fireEvent.click(screen.getByText('Accept'))
   expect(onPress).toHaveBeenCalledOnce()
 })
 
 it('does not call onPress when disabled', () => {
   const onPress = vi.fn()
   wrap(<Button onPress={onPress} disabled>Accept</Button>)
-  fireEvent.press(screen.getByText('Accept'))
+  fireEvent.click(screen.getByText('Accept'))
   expect(onPress).not.toHaveBeenCalled()
 })
 
@@ -2103,26 +2227,23 @@ it('renders skeletons while loading', () => {
 it('renders an error state with a working retry', () => {
   const onRetry = vi.fn()
   wrap(<Table columns={cols} data={[]} error={new Error('boom')} onRetry={onRetry} keyExtractor={(r) => r.id} />)
-  fireEvent.press(screen.getByText('Try again'))
+  fireEvent.click(screen.getByText('Try again'))
   expect(onRetry).toHaveBeenCalledOnce()
 })
 
 it('marks the active nav item and shows a focus ring on keyboard focus', () => {
   wrap(<NavItem href="/orders" label="Orders" active />)
-  const item = screen.getByText('Orders')
-  expect(item).toBeTruthy()
-  fireEvent(item, 'focus')
-  // the focus ring is a token-driven border, asserted via testID on the wrapper
-  expect(screen.getByTestId('nav-item-orders').props.style).toEqual(
-    expect.objectContaining({ borderColor: expect.any(String) }),
-  )
+  const wrapper = screen.getByTestId('nav-item-orders')
+  fireEvent.focus(screen.getByText('Orders'))
+  // the focus ring is a token-driven outline drawn as an inline style on the wrapper
+  expect(wrapper.getAttribute('style')).toContain('border')
 })
 
 it('selects an option', () => {
   const onChange = vi.fn()
   wrap(<Select options={[{ label: 'Dine in', value: 'dine_in' }]} value={null} onChange={onChange} placeholder="Channel" />)
-  fireEvent.press(screen.getByText('Channel'))
-  fireEvent.press(screen.getByText('Dine in'))
+  fireEvent.click(screen.getByText('Channel'))
+  fireEvent.click(screen.getByText('Dine in'))
   expect(onChange).toHaveBeenCalledWith('dine_in')
 })
 ```
@@ -2519,7 +2640,7 @@ git add -A && git commit -m "feat(dashboard): settings screen driving order rule
 
 **Files:**
 - Create: `apps/dashboard/test/{order-actions.test.tsx,money-display.test.tsx}`
-- Modify: `apps/dashboard/vitest.config.ts`
+- Create: `apps/dashboard/vitest.config.ts` — identical setup to `packages/ui`'s (Task 16 Step 0): jsdom, `react-native` aliased to `react-native-web`, `@testing-library/react`.
 
 - [ ] **Step 1: Test the shared-map integration**
 
@@ -2706,3 +2827,16 @@ Cut in this order. The point of the ordering is that everything above the cut st
 - **Spec coverage:** §2 → T4; §3 → T1; §4 → T3; §5 → T6, T11; §6 → T11; §7 → T5, T12, T21; §8 → T8–T14; §9 → T15–T17, T19; §10 → T18, T20–T25; §11 → T5, T6, T7, T11–T14, T16, T17, T22, T26; §12 → T1, T2, T28; §13 → T7; §14 → T29.
 - **Naming consistency check:** `createDb`/`Db` (T3) used in T4, T7, T9, T11, T12. `AppError`/`ErrorCode` (T2) used in T11, T12. `calcTaxCents`/`sumCents` (T6) used in T7, T11, T22. `getAvailableActions`/`resolveTransition` (T5) used in T12, T21, T26. `createTestDb`/`createTestApp` (T7) used in T8–T14. `customFetch`/`ApiError` (T4) used in T21, T22.
 - **Known thin spots, deliberately:** Tasks 20–25 give the feature hooks' full code but describe the JSX layout rather than writing every line — the layout is design work best done against a running app, and the primitives from Tasks 16–17 constrain it enough that the result stays consistent. Task 7's seed is described rather than fully written for the same reason: it's 200 lines of literal dish names, not logic.
+
+## Pre-implementation review pass (2026-08-13, second model)
+
+Before any code was written, the plan was re-reviewed by a second model and six defects were fixed. Recorded here because finding them on day 2 would have cost hours each:
+
+1. **Driver/transaction contradiction (Tasks 3, 11; ADR 0003).** The original `createDb()` used `neon-http` only, whose lack of interactive transactions would have made Task 11's `db.transaction()` throw — but only on the deployed Worker, never in PGlite tests. Switched to `drizzle-orm/neon-serverless` (WebSocket) in production and implemented the `postgres-js` local branch the ADR promised; ADR 0003 rewritten to match.
+2. **Timestamps would have poisoned the contract (Tasks 3–4, 8–11).** drizzle-zod derives `z.date()` for timestamp columns, which is unrepresentable in OpenAPI, while the wire format is an ISO string. Fixed once with the `isoDateTime` override in `schemas/common.ts`, applied at every `createSelectSchema` (and `openingHoursSchema` substituted on the settings select schema).
+3. **Test-app middleware ordering (Task 7).** The db middleware originally lived inside `createApp()`, so it ran before the test's override and would have called `createDb(undefined)` in every test. Moved to `src/index.ts`; `createApp()` stays pure.
+4. **Stale version pins.** All pins re-resolved to the latest majors on npm as of 2026-08-13 (zod 4, `@hono/zod-openapi` 1.x, wrangler 4, vitest 4, orval 8, eslint 10, TS 7), with the zod-4 API changes propagated into the snippets and a root pnpm override forcing a single zod instance.
+5. **Fake timers vs PGlite (Tasks 11, 14).** `vi.useFakeTimers()` fakes all timers and stalls PGlite's async machinery; narrowed to `toFake: ['Date']`.
+6. **RN component tests under Vitest (Tasks 16–17, 26).** Raw `react-native` doesn't parse under Vitest; standardised on jsdom + `react-native` → `react-native-web` alias + `@testing-library/react` (`fireEvent.click`).
+
+Plus one timezone hole: the Home trend bucketed days by UTC date, off by one for any order placed after 16:00 UTC. Day bucketing now goes through `localDateKey(date, settings.timezone)` in `@repo/shared` (Tasks 6, 14, and the global timezone constraint), with a test pinning the 17:00-UTC-is-tomorrow-in-Singapore case.

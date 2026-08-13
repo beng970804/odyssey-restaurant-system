@@ -76,7 +76,7 @@ Write it down **once**, and generate the other three.
 | **pnpm workspace** | Lets packages import each other by name (`@repo/ui`) without publishing to npm. |
 | **Turborepo** | Runs tasks in dependency order and in parallel. `turbo run build` knows `api-client` must build before `dashboard`. |
 | **Hono** | The web framework. Routes and middleware, built on web-standard `Request`/`Response` so it runs on Cloudflare Workers. |
-| **Cloudflare Workers** | The serverless runtime. Not Node — no filesystem, and no raw TCP, which is why the database driver is a real decision (see ADR 0003). |
+| **Cloudflare Workers** | The serverless runtime. Not Node — no filesystem, and no Node TCP APIs without compatibility flags, which is why the database driver is a real decision (see ADR 0003: Neon WebSocket driver in production, postgres-js over `nodejs_compat` sockets locally). |
 | **wrangler** | Cloudflare's CLI. `wrangler dev` runs the Worker locally in the same engine production uses. |
 | **Drizzle ORM** | Tables defined in TypeScript. That definition generates SQL migrations and gives a fully typed query builder. |
 | **Zod** | Runtime validation. TypeScript types vanish when the code runs; Zod is what actually rejects a malformed request body. |
