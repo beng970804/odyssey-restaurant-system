@@ -22,6 +22,7 @@ import type {
   CancelOrder,
   CreateOrder,
   Error,
+  ListOrdersParams,
   OrderDetail,
   OrderList
 } from '../../models';
@@ -141,24 +142,38 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   status: 200
 }
 
+export type listOrdersResponse422 = {
+  data: Error
+  status: 422
+}
+
 export type listOrdersResponseSuccess = (listOrdersResponse200) & {
   headers: Headers;
 };
-;
+export type listOrdersResponseError = (listOrdersResponse422) & {
+  headers: Headers;
+};
 
-export type listOrdersResponse = (listOrdersResponseSuccess)
+export type listOrdersResponse = (listOrdersResponseSuccess | listOrdersResponseError)
 
-export const getListOrdersUrl = () => {
+export const getListOrdersUrl = (params?: ListOrdersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/orders`
+  return stringifiedParams.length > 0 ? `/orders?${stringifiedParams}` : `/orders`
 }
 
-export const listOrders = async ( options?: Parameters<typeof customFetch>[1]): Promise<listOrdersResponse> => {
+export const listOrders = async (params?: ListOrdersParams, options?: Parameters<typeof customFetch>[1]): Promise<listOrdersResponse> => {
 
-  return customFetch<listOrdersResponse>(getListOrdersUrl(),
+  return customFetch<listOrdersResponse>(getListOrdersUrl(params),
   {
     ...options,
     method: 'GET'
@@ -171,23 +186,23 @@ export const listOrders = async ( options?: Parameters<typeof customFetch>[1]): 
 
 
 
-export const getListOrdersQueryKey = () => {
+export const getListOrdersQueryKey = (params?: ListOrdersParams,) => {
     return [
-    `/orders`
+    `/orders`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listOrders>>, TError = unknown>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listOrders>>, TError = Error>(params?: ListOrdersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListOrdersQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListOrdersQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOrders>>> = ({ signal }) => listOrders({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOrders>>> = ({ signal }) => listOrders(params, { signal, ...requestOptions });
 
 
 
@@ -197,16 +212,16 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof listOrders>>>
-export type ListOrdersQueryError = unknown
+export type ListOrdersQueryError = Error
 
 
 
-export function useListOrders<TData = Awaited<ReturnType<typeof listOrders>>, TError = unknown>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export function useListOrders<TData = Awaited<ReturnType<typeof listOrders>>, TError = Error>(
+ params?: ListOrdersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListOrdersQueryOptions(options)
+  const queryOptions = getListOrdersQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

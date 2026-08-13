@@ -5,6 +5,7 @@ import {
   createOrderSchema,
   orderDetailSchema,
   orderListSchema,
+  orderQuerySchema,
 } from '../schemas/orders'
 import { toIsoDates } from '../schemas/common'
 import { createOrder, listOrders, performAction, requireOrderDetail } from '../services/orders'
@@ -91,16 +92,25 @@ export function registerOrderRoutes(app: App) {
       path: '/orders',
       operationId: 'listOrders',
       tags: ['Orders'],
+      request: { query: orderQuerySchema },
       responses: {
         200: {
-          description: 'Orders, newest first',
+          description: 'A page of orders, newest first',
           content: { 'application/json': { schema: orderListSchema } },
         },
+        422: errorResponse('Validation failed'),
       },
     }),
     async (c) => {
-      const rows = await listOrders(c.get('db'))
-      return c.json({ data: rows.map(toIsoDates), meta: { total: rows.length } }, 200)
+      const query = c.req.valid('query')
+      const { rows, total } = await listOrders(c.get('db'), query)
+      return c.json(
+        {
+          data: rows.map(toIsoDates),
+          meta: { total, page: query.page, pageSize: query.pageSize },
+        },
+        200,
+      )
     },
   )
 

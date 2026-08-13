@@ -1,4 +1,15 @@
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  ilike,
+  inArray,
+  lte,
+  sql,
+  type SQL,
+} from 'drizzle-orm'
 import { addMinutes, calcTaxCents, isWithinOpeningHours, sumCents } from '@repo/shared'
 import {
   getAvailableActions,
@@ -9,7 +20,7 @@ import {
 import { customers, menuItems, orderItems, orders } from '../db/schema'
 import { AppError } from '../lib/errors'
 import { getSettings } from './settings'
-import type { CreateOrderInput } from '../schemas/orders'
+import type { CreateOrderInput, OrderQuery } from '../schemas/orders'
 import type { Db } from '../db/client'
 
 export async function getOrderDetail(db: Db, id: string) {
@@ -32,9 +43,47 @@ export async function requireOrderDetail(db: Db, id: string) {
   return order
 }
 
-/** Filtering and pagination arrive in Task 13. */
-export function listOrders(db: Db) {
-  return db.select().from(orders).orderBy(desc(orders.placedAt))
+/**
+ * One query for the page and one for the total. The item count is a correlated
+ * subquery rather than a join, so grouping cannot distort the row set.
+ */
+export async function listOrders(db: Db, query: OrderQuery) {
+  const filters: SQL[] = []
+  if (query.status) filters.push(eq(orders.status, query.status))
+  if (query.channel) filters.push(eq(orders.channel, query.channel))
+  if (query.from) filters.push(gte(orders.placedAt, new Date(query.from)))
+  if (query.to) filters.push(lte(orders.placedAt, new Date(query.to)))
+
+  if (query.search) {
+    const orderNumber = Number(query.search)
+    filters.push(
+      // A digits-only search is an order number; anything else is a customer.
+      Number.isInteger(orderNumber)
+        ? eq(orders.orderNumber, orderNumber)
+        : ilike(customers.name, `%${query.search}%`),
+    )
+  }
+
+  const where = and(...filters)
+  const itemCount = sql<number>`(select count(*) from ${orderItems} where ${orderItems.orderId} = ${orders.id})::int`
+
+  const [rows, [totals]] = await Promise.all([
+    db
+      .select({ ...getTableColumns(orders), customerName: customers.name, itemCount })
+      .from(orders)
+      .leftJoin(customers, eq(orders.customerId, customers.id))
+      .where(where)
+      .orderBy(desc(orders.placedAt))
+      .limit(query.pageSize)
+      .offset((query.page - 1) * query.pageSize),
+    db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(orders)
+      .leftJoin(customers, eq(orders.customerId, customers.id))
+      .where(where),
+  ])
+
+  return { rows, total: totals?.total ?? 0 }
 }
 
 /**

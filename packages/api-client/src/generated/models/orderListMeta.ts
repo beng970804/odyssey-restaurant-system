@@ -7,4 +7,6 @@
 
 export type OrderListMeta = {
   total: number;
+  page: number;
+  pageSize: number;
 };

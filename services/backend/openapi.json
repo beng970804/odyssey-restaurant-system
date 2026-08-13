@@ -1189,7 +1189,7 @@
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Order"
+              "$ref": "#/components/schemas/OrderRow"
             }
           },
           "meta": {
@@ -1197,16 +1197,49 @@
             "properties": {
               "total": {
                 "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "pageSize": {
+                "type": "integer"
               }
             },
             "required": [
-              "total"
+              "total",
+              "page",
+              "pageSize"
             ]
           }
         },
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "OrderRow": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Order"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "customerName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "itemCount": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "customerName",
+              "itemCount"
+            ]
+          }
         ]
       },
       "CancelOrder": {
@@ -1930,13 +1963,102 @@
         "tags": [
           "Orders"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "accepted",
+                "preparing",
+                "ready",
+                "completed",
+                "cancelled"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dine_in",
+                "takeaway",
+                "delivery"
+              ]
+            },
+            "required": false,
+            "name": "channel",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Orders, newest first",
+            "description": "A page of orders, newest first",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

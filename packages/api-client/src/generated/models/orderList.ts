@@ -4,10 +4,10 @@
  * Restaurant Operations API
  * OpenAPI spec version: 1.0.0
  */
-import type { Order } from './order';
 import type { OrderListMeta } from './orderListMeta';
+import type { OrderRow } from './orderRow';
 
 export interface OrderList {
-  data: Order[];
+  data: OrderRow[];
   meta: OrderListMeta;
 }

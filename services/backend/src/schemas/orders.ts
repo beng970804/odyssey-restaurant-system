@@ -1,6 +1,6 @@
 import { createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
-import { ORDER_CHANNELS } from '@repo/types'
+import { ORDER_CHANNELS, ORDER_STATUSES } from '@repo/types'
 import { orderItems, orders } from '../db/schema'
 import { customerSchema } from './customers'
 import { isoDateTime } from './common'
@@ -49,10 +49,38 @@ export const orderDetailSchema = orderSchema
   })
   .openapi('OrderDetail')
 
-/** Extended with filters and pagination in Task 13. */
+/**
+ * The list row carries the customer name and item count so the orders table
+ * renders from one request instead of an N+1 per row.
+ */
+export const orderRowSchema = orderSchema
+  .extend({
+    customerName: z.string().nullable(),
+    itemCount: z.number().int(),
+  })
+  .openapi('OrderRow')
+
+export const orderQuerySchema = z.object({
+  status: z.enum(ORDER_STATUSES).optional(),
+  channel: z.enum(ORDER_CHANNELS).optional(),
+  from: z.iso.datetime().optional(),
+  to: z.iso.datetime().optional(),
+  /** An order number, or part of a customer's name. */
+  search: z.string().min(1).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  // Capped: an uncapped page size is an easy way to ask for the whole table.
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+})
+
+export type OrderQuery = z.infer<typeof orderQuerySchema>
+
 export const orderListSchema = z
   .object({
-    data: z.array(orderSchema),
-    meta: z.object({ total: z.number().int() }),
+    data: z.array(orderRowSchema),
+    meta: z.object({
+      total: z.number().int(),
+      page: z.number().int(),
+      pageSize: z.number().int(),
+    }),
   })
   .openapi('OrderList')
