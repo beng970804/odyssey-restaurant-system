@@ -7,3 +7,10 @@ dist/
 .dev.vars
 .DS_Store
 .local/
+
+# Third-party agent skills installed via `npx skills add`. They run with full
+# agent permissions, so they stay a local choice rather than a repo dependency.
+# `.claude/skills/` only — a future .claude/settings.json is still committable.
+.agents/
+.claude/skills/
+skills-lock.json
