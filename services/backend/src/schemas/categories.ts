@@ -18,6 +18,10 @@ export const createCategorySchema = createInsertSchema(categories, {
   .pick({ name: true, sortOrder: true })
   .openapi('CreateCategory')
 
+export const updateCategorySchema = createCategorySchema.partial().openapi('UpdateCategory')
+
+export const categoryIdParamSchema = z.object({ id: z.uuid() })
+
 export const categoryListSchema = z
   .object({
     data: z.array(categorySchema),

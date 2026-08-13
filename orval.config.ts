@@ -18,7 +18,11 @@ export default defineConfig({
       override: {
         // Makes every generated call route through our own fetch wrapper.
         mutator: { path: './packages/api-client/src/fetcher.ts', name: 'customFetch' },
-        query: { useQuery: true, useMutation: true, signal: true },
+        // No `useQuery`/`useMutation` flags: setting either to `true` forces
+        // that hook kind onto *every* operation, which generated a useQuery for
+        // POST /menu-items — a mutation fired on render. Left unset, orval
+        // follows the verb: GET becomes a query, POST/PATCH become mutations.
+        query: { signal: true },
       },
     },
   },
