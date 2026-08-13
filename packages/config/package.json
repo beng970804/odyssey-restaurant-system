@@ -3,10 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "files": [
-    "tsconfig.base.json"
+    "tsconfig.base.json",
+    "vitest"
   ],
   "type": "module",
   "exports": {
-    "./tsconfig.base.json": "./tsconfig.base.json"
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./vitest/animation-mocks": "./vitest/animation-mocks.ts"
+  },
+  "devDependencies": {
+    "react-native-web": "^0.21.2",
+    "vitest": "^4.1.10"
   }
 }

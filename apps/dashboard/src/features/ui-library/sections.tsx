@@ -6,6 +6,7 @@ import {
   IconButton,
   Inline,
   Input,
+  NavDrawer,
   NavItem,
   Select,
   SideNav,
@@ -18,6 +19,7 @@ import {
   Tabs,
   Text,
   useTheme,
+  type NavDrawerMode,
   type StatusTone,
 } from '@repo/ui'
 import { useState, type ReactNode } from 'react'
@@ -295,6 +297,7 @@ export function ComponentGallery() {
             />
           </View>
         </Inline>
+        <NavDrawerStates />
         <Tabs
           tabs={[
             { value: 'all', label: 'All' },
@@ -330,6 +333,60 @@ export function ComponentGallery() {
           <Table columns={[]} data={[]} keyExtractor={() => ''} />
         </Card>
       </Stack>
+    </Stack>
+  )
+}
+
+/**
+ * The drawer only makes sense in motion, so this shows both resting states and
+ * lets you drive the transition — the same component the shell uses below the
+ * md breakpoint, at a size that fits on the page.
+ */
+function NavDrawerStates() {
+  const theme = useTheme()
+  const [open, setOpen] = useState(false)
+
+  const demo = (mode: NavDrawerMode, isOpen: boolean, onOpenChange: (next: boolean) => void) => (
+    <View
+      style={{
+        width: 360,
+        height: 260,
+        borderWidth: theme.borderWidth.thin,
+        borderColor: theme.color.border.default,
+        borderRadius: theme.radius.md,
+        overflow: 'hidden',
+      }}
+    >
+      <NavDrawer
+        items={[
+          { href: '/', label: 'Home' },
+          { href: '/orders', label: 'Orders', badge: 3 },
+        ]}
+        activeHref="/orders"
+        onNavigate={() => {}}
+        mode={mode}
+        open={isOpen}
+        onOpenChange={onOpenChange}
+      >
+        <Stack gap="sm" style={{ padding: theme.space.lg }}>
+          <Button size="sm" variant="secondary" onPress={() => onOpenChange(!isOpen)}>
+            {isOpen ? 'Close' : 'Open'}
+          </Button>
+          <Text color="muted">Content surface</Text>
+        </Stack>
+      </NavDrawer>
+    </View>
+  )
+
+  return (
+    <Stack gap="sm">
+      <Text variant="caption" color="muted">
+        NavDrawer — swipe the surface sideways, or use the button
+      </Text>
+      <Inline gap="xl" align="flex-start" wrap>
+        {demo('drawer', open, setOpen)}
+        {demo('pinned', true, () => {})}
+      </Inline>
     </Stack>
   )
 }

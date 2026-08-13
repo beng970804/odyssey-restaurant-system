@@ -11,6 +11,7 @@ export type IconButtonProps = {
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   onPress?: () => void
+  testID?: string
 }
 
 const SIZE = { sm: 28, md: 36, lg: 44 } as const
@@ -21,12 +22,14 @@ export function IconButton({
   size = 'md',
   disabled = false,
   onPress,
+  testID,
 }: IconButtonProps) {
   const theme = useTheme()
   const { state, handlers } = useInteractionState()
 
   return (
     <Pressable
+      testID={testID}
       role="button"
       aria-label={label}
       aria-disabled={disabled}
