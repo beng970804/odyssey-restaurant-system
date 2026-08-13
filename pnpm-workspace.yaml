@@ -14,6 +14,12 @@ allowBuilds:
   esbuild: true
   workerd: true
 
+# Expo's packages reach for peers they do not declare (@expo/log-box,
+# expo-font/build/server, @expo/router-server), which pnpm's symlinked layout
+# hides from Metro — the dashboard cannot bundle at all without this. Settings
+# live here rather than .npmrc because pnpm 11 reads its config from this file.
+nodeLinker: hoisted
+
 autoInstallPeers: true
 strictPeerDependencies: false
 minimumReleaseAgeExclude:

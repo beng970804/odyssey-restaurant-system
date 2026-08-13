@@ -1,0 +1,39 @@
+{
+  "name": "@repo/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --web --port 8081",
+    "build": "expo export --platform web",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "^57.0.9",
+    "@repo/api-client": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "expo": "~57.0.12",
+    "expo-constants": "~57.0.10",
+    "expo-font": "^57.0.1",
+    "expo-linking": "~57.0.5",
+    "expo-router": "~57.0.12",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.9.0",
+    "react-native-screens": "~4.27.0",
+    "react-native-web": "~0.21.2"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "@testing-library/react": "^14.3.1",
+    "@types/react": "~19.2.2",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^28.0.0",
+    "vitest": "^4.1.10"
+  }
+}

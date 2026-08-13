@@ -14,6 +14,9 @@ export function createQueryClient(): QueryClient {
           return failureCount < 2
         },
       },
+      // Never retry a mutation: silently repeating "create order" would place
+      // two orders.
+      mutations: { retry: 0 },
     },
   })
 }
