@@ -1,13 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import type { ReactElement } from 'react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { hexToRgb, wrap } from './helpers'
 import { Button } from '../src/primitives/Button'
 import { Badge } from '../src/primitives/Badge'
 import { focusRingStyle } from '../src/hooks/useFocusRing'
-import { ThemeProvider } from '../src/theme/ThemeProvider'
 import { lightTheme } from '../src/theme/tokens'
-
-const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
 describe('Button', () => {
   it('calls onPress when enabled', () => {
@@ -116,8 +113,3 @@ describe('Badge', () => {
     expect(label.style.color).toBe(hexToRgb(lightTheme.color.status.warning.fg))
   })
 })
-
-function hexToRgb(hex: string) {
-  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
-  return `rgb(${r}, ${g}, ${b})`
-}
