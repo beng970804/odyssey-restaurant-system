@@ -2,6 +2,7 @@ import { unwrap, useGetStatsSummary } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
 import type { StatusTone } from '@repo/ui'
 import { useCurrency } from '../../hooks/useCurrency'
+import { useTimezone } from '../../hooks/useTimezone'
 
 export type Kpi = { label: string; value: string; tone?: StatusTone; hint?: string }
 
@@ -11,8 +12,9 @@ export type Kpi = { label: string; value: string; tone?: StatusTone; hint?: stri
  * compose, they do not compute.
  */
 export function useHomeSummary() {
-  const { data, isLoading, error, refetch } = useGetStatsSummary()
+  const { data, isLoading, error, refetch, dataUpdatedAt } = useGetStatsSummary()
   const currency = useCurrency()
+  const timezone = useTimezone()
   const summary = unwrap(data)
 
   const kpis: Kpi[] = summary
@@ -45,5 +47,8 @@ export function useHomeSummary() {
     trend: summary?.dailyTrend ?? [],
     topItems: summary?.topItems ?? [],
     currency,
+    timezone,
+    // When the board last heard from the server — 0 until the first fetch lands.
+    updatedAt: dataUpdatedAt,
   }
 }
