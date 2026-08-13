@@ -518,6 +518,426 @@
             ]
           }
         }
+      },
+      "Settings": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "defaultPrepTimeMinutes": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "autoAcceptOrders": {
+            "type": "boolean"
+          },
+          "dineInEnabled": {
+            "type": "boolean"
+          },
+          "takeawayEnabled": {
+            "type": "boolean"
+          },
+          "deliveryEnabled": {
+            "type": "boolean"
+          },
+          "deliveryFeeCents": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "taxRatePercent": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "currency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "openingHours": {
+            "$ref": "#/components/schemas/OpeningHours"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "defaultPrepTimeMinutes",
+          "autoAcceptOrders",
+          "dineInEnabled",
+          "takeawayEnabled",
+          "deliveryEnabled",
+          "deliveryFeeCents",
+          "taxRatePercent",
+          "currency",
+          "timezone",
+          "openingHours",
+          "updatedAt"
+        ]
+      },
+      "OpeningHours": {
+        "type": "object",
+        "properties": {
+          "mon": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "tue": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "wed": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "thu": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "fri": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "sat": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          },
+          "sun": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "closed"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "closed": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  },
+                  "close": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "example": "11:00"
+                  }
+                },
+                "required": [
+                  "open",
+                  "close"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat",
+          "sun"
+        ]
+      },
+      "UpdateSettings": {
+        "type": "object",
+        "properties": {
+          "defaultPrepTimeMinutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "autoAcceptOrders": {
+            "type": "boolean"
+          },
+          "dineInEnabled": {
+            "type": "boolean"
+          },
+          "takeawayEnabled": {
+            "type": "boolean"
+          },
+          "deliveryEnabled": {
+            "type": "boolean"
+          },
+          "deliveryFeeCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "taxRatePercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "openingHours": {
+            "$ref": "#/components/schemas/OpeningHours"
+          }
+        }
       }
     },
     "parameters": {}
@@ -1074,6 +1494,84 @@
           },
           "404": {
             "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "operationId": "getSettings",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "The restaurant settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Settings row is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSettings",
+        "tags": [
+          "Settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Settings row is missing",
             "content": {
               "application/json": {
                 "schema": {

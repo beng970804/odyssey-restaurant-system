@@ -3,6 +3,7 @@ import { registerCategoryRoutes } from './categories'
 import { registerCustomerRoutes } from './customers'
 import { registerHealthRoutes } from './health'
 import { registerMenuRoutes } from './menu'
+import { registerSettingsRoutes } from './settings'
 
 /**
  * One registration point. Both the served Worker (`src/index.ts`) and the
@@ -14,4 +15,5 @@ export function registerAllRoutes(app: App) {
   registerCategoryRoutes(app)
   registerMenuRoutes(app)
   registerCustomerRoutes(app)
+  registerSettingsRoutes(app)
 }
