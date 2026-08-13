@@ -7,6 +7,7 @@ dist/
 .dev.vars
 .DS_Store
 .local/
+.superpowers/
 
 # Third-party agent skills installed via `npx skills add`. They run with full
 # agent permissions, so they stay a local choice rather than a repo dependency.
