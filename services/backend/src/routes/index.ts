@@ -3,6 +3,7 @@ import { registerCategoryRoutes } from './categories'
 import { registerCustomerRoutes } from './customers'
 import { registerHealthRoutes } from './health'
 import { registerMenuRoutes } from './menu'
+import { registerOrderRoutes } from './orders'
 import { registerSettingsRoutes } from './settings'
 
 /**
@@ -16,4 +17,5 @@ export function registerAllRoutes(app: App) {
   registerMenuRoutes(app)
   registerCustomerRoutes(app)
   registerSettingsRoutes(app)
+  registerOrderRoutes(app)
 }
