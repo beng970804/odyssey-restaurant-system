@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createTestApp } from './helpers/app'
 import { createTestDb, type TestDb } from './helpers/db'
+import { errorCode } from './helpers/request'
 import { seed } from '../src/db/seed'
 
 let db: TestDb
@@ -52,9 +53,6 @@ const getSettings = async (): Promise<Settings> => {
   expect(res.status).toBe(200)
   return (await res.json()) as Settings
 }
-
-const errorCode = async (res: Response) =>
-  ((await res.json()) as { error: { code: string } }).error.code
 
 describe('reading settings', () => {
   it('returns the singleton row', async () => {

@@ -2,7 +2,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
 import { ORDER_CHANNELS, ORDER_STATUSES } from '@repo/types'
 import { customers } from '../db/schema'
-import { isoDateTime } from './common'
+import { catalogQuerySchema, isoDateTime, listMetaSchema } from './common'
 
 export const customerSchema = createSelectSchema(customers, {
   createdAt: isoDateTime,
@@ -44,11 +44,10 @@ export const createCustomerSchema = createInsertSchema(customers, {
 
 export const updateCustomerSchema = createCustomerSchema.partial().openapi('UpdateCustomer')
 
-export const customerQuerySchema = z.object({ search: z.string().min(1).optional() })
+export const customerQuerySchema = z
+  .object({ search: z.string().min(1).optional() })
+  .extend(catalogQuerySchema.shape)
 
 export const customerListSchema = z
-  .object({
-    data: z.array(customerWithStatsSchema),
-    meta: z.object({ total: z.number().int() }),
-  })
+  .object({ data: z.array(customerWithStatsSchema), meta: listMetaSchema })
   .openapi('CustomerList')

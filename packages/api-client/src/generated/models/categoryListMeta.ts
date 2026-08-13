@@ -7,4 +7,6 @@
 
 export type CategoryListMeta = {
   total: number;
+  page: number;
+  pageSize: number;
 };

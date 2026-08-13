@@ -99,8 +99,10 @@ describe('GET /stats/summary', () => {
   })
 
   describe('against a controlled fixture', () => {
+    let fixtures: Awaited<ReturnType<typeof seedMinimal>>
+
     beforeEach(async () => {
-      await seedMinimal(db)
+      fixtures = await seedMinimal(db)
     })
 
     it('reports zeroes rather than NaN when there are no orders', async () => {
@@ -116,6 +118,38 @@ describe('GET /stats/summary', () => {
       })
       expect(stats.dailyTrend).toHaveLength(7)
       expect(stats.dailyTrend.every((d) => d.orderCount === 0 && d.revenueCents === 0)).toBe(true)
+    })
+
+    it('keys top items by menu item, so a rename cannot split a dish', async () => {
+      const { menuItems } = await import('../src/db/schema')
+      const { eq } = await import('drizzle-orm')
+
+      await fixtureOrder(db, new Date('2026-08-13T02:00:00Z'), 1700, 'completed', {
+        menuItemId: fixtures.nasiLemak.id,
+        nameSnapshot: 'Nasi Lemak',
+        unitPriceCents: 850,
+        quantity: 2,
+      })
+
+      // The dish is renamed; its older line keeps the old snapshot (ADR 0001).
+      await db
+        .update(menuItems)
+        .set({ name: 'Nasi Lemak Special' })
+        .where(eq(menuItems.id, fixtures.nasiLemak.id))
+
+      await fixtureOrder(db, new Date('2026-08-13T03:00:00Z'), 850, 'completed', {
+        menuItemId: fixtures.nasiLemak.id,
+        nameSnapshot: 'Nasi Lemak Special',
+        unitPriceCents: 850,
+        quantity: 1,
+      })
+
+      const { topItems } = await summary()
+      const rows = topItems.filter((i) => i.menuItemId === fixtures.nasiLemak.id)
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.quantitySold).toBe(3)
+      // Reported under the item's current name, not a frozen snapshot.
+      expect(rows[0]!.name).toBe('Nasi Lemak Special')
     })
 
     it('buckets trend days in the settings timezone, not UTC', async () => {
@@ -150,16 +184,34 @@ describe('GET /stats/summary', () => {
   })
 })
 
-async function fixtureOrder(db: TestDb, placedAt: Date, totalCents: number, status = 'completed') {
-  const { orders } = await import('../src/db/schema')
-  await db.insert(orders).values({
-    channel: 'takeaway',
-    status: status as 'completed',
-    subtotalCents: totalCents,
-    taxCents: 0,
-    deliveryFeeCents: 0,
-    totalCents,
-    placedAt,
-    updatedAt: placedAt,
-  })
+type FixtureLine = {
+  menuItemId: string
+  nameSnapshot: string
+  unitPriceCents: number
+  quantity: number
+}
+
+async function fixtureOrder(
+  db: TestDb,
+  placedAt: Date,
+  totalCents: number,
+  status = 'completed',
+  line?: FixtureLine,
+) {
+  const { orderItems, orders } = await import('../src/db/schema')
+  const [order] = await db
+    .insert(orders)
+    .values({
+      channel: 'takeaway',
+      status: status as 'completed',
+      subtotalCents: totalCents,
+      taxCents: 0,
+      deliveryFeeCents: 0,
+      totalCents,
+      placedAt,
+      updatedAt: placedAt,
+    })
+    .returning({ id: orders.id })
+
+  if (line) await db.insert(orderItems).values({ orderId: order!.id, ...line })
 }

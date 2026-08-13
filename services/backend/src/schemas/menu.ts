@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
 import { menuItems } from '../db/schema'
-import { isoDateTime } from './common'
+import { catalogQuerySchema, isoDateTime, listMetaSchema } from './common'
 
 export const menuItemSchema = createSelectSchema(menuItems, {
   createdAt: isoDateTime,
@@ -41,16 +41,15 @@ export const updateMenuItemSchema = createMenuItemSchema.partial().openapi('Upda
  * coerced — an explicit enum keeps the OpenAPI document honest about what the
  * wire actually carries.
  */
-export const menuItemQuerySchema = z.object({
-  categoryId: z.uuid().optional(),
-  available: z.enum(['true', 'false']).optional(),
-  search: z.string().min(1).optional(),
-  includeArchived: z.enum(['true', 'false']).optional(),
-})
+export const menuItemQuerySchema = z
+  .object({
+    categoryId: z.uuid().optional(),
+    available: z.enum(['true', 'false']).optional(),
+    search: z.string().min(1).optional(),
+    includeArchived: z.enum(['true', 'false']).optional(),
+  })
+  .extend(catalogQuerySchema.shape)
 
 export const menuItemListSchema = z
-  .object({
-    data: z.array(menuItemWithCategorySchema),
-    meta: z.object({ total: z.number().int() }),
-  })
+  .object({ data: z.array(menuItemWithCategorySchema), meta: listMetaSchema })
   .openapi('MenuItemList')

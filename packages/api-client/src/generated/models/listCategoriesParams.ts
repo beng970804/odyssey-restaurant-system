@@ -5,11 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ListCustomersParams = {
-/**
- * @minLength 1
- */
-search?: string;
+export type ListCategoriesParams = {
 /**
  * @minimum 1
  */

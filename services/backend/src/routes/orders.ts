@@ -1,4 +1,4 @@
-import { createRoute, z } from '@hono/zod-openapi'
+import { createRoute } from '@hono/zod-openapi'
 import type { OrderAction } from '@repo/types'
 import {
   cancelOrderSchema,
@@ -7,17 +7,10 @@ import {
   orderListSchema,
   orderQuerySchema,
 } from '../schemas/orders'
-import { toIsoDates } from '../schemas/common'
+import { toIsoDates, uuidParamSchema } from '../schemas/common'
 import { createOrder, listOrders, performAction, requireOrderDetail } from '../services/orders'
-import { errorSchema } from '../lib/errors'
+import { errorResponse, internalErrorResponse } from '../lib/errors'
 import type { App } from '../app'
-
-const errorResponse = (description: string) => ({
-  description,
-  content: { 'application/json': { schema: errorSchema } },
-})
-
-const idParamSchema = z.object({ id: z.uuid() })
 
 /**
  * The API exposes named business operations, not a status field — there is no
@@ -81,6 +74,7 @@ export function registerOrderRoutes(app: App) {
         },
         404: errorResponse('A menu item does not exist'),
         422: errorResponse('The order was refused'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => c.json(serialiseOrder(await createOrder(c.get('db'), c.req.valid('json'))), 201),
@@ -99,6 +93,7 @@ export function registerOrderRoutes(app: App) {
           content: { 'application/json': { schema: orderListSchema } },
         },
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -122,6 +117,7 @@ export function registerOrderRoutes(app: App) {
     404: errorResponse('Order not found'),
     409: errorResponse('The order’s current status does not allow this action'),
     422: errorResponse('Validation failed'),
+    ...internalErrorResponse,
   }
 
   for (const { action, path, operationId, summary } of ORDER_ACTION_ROUTES) {
@@ -132,7 +128,7 @@ export function registerOrderRoutes(app: App) {
         operationId,
         summary,
         tags: ['Orders'],
-        request: { params: idParamSchema },
+        request: { params: uuidParamSchema },
         responses: actionResponses,
       }),
       async (c) => {
@@ -150,7 +146,7 @@ export function registerOrderRoutes(app: App) {
       summary: 'Cancel an order',
       tags: ['Orders'],
       request: {
-        params: idParamSchema,
+        params: uuidParamSchema,
         body: { content: { 'application/json': { schema: cancelOrderSchema } }, required: true },
       },
       responses: actionResponses,
@@ -172,7 +168,7 @@ export function registerOrderRoutes(app: App) {
       path: '/orders/{id}',
       operationId: 'getOrder',
       tags: ['Orders'],
-      request: { params: idParamSchema },
+      request: { params: uuidParamSchema },
       responses: {
         200: {
           description: 'Order with its items and customer',
@@ -180,6 +176,7 @@ export function registerOrderRoutes(app: App) {
         },
         404: errorResponse('Order not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) =>

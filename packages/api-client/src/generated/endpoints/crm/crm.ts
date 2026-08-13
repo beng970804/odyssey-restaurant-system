@@ -60,10 +60,15 @@ export type listCustomersResponse422 = {
   status: 422
 }
 
+export type listCustomersResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type listCustomersResponseSuccess = (listCustomersResponse200) & {
   headers: Headers;
 };
-export type listCustomersResponseError = (listCustomersResponse422) & {
+export type listCustomersResponseError = (listCustomersResponse422 | listCustomersResponse500) & {
   headers: Headers;
 };
 
@@ -156,10 +161,15 @@ export type createCustomerResponse422 = {
   status: 422
 }
 
+export type createCustomerResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type createCustomerResponseSuccess = (createCustomerResponse201) & {
   headers: Headers;
 };
-export type createCustomerResponseError = (createCustomerResponse422) & {
+export type createCustomerResponseError = (createCustomerResponse422 | createCustomerResponse500) & {
   headers: Headers;
 };
 
@@ -244,10 +254,15 @@ export type getCustomerResponse422 = {
   status: 422
 }
 
+export type getCustomerResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type getCustomerResponseSuccess = (getCustomerResponse200) & {
   headers: Headers;
 };
-export type getCustomerResponseError = (getCustomerResponse404 | getCustomerResponse422) & {
+export type getCustomerResponseError = (getCustomerResponse404 | getCustomerResponse422 | getCustomerResponse500) & {
   headers: Headers;
 };
 
@@ -338,10 +353,15 @@ export type updateCustomerResponse422 = {
   status: 422
 }
 
+export type updateCustomerResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type updateCustomerResponseSuccess = (updateCustomerResponse200) & {
   headers: Headers;
 };
-export type updateCustomerResponseError = (updateCustomerResponse404 | updateCustomerResponse422) & {
+export type updateCustomerResponseError = (updateCustomerResponse404 | updateCustomerResponse422 | updateCustomerResponse500) & {
   headers: Headers;
 };
 

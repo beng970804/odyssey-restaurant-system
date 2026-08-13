@@ -15,4 +15,13 @@ available?: ListMenuItemsAvailable;
  */
 search?: string;
 includeArchived?: ListMenuItemsIncludeArchived;
+/**
+ * @minimum 1
+ */
+page?: number;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+pageSize?: number;
 };

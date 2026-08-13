@@ -1,4 +1,4 @@
-import { desc, eq, getTableColumns, ilike, sql } from 'drizzle-orm'
+import { desc, eq, getTableColumns, ilike, sql, type SQL } from 'drizzle-orm'
 import { customers, orders } from '../db/schema'
 import type { Db } from '../db/client'
 
@@ -18,29 +18,32 @@ const lifetimeSpendCents = sql<number>`coalesce(sum(${orders.totalCents}) filter
  * month is worth seeing — but they contribute no money, so the two aggregates
  * deliberately disagree.
  */
+function selectCustomersWithStats(db: Db, where?: SQL) {
+  return db
+    .select({ ...getTableColumns(customers), orderCount, lifetimeSpendCents })
+    .from(customers)
+    .leftJoin(orders, eq(orders.customerId, customers.id))
+    .where(where)
+    .groupBy(customers.id)
+}
+
 export function listCustomers(db: Db, search?: string) {
   return (
-    db
-      .select({ ...getTableColumns(customers), orderCount, lifetimeSpendCents })
-      .from(customers)
-      .leftJoin(orders, eq(orders.customerId, customers.id))
-      .where(search ? ilike(customers.name, `%${search}%`) : undefined)
-      .groupBy(customers.id)
+    selectCustomersWithStats(db, search ? ilike(customers.name, `%${search}%`) : undefined)
       // Ordered by the expression rather than by its output alias: Drizzle names
       // the column "lifetimeSpendCents", so a snake_case alias would not resolve.
       .orderBy(desc(lifetimeSpendCents), customers.name)
   )
 }
 
-export async function getCustomer(db: Db, id: string) {
-  const [customer] = await db
-    .select({ ...getTableColumns(customers), orderCount, lifetimeSpendCents })
-    .from(customers)
-    .leftJoin(orders, eq(orders.customerId, customers.id))
-    .where(eq(customers.id, id))
-    .groupBy(customers.id)
-    .limit(1)
+/** The customer and their aggregates, without the order history. */
+export async function getCustomerStats(db: Db, id: string) {
+  const [customer] = await selectCustomersWithStats(db, eq(customers.id, id)).limit(1)
+  return customer ?? null
+}
 
+export async function getCustomer(db: Db, id: string) {
+  const customer = await getCustomerStats(db, id)
   if (!customer) return null
 
   const recentOrders = await db

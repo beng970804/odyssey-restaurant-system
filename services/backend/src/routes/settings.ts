@@ -2,13 +2,8 @@ import { createRoute } from '@hono/zod-openapi'
 import { settingsSchema, updateSettingsSchema } from '../schemas/settings'
 import { toIsoDates } from '../schemas/common'
 import { getSettings, updateSettings } from '../services/settings'
-import { errorSchema } from '../lib/errors'
+import { errorResponse, internalErrorResponse } from '../lib/errors'
 import type { App } from '../app'
-
-const errorResponse = (description: string) => ({
-  description,
-  content: { 'application/json': { schema: errorSchema } },
-})
 
 export function registerSettingsRoutes(app: App) {
   app.openapi(
@@ -23,6 +18,7 @@ export function registerSettingsRoutes(app: App) {
           content: { 'application/json': { schema: settingsSchema } },
         },
         404: errorResponse('Settings row is missing'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => c.json(toIsoDates(await getSettings(c.get('db'))), 200),
@@ -44,6 +40,7 @@ export function registerSettingsRoutes(app: App) {
         },
         404: errorResponse('Settings row is missing'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => c.json(toIsoDates(await updateSettings(c.get('db'), c.req.valid('json'))), 200),

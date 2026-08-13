@@ -10,6 +10,21 @@ export const errorSchema = z
   })
   .openapi('Error')
 
+/**
+ * The one place a route describes an error response. Spec §8 asks for a shared
+ * response so every endpoint documents the envelope identically; a per-file
+ * copy of this helper drifts the moment someone edits one of them.
+ */
+export const errorResponse = (description: string) => ({
+  description,
+  content: { 'application/json': { schema: errorSchema } },
+})
+
+/** Every route can fail this way, so every route documents it. */
+export const internalErrorResponse = {
+  500: errorResponse('Internal server error'),
+}
+
 export type ErrorCode =
   // Emitted by the onError catch-all rather than thrown as an AppError — it is
   // the one failure that is not a domain failure.

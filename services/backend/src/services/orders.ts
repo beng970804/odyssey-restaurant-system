@@ -23,7 +23,7 @@ import { getSettings } from './settings'
 import type { CreateOrderInput, OrderQuery } from '../schemas/orders'
 import type { Db } from '../db/client'
 
-export async function getOrderDetail(db: Db, id: string) {
+async function getOrderDetail(db: Db, id: string) {
   const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1)
   if (!order) return null
 
@@ -150,6 +150,20 @@ export async function createOrder(db: Db, input: CreateOrderInput, now = new Dat
   // the restaurant's hours are not.
   if (!isWithinOpeningHours(now, settings.openingHours, settings.timezone)) {
     throw new AppError('OUTSIDE_OPENING_HOURS', 'The restaurant is closed', 422)
+  }
+
+  // 4a. The customer, if named, exists. Checked here so a stale client id is a
+  // pipeline outcome like any other, rather than a foreign-key violation
+  // surfacing as an unhandled 500.
+  if (input.customerId) {
+    const [customer] = await db
+      .select({ id: customers.id })
+      .from(customers)
+      .where(eq(customers.id, input.customerId))
+      .limit(1)
+    if (!customer) {
+      throw new AppError('NOT_FOUND', `No customer with id ${input.customerId}`, 404)
+    }
   }
 
   // 4. Every item exists and is not archived.

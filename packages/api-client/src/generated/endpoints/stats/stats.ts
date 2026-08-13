@@ -51,10 +51,15 @@ export type getStatsSummaryResponse404 = {
   status: 404
 }
 
+export type getStatsSummaryResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type getStatsSummaryResponseSuccess = (getStatsSummaryResponse200) & {
   headers: Headers;
 };
-export type getStatsSummaryResponseError = (getStatsSummaryResponse404) & {
+export type getStatsSummaryResponseError = (getStatsSummaryResponse404 | getStatsSummaryResponse500) & {
   headers: Headers;
 };
 

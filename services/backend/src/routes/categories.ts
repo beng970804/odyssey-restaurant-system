@@ -2,20 +2,14 @@ import { createRoute } from '@hono/zod-openapi'
 import { asc, eq } from 'drizzle-orm'
 import { categories } from '../db/schema'
 import {
-  categoryIdParamSchema,
   categoryListSchema,
   categorySchema,
   createCategorySchema,
   updateCategorySchema,
 } from '../schemas/categories'
-import { toIsoDates } from '../schemas/common'
-import { AppError, errorSchema } from '../lib/errors'
+import { catalogQuerySchema, paginate, toIsoDates, uuidParamSchema } from '../schemas/common'
+import { AppError, errorResponse, internalErrorResponse } from '../lib/errors'
 import type { App } from '../app'
-
-const errorResponse = (description: string) => ({
-  description,
-  content: { 'application/json': { schema: errorSchema } },
-})
 
 export function registerCategoryRoutes(app: App) {
   app.openapi(
@@ -24,21 +18,22 @@ export function registerCategoryRoutes(app: App) {
       path: '/categories',
       operationId: 'listCategories',
       tags: ['Menu'],
+      request: { query: catalogQuerySchema },
       responses: {
         200: {
           description: 'All categories',
           content: { 'application/json': { schema: categoryListSchema } },
         },
-        500: errorResponse('Error'),
+        422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
       const db = c.get('db')
       const rows = await db.select().from(categories).orderBy(asc(categories.sortOrder))
-      // Explicit 200: the route declares a 500 response too, so without a
-      // status c.json() infers `200 | 500` and checks this body against the
-      // error envelope as well.
-      return c.json({ data: rows.map(toIsoDates), meta: { total: rows.length } }, 200)
+      // Explicit 200: the route declares error responses too, so without a
+      // status c.json() checks this body against the error envelope as well.
+      return c.json(paginate(rows.map(toIsoDates), c.req.valid('query')), 200)
     },
   )
 
@@ -57,6 +52,7 @@ export function registerCategoryRoutes(app: App) {
           content: { 'application/json': { schema: categorySchema } },
         },
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -73,7 +69,7 @@ export function registerCategoryRoutes(app: App) {
       operationId: 'updateCategory',
       tags: ['Menu'],
       request: {
-        params: categoryIdParamSchema,
+        params: uuidParamSchema,
         body: { content: { 'application/json': { schema: updateCategorySchema } }, required: true },
       },
       responses: {
@@ -83,6 +79,7 @@ export function registerCategoryRoutes(app: App) {
         },
         404: errorResponse('Category not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {

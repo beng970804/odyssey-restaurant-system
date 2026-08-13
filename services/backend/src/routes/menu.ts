@@ -1,4 +1,4 @@
-import { createRoute, z } from '@hono/zod-openapi'
+import { createRoute } from '@hono/zod-openapi'
 import { and, asc, eq, getTableColumns, ilike, type SQL } from 'drizzle-orm'
 import { categories, menuItems } from '../db/schema'
 import {
@@ -8,17 +8,10 @@ import {
   menuItemWithCategorySchema,
   updateMenuItemSchema,
 } from '../schemas/menu'
-import { toIsoDates } from '../schemas/common'
-import { AppError, errorSchema } from '../lib/errors'
+import { paginate, toIsoDates, uuidParamSchema } from '../schemas/common'
+import { AppError, errorResponse, internalErrorResponse } from '../lib/errors'
 import type { App } from '../app'
 import type { Db } from '../db/client'
-
-const errorResponse = (description: string) => ({
-  description,
-  content: { 'application/json': { schema: errorSchema } },
-})
-
-const idParamSchema = z.object({ id: z.uuid() })
 
 const withCategory = { ...getTableColumns(menuItems), categoryName: categories.name }
 
@@ -52,6 +45,7 @@ export function registerMenuRoutes(app: App) {
           content: { 'application/json': { schema: menuItemListSchema } },
         },
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -67,7 +61,7 @@ export function registerMenuRoutes(app: App) {
       if (search) filters.push(ilike(menuItems.name, `%${search}%`))
 
       const rows = await selectItems(db, and(...filters))
-      return c.json({ data: rows.map(toIsoDates), meta: { total: rows.length } }, 200)
+      return c.json(paginate(rows.map(toIsoDates), c.req.valid('query')), 200)
     },
   )
 
@@ -87,6 +81,7 @@ export function registerMenuRoutes(app: App) {
         },
         404: errorResponse('Category not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -114,7 +109,7 @@ export function registerMenuRoutes(app: App) {
       operationId: 'updateMenuItem',
       tags: ['Menu'],
       request: {
-        params: idParamSchema,
+        params: uuidParamSchema,
         body: { content: { 'application/json': { schema: updateMenuItemSchema } }, required: true },
       },
       responses: {
@@ -124,6 +119,7 @@ export function registerMenuRoutes(app: App) {
         },
         404: errorResponse('Menu item not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -158,7 +154,7 @@ export function registerMenuRoutes(app: App) {
       path: '/menu-items/{id}/archive',
       operationId: 'archiveMenuItem',
       tags: ['Menu'],
-      request: { params: idParamSchema },
+      request: { params: uuidParamSchema },
       responses: {
         200: {
           description: 'Menu item archived',
@@ -166,6 +162,7 @@ export function registerMenuRoutes(app: App) {
         },
         404: errorResponse('Menu item not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {

@@ -125,6 +125,18 @@ describe('POST /orders', () => {
     expect(body.error.details?.unavailableItems?.[0]!.name).toBe(fixtures.soldOut.name)
   })
 
+  it('404s a customer that does not exist rather than failing the insert', async () => {
+    // A stale client id must be a pipeline outcome, not a foreign-key violation
+    // surfacing through the catch-all as a 500.
+    const res = await post({
+      channel: 'takeaway',
+      customerId: '00000000-0000-0000-0000-000000000000',
+      items: [{ menuItemId: fixtures.tehTarik.id, quantity: 1 }],
+    })
+    expect(res.status).toBe(404)
+    expect(((await res.json()) as ErrorBody).error.code).toBe('NOT_FOUND')
+  })
+
   it('404s a menu item that does not exist', async () => {
     const res = await post({
       channel: 'takeaway',

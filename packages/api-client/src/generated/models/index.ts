@@ -27,6 +27,7 @@ export * from './error';
 export * from './errorError';
 export * from './health';
 export * from './healthStatus';
+export * from './listCategoriesParams';
 export * from './listCustomersParams';
 export * from './listMenuItemsAvailable';
 export * from './listMenuItemsIncludeArchived';

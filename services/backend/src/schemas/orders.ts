@@ -3,7 +3,7 @@ import { z } from '@hono/zod-openapi'
 import { ORDER_CHANNELS, ORDER_STATUSES } from '@repo/types'
 import { orderItems, orders } from '../db/schema'
 import { customerSchema } from './customers'
-import { isoDateTime } from './common'
+import { isoDateTime, listMetaSchema } from './common'
 
 /**
  * Note what is absent: no price, no total, no status. The client cannot express
@@ -77,10 +77,6 @@ export type OrderQuery = z.infer<typeof orderQuerySchema>
 export const orderListSchema = z
   .object({
     data: z.array(orderRowSchema),
-    meta: z.object({
-      total: z.number().int(),
-      page: z.number().int(),
-      pageSize: z.number().int(),
-    }),
+    meta: listMetaSchema,
   })
   .openapi('OrderList')

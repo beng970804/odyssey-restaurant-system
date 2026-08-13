@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createTestApp } from './helpers/app'
 import { createTestDb, type TestDb } from './helpers/db'
+import { jsonRequest } from './helpers/request'
 import { seed } from '../src/db/seed'
 
 let db: TestDb
@@ -17,12 +18,7 @@ afterAll(async () => {
   await cleanup()
 })
 
-const json = (path: string, method: string, body: unknown) =>
-  app.request(path, {
-    method,
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
-  })
+const json = (path: string, method: string, body: unknown) => jsonRequest(app)(path, method, body)
 
 type Customer = {
   id: string

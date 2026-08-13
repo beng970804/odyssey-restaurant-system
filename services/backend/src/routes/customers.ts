@@ -1,4 +1,4 @@
-import { createRoute, z } from '@hono/zod-openapi'
+import { createRoute } from '@hono/zod-openapi'
 import { eq } from 'drizzle-orm'
 import { customers } from '../db/schema'
 import {
@@ -9,25 +9,17 @@ import {
   customerWithStatsSchema,
   updateCustomerSchema,
 } from '../schemas/customers'
-import { toIsoDates } from '../schemas/common'
-import { getCustomer, listCustomers } from '../services/customers'
-import { AppError, errorSchema } from '../lib/errors'
+import { paginate, toIsoDates, uuidParamSchema } from '../schemas/common'
+import { getCustomer, getCustomerStats, listCustomers } from '../services/customers'
+import { AppError, errorResponse, internalErrorResponse } from '../lib/errors'
 import type { App } from '../app'
 import type { Db } from '../db/client'
 
-const errorResponse = (description: string) => ({
-  description,
-  content: { 'application/json': { schema: errorSchema } },
-})
-
-const idParamSchema = z.object({ id: z.uuid() })
-
 /** A written row still has to come back carrying its aggregates. */
 async function requireCustomerWithStats(db: Db, id: string) {
-  const customer = await getCustomer(db, id)
+  const customer = await getCustomerStats(db, id)
   if (!customer) throw new AppError('NOT_FOUND', `No customer with id ${id}`, 404)
-  const { recentOrders: _recentOrders, ...withStats } = customer
-  return withStats
+  return customer
 }
 
 export function registerCustomerRoutes(app: App) {
@@ -44,11 +36,13 @@ export function registerCustomerRoutes(app: App) {
           content: { 'application/json': { schema: customerListSchema } },
         },
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
-      const rows = await listCustomers(c.get('db'), c.req.valid('query').search)
-      return c.json({ data: rows.map(toIsoDates), meta: { total: rows.length } }, 200)
+      const query = c.req.valid('query')
+      const rows = await listCustomers(c.get('db'), query.search)
+      return c.json(paginate(rows.map(toIsoDates), query), 200)
     },
   )
 
@@ -58,7 +52,7 @@ export function registerCustomerRoutes(app: App) {
       path: '/customers/{id}',
       operationId: 'getCustomer',
       tags: ['CRM'],
-      request: { params: idParamSchema },
+      request: { params: uuidParamSchema },
       responses: {
         200: {
           description: 'Customer with recent order history',
@@ -66,6 +60,7 @@ export function registerCustomerRoutes(app: App) {
         },
         404: errorResponse('Customer not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -95,6 +90,7 @@ export function registerCustomerRoutes(app: App) {
           content: { 'application/json': { schema: customerWithStatsSchema } },
         },
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {
@@ -114,7 +110,7 @@ export function registerCustomerRoutes(app: App) {
       operationId: 'updateCustomer',
       tags: ['CRM'],
       request: {
-        params: idParamSchema,
+        params: uuidParamSchema,
         body: { content: { 'application/json': { schema: updateCustomerSchema } }, required: true },
       },
       responses: {
@@ -124,6 +120,7 @@ export function registerCustomerRoutes(app: App) {
         },
         404: errorResponse('Customer not found'),
         422: errorResponse('Validation failed'),
+        ...internalErrorResponse,
       },
     }),
     async (c) => {

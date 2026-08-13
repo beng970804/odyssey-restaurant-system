@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
 import { categories } from '../db/schema'
-import { isoDateTime } from './common'
+import { isoDateTime, listMetaSchema } from './common'
 
 /**
  * The drizzle-zod link. `categorySchema` was never hand-written — it is the
@@ -20,11 +20,6 @@ export const createCategorySchema = createInsertSchema(categories, {
 
 export const updateCategorySchema = createCategorySchema.partial().openapi('UpdateCategory')
 
-export const categoryIdParamSchema = z.object({ id: z.uuid() })
-
 export const categoryListSchema = z
-  .object({
-    data: z.array(categorySchema),
-    meta: z.object({ total: z.number().int() }),
-  })
+  .object({ data: z.array(categorySchema), meta: listMetaSchema })
   .openapi('CategoryList')

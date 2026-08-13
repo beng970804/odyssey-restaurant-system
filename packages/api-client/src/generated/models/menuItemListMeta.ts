@@ -7,4 +7,6 @@
 
 export type MenuItemListMeta = {
   total: number;
+  page: number;
+  pageSize: number;
 };

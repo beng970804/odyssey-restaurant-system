@@ -1,6 +1,6 @@
 import { desc, eq, gte, ne, sql } from 'drizzle-orm'
 import { localDateKey } from '@repo/shared'
-import { orderItems, orders } from '../db/schema'
+import { menuItems, orderItems, orders } from '../db/schema'
 import { getSettings } from './settings'
 import type { Db } from '../db/client'
 
@@ -34,16 +34,21 @@ export async function getStatsSummary(db: Db, now = new Date()) {
       .from(orders)
       .where(eq(orders.status, 'pending')),
 
+    // Grouped by menuItemId alone — the reporting key. Grouping by the frozen
+    // nameSnapshot too would split one dish into two rows the moment it is
+    // renamed, and could drop the real bestseller out of the top five. The
+    // name shown is therefore the item's current name, not the snapshot.
     db
       .select({
         menuItemId: orderItems.menuItemId,
-        name: orderItems.nameSnapshot,
+        name: menuItems.name,
         quantitySold: sql<number>`sum(${orderItems.quantity})::int`,
       })
       .from(orderItems)
       .innerJoin(orders, eq(orderItems.orderId, orders.id))
+      .innerJoin(menuItems, eq(orderItems.menuItemId, menuItems.id))
       .where(ne(orders.status, 'cancelled'))
-      .groupBy(orderItems.menuItemId, orderItems.nameSnapshot)
+      .groupBy(orderItems.menuItemId, menuItems.name)
       .orderBy(desc(sql`sum(${orderItems.quantity})`))
       .limit(TOP_ITEM_LIMIT),
 

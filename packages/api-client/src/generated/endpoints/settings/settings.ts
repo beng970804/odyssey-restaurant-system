@@ -56,10 +56,15 @@ export type getSettingsResponse404 = {
   status: 404
 }
 
+export type getSettingsResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type getSettingsResponseSuccess = (getSettingsResponse200) & {
   headers: Headers;
 };
-export type getSettingsResponseError = (getSettingsResponse404) & {
+export type getSettingsResponseError = (getSettingsResponse404 | getSettingsResponse500) & {
   headers: Headers;
 };
 
@@ -150,10 +155,15 @@ export type updateSettingsResponse422 = {
   status: 422
 }
 
+export type updateSettingsResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type updateSettingsResponseSuccess = (updateSettingsResponse200) & {
   headers: Headers;
 };
-export type updateSettingsResponseError = (updateSettingsResponse404 | updateSettingsResponse422) & {
+export type updateSettingsResponseError = (updateSettingsResponse404 | updateSettingsResponse422 | updateSettingsResponse500) & {
   headers: Headers;
 };
 

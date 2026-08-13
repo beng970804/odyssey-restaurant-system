@@ -64,10 +64,15 @@ export type createOrderResponse422 = {
   status: 422
 }
 
+export type createOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type createOrderResponseSuccess = (createOrderResponse201) & {
   headers: Headers;
 };
-export type createOrderResponseError = (createOrderResponse404 | createOrderResponse422) & {
+export type createOrderResponseError = (createOrderResponse404 | createOrderResponse422 | createOrderResponse500) & {
   headers: Headers;
 };
 
@@ -147,10 +152,15 @@ export type listOrdersResponse422 = {
   status: 422
 }
 
+export type listOrdersResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type listOrdersResponseSuccess = (listOrdersResponse200) & {
   headers: Headers;
 };
-export type listOrdersResponseError = (listOrdersResponse422) & {
+export type listOrdersResponseError = (listOrdersResponse422 | listOrdersResponse500) & {
   headers: Headers;
 };
 
@@ -253,10 +263,15 @@ export type acceptOrderResponse422 = {
   status: 422
 }
 
+export type acceptOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type acceptOrderResponseSuccess = (acceptOrderResponse200) & {
   headers: Headers;
 };
-export type acceptOrderResponseError = (acceptOrderResponse404 | acceptOrderResponse409 | acceptOrderResponse422) & {
+export type acceptOrderResponseError = (acceptOrderResponse404 | acceptOrderResponse409 | acceptOrderResponse422 | acceptOrderResponse500) & {
   headers: Headers;
 };
 
@@ -352,10 +367,15 @@ export type startPreparingOrderResponse422 = {
   status: 422
 }
 
+export type startPreparingOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type startPreparingOrderResponseSuccess = (startPreparingOrderResponse200) & {
   headers: Headers;
 };
-export type startPreparingOrderResponseError = (startPreparingOrderResponse404 | startPreparingOrderResponse409 | startPreparingOrderResponse422) & {
+export type startPreparingOrderResponseError = (startPreparingOrderResponse404 | startPreparingOrderResponse409 | startPreparingOrderResponse422 | startPreparingOrderResponse500) & {
   headers: Headers;
 };
 
@@ -451,10 +471,15 @@ export type markOrderReadyResponse422 = {
   status: 422
 }
 
+export type markOrderReadyResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type markOrderReadyResponseSuccess = (markOrderReadyResponse200) & {
   headers: Headers;
 };
-export type markOrderReadyResponseError = (markOrderReadyResponse404 | markOrderReadyResponse409 | markOrderReadyResponse422) & {
+export type markOrderReadyResponseError = (markOrderReadyResponse404 | markOrderReadyResponse409 | markOrderReadyResponse422 | markOrderReadyResponse500) & {
   headers: Headers;
 };
 
@@ -550,10 +575,15 @@ export type completeOrderResponse422 = {
   status: 422
 }
 
+export type completeOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type completeOrderResponseSuccess = (completeOrderResponse200) & {
   headers: Headers;
 };
-export type completeOrderResponseError = (completeOrderResponse404 | completeOrderResponse409 | completeOrderResponse422) & {
+export type completeOrderResponseError = (completeOrderResponse404 | completeOrderResponse409 | completeOrderResponse422 | completeOrderResponse500) & {
   headers: Headers;
 };
 
@@ -649,10 +679,15 @@ export type cancelOrderResponse422 = {
   status: 422
 }
 
+export type cancelOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type cancelOrderResponseSuccess = (cancelOrderResponse200) & {
   headers: Headers;
 };
-export type cancelOrderResponseError = (cancelOrderResponse404 | cancelOrderResponse409 | cancelOrderResponse422) & {
+export type cancelOrderResponseError = (cancelOrderResponse404 | cancelOrderResponse409 | cancelOrderResponse422 | cancelOrderResponse500) & {
   headers: Headers;
 };
 
@@ -744,10 +779,15 @@ export type getOrderResponse422 = {
   status: 422
 }
 
+export type getOrderResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type getOrderResponseSuccess = (getOrderResponse200) & {
   headers: Headers;
 };
-export type getOrderResponseError = (getOrderResponse404 | getOrderResponse422) & {
+export type getOrderResponseError = (getOrderResponse404 | getOrderResponse422 | getOrderResponse500) & {
   headers: Headers;
 };
 

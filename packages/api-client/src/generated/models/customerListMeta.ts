@@ -7,4 +7,6 @@
 
 export type CustomerListMeta = {
   total: number;
+  page: number;
+  pageSize: number;
 };

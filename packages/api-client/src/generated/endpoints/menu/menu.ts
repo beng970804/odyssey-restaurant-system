@@ -24,6 +24,7 @@ import type {
   CreateCategory,
   CreateMenuItem,
   Error,
+  ListCategoriesParams,
   ListMenuItemsParams,
   MenuItemList,
   MenuItemWithCategory,
@@ -58,6 +59,11 @@ export type listCategoriesResponse200 = {
   status: 200
 }
 
+export type listCategoriesResponse422 = {
+  data: Error
+  status: 422
+}
+
 export type listCategoriesResponse500 = {
   data: Error
   status: 500
@@ -66,23 +72,30 @@ export type listCategoriesResponse500 = {
 export type listCategoriesResponseSuccess = (listCategoriesResponse200) & {
   headers: Headers;
 };
-export type listCategoriesResponseError = (listCategoriesResponse500) & {
+export type listCategoriesResponseError = (listCategoriesResponse422 | listCategoriesResponse500) & {
   headers: Headers;
 };
 
 export type listCategoriesResponse = (listCategoriesResponseSuccess | listCategoriesResponseError)
 
-export const getListCategoriesUrl = () => {
+export const getListCategoriesUrl = (params?: ListCategoriesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/categories`
+  return stringifiedParams.length > 0 ? `/categories?${stringifiedParams}` : `/categories`
 }
 
-export const listCategories = async ( options?: Parameters<typeof customFetch>[1]): Promise<listCategoriesResponse> => {
+export const listCategories = async (params?: ListCategoriesParams, options?: Parameters<typeof customFetch>[1]): Promise<listCategoriesResponse> => {
 
-  return customFetch<listCategoriesResponse>(getListCategoriesUrl(),
+  return customFetch<listCategoriesResponse>(getListCategoriesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -95,23 +108,23 @@ export const listCategories = async ( options?: Parameters<typeof customFetch>[1
 
 
 
-export const getListCategoriesQueryKey = () => {
+export const getListCategoriesQueryKey = (params?: ListCategoriesParams,) => {
     return [
-    `/categories`
+    `/categories`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listCategories>>, TError = Error>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listCategories>>, TError = Error>(params?: ListCategoriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListCategoriesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListCategoriesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCategories>>> = ({ signal }) => listCategories({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCategories>>> = ({ signal }) => listCategories(params, { signal, ...requestOptions });
 
 
 
@@ -126,11 +139,11 @@ export type ListCategoriesQueryError = Error
 
 
 export function useListCategories<TData = Awaited<ReturnType<typeof listCategories>>, TError = Error>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListCategoriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListCategoriesQueryOptions(options)
+  const queryOptions = getListCategoriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -152,10 +165,15 @@ export type createCategoryResponse422 = {
   status: 422
 }
 
+export type createCategoryResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type createCategoryResponseSuccess = (createCategoryResponse201) & {
   headers: Headers;
 };
-export type createCategoryResponseError = (createCategoryResponse422) & {
+export type createCategoryResponseError = (createCategoryResponse422 | createCategoryResponse500) & {
   headers: Headers;
 };
 
@@ -240,10 +258,15 @@ export type updateCategoryResponse422 = {
   status: 422
 }
 
+export type updateCategoryResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type updateCategoryResponseSuccess = (updateCategoryResponse200) & {
   headers: Headers;
 };
-export type updateCategoryResponseError = (updateCategoryResponse404 | updateCategoryResponse422) & {
+export type updateCategoryResponseError = (updateCategoryResponse404 | updateCategoryResponse422 | updateCategoryResponse500) & {
   headers: Headers;
 };
 
@@ -324,10 +347,15 @@ export type listMenuItemsResponse422 = {
   status: 422
 }
 
+export type listMenuItemsResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type listMenuItemsResponseSuccess = (listMenuItemsResponse200) & {
   headers: Headers;
 };
-export type listMenuItemsResponseError = (listMenuItemsResponse422) & {
+export type listMenuItemsResponseError = (listMenuItemsResponse422 | listMenuItemsResponse500) & {
   headers: Headers;
 };
 
@@ -425,10 +453,15 @@ export type createMenuItemResponse422 = {
   status: 422
 }
 
+export type createMenuItemResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type createMenuItemResponseSuccess = (createMenuItemResponse201) & {
   headers: Headers;
 };
-export type createMenuItemResponseError = (createMenuItemResponse404 | createMenuItemResponse422) & {
+export type createMenuItemResponseError = (createMenuItemResponse404 | createMenuItemResponse422 | createMenuItemResponse500) & {
   headers: Headers;
 };
 
@@ -513,10 +546,15 @@ export type updateMenuItemResponse422 = {
   status: 422
 }
 
+export type updateMenuItemResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type updateMenuItemResponseSuccess = (updateMenuItemResponse200) & {
   headers: Headers;
 };
-export type updateMenuItemResponseError = (updateMenuItemResponse404 | updateMenuItemResponse422) & {
+export type updateMenuItemResponseError = (updateMenuItemResponse404 | updateMenuItemResponse422 | updateMenuItemResponse500) & {
   headers: Headers;
 };
 
@@ -602,10 +640,15 @@ export type archiveMenuItemResponse422 = {
   status: 422
 }
 
+export type archiveMenuItemResponse500 = {
+  data: Error
+  status: 500
+}
+
 export type archiveMenuItemResponseSuccess = (archiveMenuItemResponse200) & {
   headers: Headers;
 };
-export type archiveMenuItemResponseError = (archiveMenuItemResponse404 | archiveMenuItemResponse422) & {
+export type archiveMenuItemResponseError = (archiveMenuItemResponse404 | archiveMenuItemResponse422 | archiveMenuItemResponse500) & {
   headers: Headers;
 };
 
