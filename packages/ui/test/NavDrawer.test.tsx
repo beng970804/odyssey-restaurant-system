@@ -3,6 +3,7 @@ import { Text } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
 import { NavDrawer } from '../src/primitives/NavDrawer'
+import { lightTheme } from '../src/theme/tokens'
 
 const items = [
   { href: '/', label: 'Home' },
@@ -129,6 +130,32 @@ describe('NavDrawer', () => {
 
     fireEvent.click(screen.getByTestId('nav-item-orders'))
     expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it('sizes the pinned nav from the expanded width token', () => {
+    wrap(
+      <NavDrawer {...props} mode="pinned" open={false}>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    expect(screen.getByTestId('nav-drawer-menu')).toHaveStyle({
+      width: `${lightTheme.layout.sidebarWidth}px`,
+    })
+  })
+
+  it('sizes the pinned nav from the collapsed width token', () => {
+    wrap(
+      <NavDrawer {...props} mode="pinned" open={false} collapsed>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    // The width is what animates, so it has to be the drawer's to drive —
+    // SideNav's own width would snap independently of the spring.
+    expect(screen.getByTestId('nav-drawer-menu')).toHaveStyle({
+      width: `${lightTheme.layout.sidebarCollapsedWidth}px`,
+    })
   })
 
   it('collapses the pinned nav to icons when asked', () => {

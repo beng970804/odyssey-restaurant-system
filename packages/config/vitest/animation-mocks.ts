@@ -20,7 +20,10 @@ vi.mock('react-native-reanimated', async () => {
   return {
     default: { View },
     useSharedValue: (initial: number) => ({ value: initial }),
-    useAnimatedStyle: () => ({}),
+    // Evaluated rather than stubbed to {}: the factory reads shared values, so
+    // running it puts the resting style in the DOM where a test can assert on
+    // it. It is not reactive — a test that changes a prop has to re-render.
+    useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
     withSpring: (toValue: number) => toValue,
     withTiming: (toValue: number) => toValue,
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,

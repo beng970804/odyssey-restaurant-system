@@ -36,6 +36,12 @@ const VERTICAL_BAILOUT = 15
 /** A flick this fast decides the direction regardless of how far it travelled. */
 const FLICK_VELOCITY = 500
 const SPRING = { damping: 20, stiffness: 200 } as const
+/**
+ * Critically damped, unlike the drawer's spring. A little overshoot reads as
+ * life when a surface slides; the same overshoot on a width squeezes the icon
+ * rail to half its size and springs back, which reads as a glitch.
+ */
+const WIDTH_SPRING = { damping: 30, stiffness: 220, overshootClamping: true } as const
 
 /**
  * The nav sits mounted underneath a single moving surface: opening slides the
@@ -58,12 +64,20 @@ export function NavDrawer({
   const theme = useTheme()
   const isDrawer = mode === 'drawer'
   const openWidth = theme.layout.sidebarWidth
+  const pinnedWidth = collapsed ? theme.layout.sidebarCollapsedWidth : openWidth
 
   const translateX = useSharedValue(0)
+  // Initialised from the current props so the first paint is already the right
+  // size; the effect below only handles later changes.
+  const navWidth = useSharedValue(pinnedWidth)
 
   useEffect(() => {
     translateX.value = withSpring(isDrawer && open ? openWidth : 0, SPRING)
   }, [isDrawer, open, openWidth, translateX])
+
+  useEffect(() => {
+    navWidth.value = withSpring(pinnedWidth, WIDTH_SPRING)
+  }, [pinnedWidth, navWidth])
 
   const pan = Gesture.Pan()
     .enabled(isDrawer)
@@ -87,6 +101,8 @@ export function NavDrawer({
     transform: [{ translateX: translateX.value }],
   }))
 
+  const navStyle = useAnimatedStyle(() => ({ width: navWidth.value }))
+
   const nav = (
     <SideNav
       items={items}
@@ -99,13 +115,18 @@ export function NavDrawer({
       collapsed={isDrawer ? false : collapsed}
       header={header}
       footer={footer}
+      // The wrapper owns the width in both modes, so SideNav must not also set
+      // one — otherwise it snaps while the spring is still running.
+      width="100%"
     />
   )
 
   if (!isDrawer) {
     return (
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        <View testID="nav-drawer-menu">{nav}</View>
+        <Animated.View testID="nav-drawer-menu" style={[{ overflow: 'hidden' }, navStyle]}>
+          {nav}
+        </Animated.View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>
     )

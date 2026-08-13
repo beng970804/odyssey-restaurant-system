@@ -17,6 +17,11 @@ export type SideNavProps = {
   collapsed?: boolean
   header?: ReactNode
   footer?: ReactNode
+  /**
+   * Defaults to the width token matching `collapsed`. Pass `'100%'` when a
+   * parent is animating the width, so the two do not fight over it.
+   */
+  width?: number | '100%'
 }
 
 /**
@@ -30,6 +35,7 @@ export function SideNav({
   collapsed = false,
   header,
   footer,
+  width,
 }: SideNavProps) {
   const theme = useTheme()
 
@@ -37,7 +43,8 @@ export function SideNav({
     <Stack
       gap="md"
       style={{
-        width: collapsed ? theme.layout.sidebarCollapsedWidth : theme.layout.sidebarWidth,
+        width:
+          width ?? (collapsed ? theme.layout.sidebarCollapsedWidth : theme.layout.sidebarWidth),
         padding: theme.space.md,
         backgroundColor: theme.color.bg.surface,
         borderRightWidth: theme.borderWidth.thin,
