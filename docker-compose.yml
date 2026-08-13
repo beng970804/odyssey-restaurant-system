@@ -5,6 +5,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: restaurant
-    ports: ['5432:5432']
+    # Host port 5433, not 5432: a natively-installed Postgres binds 127.0.0.1:5432
+    # and wins over Docker's wildcard bind, so `localhost:5432` would silently
+    # reach the wrong server. 5433 keeps this project independent of whatever
+    # else is on the machine.
+    ports: ['5433:5432']
     volumes: ['pgdata:/var/lib/postgresql/data']
 volumes: { pgdata: {} }
