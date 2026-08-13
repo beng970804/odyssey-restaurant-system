@@ -9,6 +9,11 @@ packages:
 # runtime from every derived schema. This forces a single instance.
 overrides:
   zod: '^4.4.0'
+  # Same reasoning as zod, different symptom: two React copies make every hook
+  # in @repo/ui throw "Invalid hook call" the moment the dashboard renders a
+  # primitive. One instance, pinned to what Expo SDK 57 expects.
+  react: '19.2.3'
+  react-dom: '19.2.3'
 
 allowBuilds:
   esbuild: true
