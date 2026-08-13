@@ -137,7 +137,8 @@ export function registerMenuRoutes(app: App) {
           .from(categories)
           .where(eq(categories.id, body.categoryId))
           .limit(1)
-        if (!category) throw new AppError('NOT_FOUND', `No category with id ${body.categoryId}`, 404)
+        if (!category)
+          throw new AppError('NOT_FOUND', `No category with id ${body.categoryId}`, 404)
       }
 
       const [updated] = await db

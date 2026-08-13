@@ -19,15 +19,17 @@ const lifetimeSpendCents = sql<number>`coalesce(sum(${orders.totalCents}) filter
  * deliberately disagree.
  */
 export function listCustomers(db: Db, search?: string) {
-  return db
-    .select({ ...getTableColumns(customers), orderCount, lifetimeSpendCents })
-    .from(customers)
-    .leftJoin(orders, eq(orders.customerId, customers.id))
-    .where(search ? ilike(customers.name, `%${search}%`) : undefined)
-    .groupBy(customers.id)
-    // Ordered by the expression rather than by its output alias: Drizzle names
-    // the column "lifetimeSpendCents", so a snake_case alias would not resolve.
-    .orderBy(desc(lifetimeSpendCents), customers.name)
+  return (
+    db
+      .select({ ...getTableColumns(customers), orderCount, lifetimeSpendCents })
+      .from(customers)
+      .leftJoin(orders, eq(orders.customerId, customers.id))
+      .where(search ? ilike(customers.name, `%${search}%`) : undefined)
+      .groupBy(customers.id)
+      // Ordered by the expression rather than by its output alias: Drizzle names
+      // the column "lifetimeSpendCents", so a snake_case alias would not resolve.
+      .orderBy(desc(lifetimeSpendCents), customers.name)
+  )
 }
 
 export async function getCustomer(db: Db, id: string) {

@@ -36,7 +36,9 @@ type Customer = {
 type OrderSummary = { id: string; status: string; totalCents: number; placedAt: string }
 type CustomerDetail = Customer & { recentOrders: OrderSummary[] }
 
-const listCustomers = async (query = ''): Promise<{ data: Customer[]; meta: { total: number } }> => {
+const listCustomers = async (
+  query = '',
+): Promise<{ data: Customer[]; meta: { total: number } }> => {
   const res = await app.request(`/customers${query}`)
   expect(res.status).toBe(200)
   return (await res.json()) as { data: Customer[]; meta: { total: number } }
@@ -85,7 +87,9 @@ describe('customer list', () => {
     const withOrders = all.data.find((c) => c.orderCount > 0)!
     expect(withOrders.lifetimeSpendCents).toBeGreaterThan(0)
 
-    const detail = (await (await app.request(`/customers/${withOrders.id}`)).json()) as CustomerDetail
+    const detail = (await (
+      await app.request(`/customers/${withOrders.id}`)
+    ).json()) as CustomerDetail
     const expected = detail.recentOrders
       .filter((o) => o.status !== 'cancelled')
       .reduce((sum, o) => sum + o.totalCents, 0)
@@ -98,7 +102,9 @@ describe('customer list', () => {
     // Find a customer whose history actually contains a cancellation, then
     // prove the two aggregates disagree in exactly the expected direction.
     for (const customer of all.data) {
-      const detail = (await (await app.request(`/customers/${customer.id}`)).json()) as CustomerDetail
+      const detail = (await (
+        await app.request(`/customers/${customer.id}`)
+      ).json()) as CustomerDetail
       const cancelled = detail.recentOrders.filter((o) => o.status === 'cancelled')
       if (cancelled.length === 0 || detail.recentOrders.length !== customer.orderCount) continue
 
