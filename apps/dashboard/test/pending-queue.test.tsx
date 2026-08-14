@@ -1,6 +1,6 @@
 import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { PendingOrdersModal } from '../src/features/home/PendingOrdersModal'
@@ -52,28 +52,25 @@ const modal = () => (
 )
 
 describe('PendingOrdersModal', () => {
-  it('offers the decision on the row, without opening the order first', () => {
+  it('opens the order in the drawer, with no buttons of its own', () => {
+    // The drawer carries the whole order — the receipt, the notes, and the
+    // action bar that accepts or cancels it — so the list needs no Accept of
+    // its own, and no Decide column to hold one.
     wrap(modal())
+    expect(screen.queryByText('Decide')).toBeNull()
+    expect(screen.queryByText('Accept')).toBeNull()
 
-    expect(screen.getAllByText('Accept')).toHaveLength(rows.length)
-    expect(screen.getAllByText('Open')).toHaveLength(rows.length)
+    fireEvent.click(screen.getByText('Marcus Lim'))
+
+    expect(screen.getByRole('dialog', { name: 'Order' })).toBeTruthy()
   })
 
-  it('leaves Cancel to the order itself', () => {
-    // The API refuses a cancellation without a reason, and collecting one is a
-    // form rather than a quick action — a second modal over this one.
+  it('lists what is waiting, and who for', () => {
     wrap(modal())
 
-    expect(screen.queryByText('Cancel')).toBeNull()
-  })
-
-  it('takes its buttons from the transition map, not from a list of its own', () => {
-    // Every row here is Pending, and Accept is what the map allows from there.
-    // A row that had moved on would not offer it.
-    wrap(modal())
-
-    expect(screen.getAllByText('Accept')[0]).toBeTruthy()
     expect(screen.getByText('#166')).toBeTruthy()
     expect(screen.getByText('Walk-in')).toBeTruthy()
+    // Both rows were placed at the same minute in this fixture.
+    expect(screen.getAllByText('13 Aug, 21:31')).toHaveLength(rows.length)
   })
 })
