@@ -15,9 +15,12 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
     <Inline justify="space-between" align="center" style={{ marginBottom: theme.space.xl }}>
       {/* The drawer toggle rides the header row rather than sitting above it,
           so every screen opens with one band of chrome instead of two. */}
-      <Inline gap="md" align="center">
+      {/* The column that gives. A row child does not shrink by default under
+          React Native, so on a phone a long description pushed the actions off
+          the right edge rather than wrapping beside them. */}
+      <Inline gap="md" align="center" flex={1}>
         <NavToggle />
-        <Stack gap="xs">
+        <Stack gap="xs" style={{ flexShrink: 1 }}>
           <Text variant="h1">{title}</Text>
           {description ? (
             <Text variant="body" color="muted">
