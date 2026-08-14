@@ -76,13 +76,12 @@ export function PendingCard({
           </Button>
         </Inline>
       </Stack>
-      {reviewing ? (
-        <PendingOrdersModal
-          onClose={() => setReviewing(false)}
-          currency={currency}
-          timezone={timezone}
-        />
-      ) : null}
+      <PendingOrdersModal
+        open={reviewing}
+        onClose={() => setReviewing(false)}
+        currency={currency}
+        timezone={timezone}
+      />
     </Card>
   )
 }

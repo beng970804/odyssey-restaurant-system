@@ -1,6 +1,6 @@
 import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider } from '@repo/ui'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { PendingCard } from '../src/features/home/PendingCard'
@@ -38,13 +38,16 @@ describe('reviewing the pending queue', () => {
     expect(push).not.toHaveBeenCalled()
   })
 
-  it('closes again', () => {
+  it('closes again, after it has finished leaving', async () => {
     wrap(card())
     fireEvent.click(screen.getByText('Review orders'))
 
     // Two things close this: the modal's own button and the backdrop behind it.
     const [backdrop] = screen.getAllByLabelText('Close')
     fireEvent.click(backdrop!)
-    expect(screen.queryByRole('dialog')).toBeNull()
+
+    // Not gone on the next tick: the dialog stays mounted while it fades, and
+    // unmounting it the instant it closed is what left it with no exit at all.
+    await waitForElementToBeRemoved(() => screen.queryByRole('dialog'))
   })
 })

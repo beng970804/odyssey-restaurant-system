@@ -48,8 +48,17 @@ vi.mock('react-native-reanimated', async () => {
     // running it puts the resting style in the DOM where a test can assert on
     // it. It is not reactive — a test that changes a prop has to re-render.
     useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
-    withSpring: (toValue: number) => toValue,
-    withTiming: (toValue: number) => toValue,
+    // The completion callback is invoked rather than dropped: a component that
+    // unmounts itself when its exit animation finishes would otherwise never
+    // unmount under test, and "closed" would be untestable.
+    withSpring: (toValue: number, _config?: unknown, callback?: (finished: boolean) => void) => {
+      callback?.(true)
+      return toValue
+    },
+    withTiming: (toValue: number, _config?: unknown, callback?: (finished: boolean) => void) => {
+      callback?.(true)
+      return toValue
+    },
     runOnJS: (fn: (...args: unknown[]) => unknown) => fn,
     // A real piecewise-linear interpolation, not a passthrough: the reveal
     // styles are built out of it, so stubbing it would make every assertion

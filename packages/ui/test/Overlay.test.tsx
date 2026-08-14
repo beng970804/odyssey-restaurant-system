@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import { View } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
+import { Drawer } from '../src/primitives/Drawer'
 import { Modal } from '../src/primitives/Modal'
 
 /** A modal written deep inside a card, which is where the bug came from. */
@@ -56,5 +57,28 @@ describe('Overlay', () => {
 
     unmount()
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('opens from nothing rather than appearing at full strength', () => {
+    // The shared value starts at 0 even when the overlay mounts already open,
+    // so the first frame is transparent and the animation has somewhere to run
+    // from. (The mocks freeze it there; the browser runs it to 1.)
+    wrap(nested())
+
+    expect(screen.getByRole('dialog').parentElement).toHaveStyle({ opacity: '0' })
+  })
+
+  it('slides the drawer in from the edge it is anchored to', () => {
+    wrap(
+      <Drawer open onClose={vi.fn()} title="Order #168" width={480}>
+        <View testID="detail" />
+      </Drawer>,
+    )
+
+    // Closed, the panel sits one full width past the right edge, and the
+    // transition carries it in from there on the next tick.
+    const panel = screen.getByRole('dialog')
+    expect(panel).toHaveStyle({ transform: 'translateX(480px)' })
+    expect(panel).toHaveStyle({ transitionProperty: 'transform' })
   })
 })

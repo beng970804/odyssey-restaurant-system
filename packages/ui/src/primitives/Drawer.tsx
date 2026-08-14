@@ -4,7 +4,13 @@ import { useTheme } from '../theme/ThemeProvider'
 import { Divider } from './Divider'
 import { IconButton } from './IconButton'
 import { Inline } from './Inline'
-import { Overlay } from './Overlay'
+import {
+  OVERLAY_ENTER_MS,
+  OVERLAY_EXIT_MS,
+  Overlay,
+  overlayTransition,
+  useOverlayShown,
+} from './Overlay'
 import { Text } from './Text'
 
 export type DrawerProps = {
@@ -18,46 +24,76 @@ export type DrawerProps = {
 
 /** A Modal anchored to the right edge — same backdrop, different placement. */
 export function Drawer({ open, onClose, title, children, footer, width = 480 }: DrawerProps) {
-  const theme = useTheme()
-
   return (
     <Overlay open={open} onClose={onClose} align="right">
-      <View
-        role="dialog"
-        aria-label={title}
-        style={[
-          {
-            width,
-            maxWidth: '100%',
-            height: '100%',
-            backgroundColor: theme.color.bg.overlay,
-            borderLeftWidth: theme.borderWidth.thin,
-            borderColor: theme.color.border.default,
-          },
-          theme.elevation.modal,
-        ]}
-      >
-        <Inline justify="space-between" style={{ padding: theme.space.lg }}>
-          <Text variant="h2">{title}</Text>
-          <IconButton label="Close" onPress={onClose}>
-            <Text variant="body" color="muted">
-              ✕
-            </Text>
-          </IconButton>
-        </Inline>
-        <Divider />
-        <ScrollView contentContainerStyle={{ padding: theme.space.lg, gap: theme.space.lg }}>
-          {children}
-        </ScrollView>
-        {footer ? (
-          <>
-            <Divider />
-            <Inline justify="flex-end" gap="sm" style={{ padding: theme.space.lg }}>
-              {footer}
-            </Inline>
-          </>
-        ) : null}
-      </View>
+      <DrawerSurface title={title} width={width} footer={footer} onClose={onClose}>
+        {children}
+      </DrawerSurface>
     </Overlay>
+  )
+}
+
+/**
+ * Split out so it sits *inside* the Overlay, where the open progress is
+ * published: a drawer arrives by sliding in from the edge it is anchored to,
+ * on the same clock as the backdrop behind it.
+ */
+function DrawerSurface({
+  title,
+  width,
+  footer,
+  onClose,
+  children,
+}: {
+  title: string
+  width: number
+  footer?: ReactNode
+  onClose: () => void
+  children: ReactNode
+}) {
+  const theme = useTheme()
+  const shown = useOverlayShown()
+
+  return (
+    <View
+      role="dialog"
+      aria-label={title}
+      style={[
+        // Closed, the panel sits one full width past the edge; open, it is
+        // flush with it.
+        { transform: [{ translateX: shown ? 0 : width }] },
+        overlayTransition('transform', shown ? OVERLAY_ENTER_MS : OVERLAY_EXIT_MS),
+        {
+          width,
+          maxWidth: '100%',
+          height: '100%',
+          backgroundColor: theme.color.bg.overlay,
+          borderLeftWidth: theme.borderWidth.thin,
+          borderColor: theme.color.border.default,
+        },
+        theme.elevation.modal,
+      ]}
+    >
+      <Inline justify="space-between" style={{ padding: theme.space.lg }}>
+        <Text variant="h2">{title}</Text>
+        <IconButton label="Close" onPress={onClose}>
+          <Text variant="body" color="muted">
+            ✕
+          </Text>
+        </IconButton>
+      </Inline>
+      <Divider />
+      <ScrollView contentContainerStyle={{ padding: theme.space.lg, gap: theme.space.lg }}>
+        {children}
+      </ScrollView>
+      {footer ? (
+        <>
+          <Divider />
+          <Inline justify="flex-end" gap="sm" style={{ padding: theme.space.lg }}>
+            {footer}
+          </Inline>
+        </>
+      ) : null}
+    </View>
   )
 }

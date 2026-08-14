@@ -1,3 +1,4 @@
+import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, lightTheme } from '@repo/ui'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
@@ -7,7 +8,13 @@ import { PendingCard } from '../src/features/home/PendingCard'
 
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
-const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
+// The pending card carries the queue modal, which holds a query.
+const wrap = (ui: ReactElement) =>
+  render(
+    <ThemeProvider>
+      <ApiProvider>{ui}</ApiProvider>
+    </ThemeProvider>,
+  )
 
 describe('KpiCard', () => {
   it('leads with the number, at display size', () => {
