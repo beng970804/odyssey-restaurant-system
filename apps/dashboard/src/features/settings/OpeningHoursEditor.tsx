@@ -1,5 +1,5 @@
 import type { DayKey, OpeningHours } from '@repo/shared'
-import { Inline, Input, Stack, Switch, Text } from '@repo/ui'
+import { Inline, Input, Stack, Switch, Text, useBreakpoint } from '@repo/ui'
 import { View } from 'react-native'
 
 /**
@@ -26,8 +26,14 @@ export function OpeningHoursEditor({
   value: OpeningHours
   onChange: (next: OpeningHours) => void
 }) {
+  const { isCompact } = useBreakpoint()
+
   return (
-    <Stack gap="sm">
+    // Wrapped, a day is two lines with a 12px gap inside it — so the 8px
+    // between days put a day's times nearer the *next* day's label than its
+    // own. Compact widens the between-days gap past the within-day one, which
+    // is what makes the grouping legible again.
+    <Stack gap={isCompact ? 'xl' : 'sm'}>
       {DAYS.map((day) => {
         const hours = value[day.key]
         // Narrowed once, so the open/close fields are only reachable on a day

@@ -29,4 +29,14 @@ describe('OpeningHoursEditor', () => {
     const row = input.parentElement?.parentElement?.parentElement
     expect(row).toHaveStyle({ flexWrap: 'wrap' })
   })
+
+  it('keeps a day and its times together by spacing the days further apart', () => {
+    // Wrapped, a day is two lines with a 12px gap inside it. The 8px between
+    // days put Monday's times nearer Tuesday's label than Monday's own — the
+    // grouping only reads if the between-days gap is the larger one. jsdom's
+    // 0×0 window is the compact layout this applies to.
+    const { container } = wrap(<OpeningHoursEditor value={hours} onChange={vi.fn()} />)
+
+    expect(container.firstElementChild).toHaveStyle({ gap: '24px' })
+  })
 })
