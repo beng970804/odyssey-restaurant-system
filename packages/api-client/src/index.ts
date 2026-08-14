@@ -11,3 +11,6 @@ export * from './generated/endpoints/settings/settings'
 export * from './generated/endpoints/stats/stats'
 export * from './generated/endpoints/system/system'
 export * from './generated/models'
+
+// Namespaced: the validators share their names with the types above.
+export * as schemas from './zod'

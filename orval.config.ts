@@ -26,4 +26,19 @@ export default defineConfig({
       },
     },
   },
+  // A second pass over the same document, emitting Zod schemas rather than
+  // types. These are what the dashboard's forms validate against, so a required
+  // field or a min length is stated once — in the Drizzle schema — and reaches
+  // the form through the same pipeline as the types. A form that validated by
+  // hand would be the "duplicated contract" the brief rules out.
+  zod: {
+    input: './services/backend/openapi.json',
+    output: {
+      mode: 'tags-split',
+      target: './packages/api-client/src/generated/zod',
+      client: 'zod',
+      fileExtension: '.zod.ts',
+      clean: true,
+    },
+  },
 })
