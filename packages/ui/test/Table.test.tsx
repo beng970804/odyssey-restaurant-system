@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { Text } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
@@ -184,6 +184,17 @@ describe('Table sorting', () => {
     wrap(<Table columns={centred} data={rows} keyExtractor={keyExtractor} />)
 
     expect(screen.getByText('a1').parentElement?.style.alignItems).toBe('center')
+  })
+
+  it('reserves the arrow before any sort, so sorting does not nudge the label', () => {
+    wrap(<Table columns={spendColumns} data={spendRows} keyExtractor={keyExtractor} />)
+
+    const header = screen.getByLabelText('Sort by Customer')
+    // There from the start — invisible, holding the space the arrow will take.
+    expect(within(header).getByText(/[↑↓]/)).toHaveStyle({ opacity: 0 })
+
+    pressHeader('Customer')
+    expect(within(header).getByText(/[↑↓]/)).toHaveStyle({ opacity: 1 })
   })
 
   it('starts from defaultSort when one is given', () => {

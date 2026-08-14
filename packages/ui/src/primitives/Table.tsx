@@ -239,7 +239,17 @@ function HeaderCell({
   const caption = (
     <Text variant="caption" color={direction ? 'primary' : 'secondary'} align={align}>
       {label}
-      {direction ? (direction === 'asc' ? ' ↑' : ' ↓') : ''}
+      {sortable ? (
+        // Always rendered, invisible until a direction exists: an arrow that
+        // appears from nothing nudges the label sideways with every toggle.
+        <Text
+          variant="caption"
+          color={direction ? 'primary' : 'secondary'}
+          style={{ opacity: direction ? 1 : 0 }}
+        >
+          {direction === 'desc' ? ' ↓' : ' ↑'}
+        </Text>
+      ) : null}
     </Text>
   )
 
@@ -285,6 +295,7 @@ function TableRow({ cells, onPress }: { cells: Cell[]; onPress?: () => void }) {
           borderColor: theme.color.border.subtle,
           backgroundColor: state.hovered && onPress ? theme.color.bg.inset : 'transparent',
         },
+        overlayTransition('background-color', 120),
         focusRingStyle(theme, state),
       ]}
     >

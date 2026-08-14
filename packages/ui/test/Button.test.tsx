@@ -36,8 +36,18 @@ describe('Button', () => {
       </Button>,
     )
 
-    expect(screen.queryByText('Accept')).toBeNull()
+    fireEvent.click(screen.getByRole('button'))
     expect(onPress).not.toHaveBeenCalled()
+  })
+
+  it('keeps its label mounted but hidden while loading, so the width holds', () => {
+    // The label used to unmount for the spinner, and "Place order" narrowed
+    // at the exact moment someone was watching it.
+    wrap(<Button loading>Accept</Button>)
+
+    const label = screen.getByText('Accept')
+    expect(label.parentElement).toHaveStyle({ opacity: 0 })
+    expect(screen.getByRole('progressbar')).toBeTruthy()
   })
 
   it('announces its disabled and busy state to assistive technology', () => {
@@ -115,7 +125,7 @@ describe('Button', () => {
     expect(icon).toHaveBeenCalledWith(expect.objectContaining({ size: 16 }))
   })
 
-  it('drops the icon while loading, so the spinner stands alone', () => {
+  it('keeps rendering the icon while loading — hidden with the label, it holds the width', () => {
     const icon = vi.fn(() => null)
     wrap(
       <Button loading icon={icon}>
@@ -123,7 +133,7 @@ describe('Button', () => {
       </Button>,
     )
 
-    expect(icon).not.toHaveBeenCalled()
+    expect(icon).toHaveBeenCalled()
   })
 })
 

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
+import { overlayTransition } from './Overlay'
 
 export type IconButtonProps = {
   children: ReactNode
@@ -51,6 +52,7 @@ export function IconButton({
               : 'transparent',
           opacity: disabled ? 0.5 : 1,
         },
+        overlayTransition('background-color', 120),
         focusRingStyle(theme, state),
       ]}
     >

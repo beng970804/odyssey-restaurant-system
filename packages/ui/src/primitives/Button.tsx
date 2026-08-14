@@ -1,9 +1,10 @@
-import { Pressable, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
+import { Pressable, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import type { ReactNode } from 'react'
 import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState, type InteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
 import type { Theme } from '../theme/types'
+import { overlayTransition } from './Overlay'
 import { Spinner } from './Spinner'
 import { Text } from './Text'
 
@@ -88,7 +89,6 @@ function buttonStyles(theme: Theme, variant: ButtonVariant, size: ButtonSize, st
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: theme.space.sm,
     // Disabled is a uniform dimming rather than a fourth palette per variant.
     opacity: disabled ? 0.5 : 1,
     ...focusRingStyle(theme, state),
@@ -126,21 +126,49 @@ export function Button({
       focusable
       {...handlers}
       onPress={onPress}
-      style={[styles.container, fullWidth && { alignSelf: 'stretch' }, style]}
+      style={[
+        styles.container,
+        // Hover and press change the background; a settle rather than a snap.
+        overlayTransition('background-color', 120),
+        fullWidth && { alignSelf: 'stretch' },
+        style,
+      ]}
     >
+      {/* The label stays mounted under the spinner, invisibly: it is what
+          gives the button its width, and "Place order" must not narrow at the
+          exact moment someone is watching it. */}
+      <View
+        aria-hidden={loading}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: theme.space.sm,
+          opacity: loading ? 0 : 1,
+        }}
+      >
+        {typeof icon === 'function' ? icon({ color: styles.fg, size: ICON_SIZE[size] }) : icon}
+        <Text variant={size === 'sm' ? 'caption' : 'bodyStrong'} style={styles.label}>
+          {children}
+        </Text>
+      </View>
       {loading ? (
-        <Spinner
-          size={size}
-          tone={variant === 'primary' || variant === 'danger' ? 'inverse' : 'default'}
-        />
-      ) : (
-        <>
-          {typeof icon === 'function' ? icon({ color: styles.fg, size: ICON_SIZE[size] }) : icon}
-          <Text variant={size === 'sm' ? 'caption' : 'bodyStrong'} style={styles.label}>
-            {children}
-          </Text>
-        </>
-      )}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Spinner
+            size={size}
+            tone={variant === 'primary' || variant === 'danger' ? 'inverse' : 'default'}
+          />
+        </View>
+      ) : null}
     </Pressable>
   )
 }
