@@ -8,22 +8,20 @@ It is a pnpm monorepo — a Hono API on Cloudflare Workers over Postgres, and an
 dashboard that runs in the browser **and on iOS from the same codebase**. The frontend's types and
 data hooks are **generated from the database schema**, not hand-written.
 
-## The short version
+## Highlights
 
-Five minutes of a reviewer's attention, spent for them:
-
+- **One codebase, three form factors: desktop web, phone-sized web, and a native iOS app.** Every
+  screen adapts down to 390px — tables become two-line lists, the date picker stacks — and the
+  same code runs on an iPhone, with a platform-split chart, safe-area handling, native modal
+  hosts, and a Hermes `Intl` fallback, each verified in a simulator rather than assumed.
 - **One schema, zero hand-written API types.** Drizzle schema → Zod → OpenAPI → generated React
   Query hooks. CI regenerates the contract and fails on any diff, so the claim cannot rot.
 - **A real order state machine.** One transition map imported by both sides — the API enforces it,
   the UI renders its buttons from it, and the tests iterate it rather than restating it. Actions
   land optimistically, with a snapshot rollback when the server refuses.
-- **A hand-built design system.** Every colour, space and radius comes from tokens; a test proves
-  light and dark expose identical token paths _and_ clear WCAG AA, so a half-finished dark mode
-  fails the build.
-- **Web, phone-sized web, and native iOS from one codebase.** Every screen adapts down to 390px
-  (tables become two-line lists, the date picker stacks), and the app runs on an iPhone — with a
-  platform-split chart, safe-area handling and a Hermes `Intl` fallback, each verified in a
-  simulator rather than assumed.
+- **A hand-built design system with light and dark modes.** Every colour, space and radius comes
+  from tokens; a test proves both themes expose identical token paths _and_ clear WCAG AA, so a
+  half-finished dark mode fails the build.
 - **Money is integer cents everywhere**, becoming dollars in exactly one place.
 - **550 tests that need no Docker** — the backend suite runs real Postgres in-process (PGlite)
   through the full route stack.
@@ -80,6 +78,9 @@ Leave that last command running, then open:
 
 Steps 1–5 are one-time setup. On any later run, `pnpm db:up` and `pnpm dev` are enough.
 
+**To run it as a native iOS app** (macOS with Xcode): press `i` in the terminal running `pnpm dev`
+— Expo installs Expo Go into an iPhone simulator and opens the same dashboard there.
+
 To stop: `Ctrl-C` the dev server, then `docker compose down` to stop the database. The data survives
 in a Docker volume; `docker compose down -v` deletes it too.
 
@@ -120,7 +121,7 @@ the claim cannot rot.
 
 ## Where the interesting code is
 
-A reviewer has limited time. These four files carry the argument:
+These four files carry most of the design:
 
 | File                                                                                 | Why                                                                                                             |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
