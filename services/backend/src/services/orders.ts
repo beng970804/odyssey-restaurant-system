@@ -55,12 +55,16 @@ export async function listOrders(db: Db, query: OrderQuery) {
   if (query.to) filters.push(lte(orders.placedAt, new Date(query.to)))
 
   if (query.search) {
-    const orderNumber = Number(query.search)
+    const term = query.search.trim()
     filters.push(
-      // A digits-only search is an order number; anything else is a customer.
-      Number.isInteger(orderNumber)
-        ? eq(orders.orderNumber, orderNumber)
-        : ilike(customers.name, `%${query.search}%`),
+      // A digits-only search is an order number, matched as a prefix rather
+      // than exactly: someone reading "#178" off a ticket types "17" and
+      // expects #17, #171 and #178 to narrow down as they keep typing. Cast to
+      // text, because a prefix is a string operation and the column is an int.
+      // Anything else is a customer.
+      /^\d+$/.test(term)
+        ? sql`${orders.orderNumber}::text like ${`${term}%`}`
+        : ilike(customers.name, `%${term}%`),
     )
   }
 

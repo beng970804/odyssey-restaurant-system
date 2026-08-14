@@ -107,8 +107,25 @@ describe('order list', () => {
     const target = all.data[0]!
 
     const body = await list(`?search=${target.orderNumber}`)
-    expect(body.data[0]!.id).toBe(target.id)
-    expect(body.meta.total).toBe(1)
+    expect(body.data.map((o) => o.id)).toContain(target.id)
+    expect(
+      body.data.every((o) => String(o.orderNumber).startsWith(String(target.orderNumber))),
+    ).toBe(true)
+  })
+
+  it('matches an order number by prefix, so a half-typed number narrows down', async () => {
+    const body = await list('?search=1&pageSize=100')
+
+    // Every order whose number starts with "1" — #1 and #10 through #19 —
+    // rather than #1 alone.
+    const numbers = body.data.map((o) => o.orderNumber).toSorted((a, b) => a - b)
+    expect(numbers).toEqual([1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+  })
+
+  it('does not match an order number that merely contains the digits', async () => {
+    const body = await list('?search=2&pageSize=100')
+    expect(body.data.every((o) => String(o.orderNumber).startsWith('2'))).toBe(true)
+    expect(body.data.map((o) => o.orderNumber)).not.toContain(12)
   })
 
   it('searches by customer name, case-insensitively', async () => {
