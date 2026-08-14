@@ -154,6 +154,25 @@ describe('Table sorting', () => {
     expect(namesInOrder()).toEqual(['Aisha', 'Chen', 'Bala'])
   })
 
+  it('keeps a fixed-width column at its width', () => {
+    // React Native's `flex: 0` becomes `flex: 0 1 0%` on the web, and a zero
+    // flex-basis beats the `width` beside it — every fixed column collapsed to
+    // nothing and its text piled up on the next one. The longhands are spelled
+    // out so the basis is the width.
+    wrap(<Table columns={columns} data={rows} keyExtractor={keyExtractor} />)
+
+    const cell = screen.getByText('Reference').parentElement
+    expect(cell?.style.flex).toBe('0 0 120px')
+    expect(cell?.style.width).toBe('120px')
+  })
+
+  it('lets a column with no width share out the rest of the row', () => {
+    wrap(<Table columns={columns} data={rows} keyExtractor={keyExtractor} />)
+
+    const cell = screen.getByText('Name').parentElement
+    expect(cell?.style.flex).toBe('1 1 0%')
+  })
+
   it('starts from defaultSort when one is given', () => {
     wrap(
       <Table

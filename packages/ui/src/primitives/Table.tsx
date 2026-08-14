@@ -8,7 +8,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table'
 import { useMemo, useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { Pressable, ScrollView, View, type ViewStyle } from 'react-native'
 import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
@@ -46,6 +46,17 @@ export type Column<T> = {
    */
   sortDescFirst?: boolean
 }
+
+/**
+ * `flex: 0` beside a `width` is a trap under React Native Web: it expands to
+ * `flex: 0 1 0%`, and a zero basis beats the width sitting next to it, so every
+ * fixed column collapsed to nothing and its text piled onto the neighbour's.
+ * Spelling the three longhands out makes the basis *be* the width.
+ */
+const cellWidth = (width?: number): ViewStyle =>
+  width === undefined
+    ? { flexGrow: 1, flexShrink: 1, flexBasis: '0%' }
+    : { width, flexGrow: 0, flexShrink: 0, flexBasis: width }
 
 export type TableProps<T extends Row> = {
   columns: Column<T>[]
@@ -127,6 +138,7 @@ export function Table<T extends Row>({
           role="row"
           style={{
             flexDirection: 'row',
+            columnGap: theme.space.lg,
             paddingHorizontal: theme.space.lg,
             paddingVertical: theme.space.md,
             borderBottomWidth: theme.borderWidth.thin,
@@ -196,7 +208,7 @@ function HeaderCell({
   )
 
   if (!sortable) {
-    return <View style={{ width, flex: width ? 0 : 1 }}>{caption}</View>
+    return <View style={cellWidth(width)}>{caption}</View>
   }
 
   return (
@@ -206,14 +218,7 @@ function HeaderCell({
       focusable
       {...handlers}
       onPress={onPress}
-      style={[
-        {
-          width,
-          flex: width ? 0 : 1,
-          opacity: state.hovered ? 0.7 : 1,
-        },
-        focusRingStyle(theme, state),
-      ]}
+      style={[cellWidth(width), { opacity: state.hovered ? 0.7 : 1 }, focusRingStyle(theme, state)]}
     >
       {caption}
     </Pressable>
@@ -237,6 +242,7 @@ function TableRow({ cells, onPress }: { cells: Cell[]; onPress?: () => void }) {
         {
           flexDirection: 'row',
           alignItems: 'center',
+          columnGap: theme.space.lg,
           paddingHorizontal: theme.space.lg,
           paddingVertical: theme.space.md,
           borderBottomWidth: theme.borderWidth.thin,
@@ -249,11 +255,10 @@ function TableRow({ cells, onPress }: { cells: Cell[]; onPress?: () => void }) {
       {cells.map((cell) => (
         <View
           key={cell.key}
-          style={{
-            width: cell.width,
-            flex: cell.width ? 0 : 1,
-            alignItems: cell.align === 'right' ? 'flex-end' : 'flex-start',
-          }}
+          style={[
+            cellWidth(cell.width),
+            { alignItems: cell.align === 'right' ? 'flex-end' : 'flex-start' },
+          ]}
         >
           {cell.content}
         </View>
@@ -281,7 +286,7 @@ function TableSkeleton<T extends Row>({ columns, rows }: { columns: Column<T>[];
           }}
         >
           {columns.map((column) => (
-            <View key={column.key} style={{ width: column.width, flex: column.width ? 0 : 1 }}>
+            <View key={column.key} style={cellWidth(column.width)}>
               <Skeleton height={14} />
             </View>
           ))}
