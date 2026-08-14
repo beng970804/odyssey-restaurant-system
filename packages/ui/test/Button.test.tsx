@@ -83,6 +83,48 @@ describe('Button', () => {
       }
     }
   })
+
+  it('renders a plain icon node beside the label', () => {
+    wrap(<Button icon={<Badge tone="warning">3</Badge>}>Accept</Button>)
+
+    expect(screen.getByText('3')).toBeTruthy()
+    expect(screen.getByText('Accept')).toBeTruthy()
+  })
+
+  it('colours a render-prop icon to match the label rather than the caller', () => {
+    // The icon set is the application's choice; the icon's colour is not.
+    const icon = vi.fn(() => null)
+    wrap(
+      <Button variant="primary" icon={icon}>
+        Accept
+      </Button>,
+    )
+
+    expect(icon).toHaveBeenCalledWith({ color: lightTheme.color.brand.onBrand, size: 20 })
+  })
+
+  it('sizes the icon to the label it sits next to', () => {
+    const icon = vi.fn(() => null)
+    wrap(
+      <Button size="sm" icon={icon}>
+        Accept
+      </Button>,
+    )
+
+    // sm labels are `caption`, whose line height is 16.
+    expect(icon).toHaveBeenCalledWith(expect.objectContaining({ size: 16 }))
+  })
+
+  it('drops the icon while loading, so the spinner stands alone', () => {
+    const icon = vi.fn(() => null)
+    wrap(
+      <Button loading icon={icon}>
+        Accept
+      </Button>,
+    )
+
+    expect(icon).not.toHaveBeenCalled()
+  })
 })
 
 describe('focus ring', () => {

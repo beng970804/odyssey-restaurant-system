@@ -1,7 +1,13 @@
 export { Avatar, type AvatarProps } from './Avatar'
 export { Badge, type BadgeProps } from './Badge'
 export { Breadcrumbs, type BreadcrumbsProps, type Crumb } from './Breadcrumbs'
-export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button'
+export {
+  Button,
+  type ButtonIcon,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from './Button'
 export { Card, type CardProps } from './Card'
 export { ChipGroup, type Chip, type ChipGroupProps } from './ChipGroup'
 export { DateRangePicker, type DateRange, type DateRangePickerProps } from './DateRangePicker'

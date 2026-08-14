@@ -10,8 +10,18 @@ import { Text } from './Text'
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
+/**
+ * A node when the icon is fixed, or a function when it should take its colour
+ * from the variant it sits in — the same bargain NavItem strikes, and for the
+ * same reason: the icon *set* is an application choice, the icon *colour* is a
+ * design-system one, so no caller should be spelling out a hex here.
+ */
+export type ButtonIcon = ReactNode | ((state: { color: string; size: number }) => ReactNode)
+
 export type ButtonProps = {
   children: ReactNode
+  /** Leading icon. Trailing icons are not a thing this button does. */
+  icon?: ButtonIcon
   variant?: ButtonVariant
   size?: ButtonSize
   loading?: boolean
@@ -22,6 +32,9 @@ export type ButtonProps = {
 }
 
 const HEIGHT: Record<ButtonSize, number> = { sm: 32, md: 40, lg: 48 }
+
+/** Matched to the line height of the label at each size, so the two align. */
+const ICON_SIZE: Record<ButtonSize, number> = { sm: 16, md: 20, lg: 20 }
 
 type VisualState = InteractionState & { disabled: boolean }
 
@@ -83,11 +96,14 @@ function buttonStyles(theme: Theme, variant: ButtonVariant, size: ButtonSize, st
 
   const label: TextStyle = { color: tokens.fg, fontWeight: '500' }
 
-  return { container, label }
+  // `fg` is handed out alongside the label style because the icon needs the
+  // colour as a value, not as a style object it cannot read back.
+  return { container, label, fg: tokens.fg }
 }
 
 export function Button({
   children,
+  icon,
   variant = 'primary',
   size = 'md',
   loading = false,
@@ -118,9 +134,12 @@ export function Button({
           tone={variant === 'primary' || variant === 'danger' ? 'inverse' : 'default'}
         />
       ) : (
-        <Text variant={size === 'sm' ? 'caption' : 'bodyStrong'} style={styles.label}>
-          {children}
-        </Text>
+        <>
+          {typeof icon === 'function' ? icon({ color: styles.fg, size: ICON_SIZE[size] }) : icon}
+          <Text variant={size === 'sm' ? 'caption' : 'bodyStrong'} style={styles.label}>
+            {children}
+          </Text>
+        </>
       )}
     </Pressable>
   )

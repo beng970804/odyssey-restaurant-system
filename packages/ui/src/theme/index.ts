@@ -7,6 +7,11 @@ export {
   useThemeMode,
   type ThemeMode,
 } from './ThemeProvider'
+export {
+  useThemeSwitchAnimation,
+  type ThemeSwitchAnimation,
+  type ThemeSwitchAnimationOptions,
+} from './useThemeSwitchAnimation'
 export type {
   ColorTokens,
   ElevationStyle,
