@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { View } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
@@ -68,17 +68,24 @@ describe('Overlay', () => {
     expect(screen.getByRole('dialog').parentElement).toHaveStyle({ opacity: '0' })
   })
 
-  it('slides the drawer in from the edge it is anchored to', () => {
+  it('slides the drawer in from the edge it is anchored to', async () => {
     wrap(
       <Drawer open onClose={vi.fn()} title="Order #168" width={480}>
         <View testID="detail" />
       </Drawer>,
     )
 
-    // Closed, the panel sits one full width past the right edge, and the
-    // transition carries it in from there on the next tick.
+    // Closed, the panel sits one full width past the right edge.
     const panel = screen.getByRole('dialog')
     expect(panel).toHaveStyle({ transform: 'translateX(480px)' })
+
+    // A tick later it is flush, and the transition is what carries it there:
+    // longer than a dialog's, because it crosses its own width to arrive. The
+    // backdrop is given the same span, so the two arrive together rather than
+    // one chasing the other.
+    await waitFor(() => expect(panel).toHaveStyle({ transform: 'translateX(0px)' }))
     expect(panel).toHaveStyle({ transitionProperty: 'transform' })
+    expect(panel.style.transitionDuration).toBe('360ms')
+    expect(panel.parentElement?.style.transitionDuration).toBe('360ms')
   })
 })

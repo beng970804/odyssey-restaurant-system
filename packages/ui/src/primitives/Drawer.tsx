@@ -4,13 +4,7 @@ import { useTheme } from '../theme/ThemeProvider'
 import { Divider } from './Divider'
 import { IconButton } from './IconButton'
 import { Inline } from './Inline'
-import {
-  OVERLAY_ENTER_MS,
-  OVERLAY_EXIT_MS,
-  Overlay,
-  overlayTransition,
-  useOverlayShown,
-} from './Overlay'
+import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
 import { Text } from './Text'
 
 export type DrawerProps = {
@@ -22,10 +16,24 @@ export type DrawerProps = {
   width?: number
 }
 
+/**
+ * Slower than the default overlay, because the panel crosses its own width to
+ * get here. At the dialog's 220ms a 480px slide reads as a flick; this is the
+ * same gesture given room to be seen.
+ */
+const DRAWER_ENTER_MS = 360
+const DRAWER_EXIT_MS = 240
+
 /** A Modal anchored to the right edge — same backdrop, different placement. */
 export function Drawer({ open, onClose, title, children, footer, width = 480 }: DrawerProps) {
   return (
-    <Overlay open={open} onClose={onClose} align="right">
+    <Overlay
+      open={open}
+      onClose={onClose}
+      align="right"
+      enterMs={DRAWER_ENTER_MS}
+      exitMs={DRAWER_EXIT_MS}
+    >
       <DrawerSurface title={title} width={width} footer={footer} onClose={onClose}>
         {children}
       </DrawerSurface>
@@ -52,7 +60,7 @@ function DrawerSurface({
   children: ReactNode
 }) {
   const theme = useTheme()
-  const shown = useOverlayShown()
+  const { shown, enterMs, exitMs } = useOverlayMotion()
 
   return (
     <View
@@ -62,7 +70,7 @@ function DrawerSurface({
         // Closed, the panel sits one full width past the edge; open, it is
         // flush with it.
         { transform: [{ translateX: shown ? 0 : width }] },
-        overlayTransition('transform', shown ? OVERLAY_ENTER_MS : OVERLAY_EXIT_MS),
+        overlayTransition('transform', shown ? enterMs : exitMs),
         {
           width,
           maxWidth: '100%',

@@ -10,7 +10,13 @@ import { useTheme } from '../theme/ThemeProvider'
  */
 const VIEWPORT_FIXED = 'fixed' as ViewStyle['position']
 
-/** Out is quicker than in: a dismissal should feel like it obeyed at once. */
+/**
+ * Out is quicker than in: a dismissal should feel like it obeyed at once.
+ *
+ * These are the defaults, for a dialog that barely moves. A panel with real
+ * distance to cover overrides them — the same milliseconds that read as calm
+ * across twelve pixels read as a flick across four hundred and eighty.
+ */
 export const OVERLAY_ENTER_MS = 220
 export const OVERLAY_EXIT_MS = 150
 
@@ -37,20 +43,33 @@ export const overlayTransition = (property: string, ms: number) =>
     transitionTimingFunction: EASING,
   }) as ViewStyle
 
-/**
- * False while closed and for the first frame of opening, true once the overlay
- * should be at rest. Published so the panel inside moves with the backdrop
- * rather than running a second clock beside it.
- */
-const OverlayShownContext = createContext(false)
+export type OverlayMotion = {
+  /** False while closed and for the first frame of opening, true once at rest. */
+  shown: boolean
+  enterMs: number
+  exitMs: number
+}
 
-export const useOverlayShown = () => useContext(OverlayShownContext)
+/**
+ * Published so the panel inside moves with the backdrop rather than running a
+ * second clock beside it: same state, same durations, one arrival.
+ */
+const OverlayMotionContext = createContext<OverlayMotion>({
+  shown: false,
+  enterMs: OVERLAY_ENTER_MS,
+  exitMs: OVERLAY_EXIT_MS,
+})
+
+export const useOverlayMotion = () => useContext(OverlayMotionContext)
 
 export type OverlayProps = {
   open: boolean
   onClose: () => void
   children: ReactNode
   align?: 'center' | 'right'
+  /** How long the whole overlay takes, panel included. */
+  enterMs?: number
+  exitMs?: number
 }
 
 /**
@@ -69,7 +88,14 @@ export type OverlayProps = {
  * It also owns its own unmounting, because a component removed the instant it
  * closes has no chance to animate out.
  */
-export function Overlay({ open, onClose, children, align = 'center' }: OverlayProps) {
+export function Overlay({
+  open,
+  onClose,
+  children,
+  align = 'center',
+  enterMs = OVERLAY_ENTER_MS,
+  exitMs = OVERLAY_EXIT_MS,
+}: OverlayProps) {
   const theme = useTheme()
   // Mounted covers the exit as well as the visit: it trails `open` by the
   // length of the closing animation.
@@ -86,9 +112,9 @@ export function Overlay({ open, onClose, children, align = 'center' }: OverlayPr
     }
 
     setShown(false)
-    const exit = setTimeout(() => setMounted(false), prefersReducedMotion() ? 0 : OVERLAY_EXIT_MS)
+    const exit = setTimeout(() => setMounted(false), prefersReducedMotion() ? 0 : exitMs)
     return () => clearTimeout(exit)
-  }, [open])
+  }, [open, exitMs])
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return
@@ -120,7 +146,7 @@ export function Overlay({ open, onClose, children, align = 'center' }: OverlayPr
           justifyContent: align === 'center' ? 'center' : 'flex-end',
           opacity: shown ? 1 : 0,
         },
-        overlayTransition('opacity', shown ? OVERLAY_ENTER_MS : OVERLAY_EXIT_MS),
+        overlayTransition('opacity', shown ? enterMs : exitMs),
       ]}
     >
       <Pressable
@@ -135,7 +161,9 @@ export function Overlay({ open, onClose, children, align = 'center' }: OverlayPr
           backgroundColor: theme.mode === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(15,23,42,0.35)',
         }}
       />
-      <OverlayShownContext.Provider value={shown}>{children}</OverlayShownContext.Provider>
+      <OverlayMotionContext.Provider value={{ shown, enterMs, exitMs }}>
+        {children}
+      </OverlayMotionContext.Provider>
     </View>
   )
 

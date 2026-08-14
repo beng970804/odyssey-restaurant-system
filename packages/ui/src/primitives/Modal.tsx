@@ -4,13 +4,7 @@ import { useTheme } from '../theme/ThemeProvider'
 import { Divider } from './Divider'
 import { IconButton } from './IconButton'
 import { Inline } from './Inline'
-import {
-  OVERLAY_ENTER_MS,
-  OVERLAY_EXIT_MS,
-  Overlay,
-  overlayTransition,
-  useOverlayShown,
-} from './Overlay'
+import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
 import { Stack } from './Stack'
 import { Text } from './Text'
 
@@ -55,7 +49,7 @@ function ModalSurface({
   children: ReactNode
 }) {
   const theme = useTheme()
-  const shown = useOverlayShown()
+  const { shown, enterMs, exitMs } = useOverlayMotion()
 
   return (
     <View
@@ -65,7 +59,7 @@ function ModalSurface({
         {
           transform: [{ translateY: shown ? 0 : RISE }, { scale: shown ? 1 : START_SCALE }],
         },
-        overlayTransition('transform', shown ? OVERLAY_ENTER_MS : OVERLAY_EXIT_MS),
+        overlayTransition('transform', shown ? enterMs : exitMs),
         {
           width,
           maxWidth: '100%',
