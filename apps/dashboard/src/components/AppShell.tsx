@@ -1,12 +1,8 @@
-import { useBreakpoint, useTheme } from '@repo/ui'
-import { useContext, type ReactNode, useEffect, useState } from 'react'
+import { useBreakpoint, useScreenInsets, useTheme } from '@repo/ui'
+import { type ReactNode, useEffect, useState } from 'react'
 import { ScrollView, View } from 'react-native'
-import { SafeAreaInsetsContext } from 'react-native-safe-area-context'
 import { NavToggleProvider } from './NavToggle'
 import { Sidebar } from './Sidebar'
-
-/** A browser gives the page the whole viewport; only a phone withholds edges. */
-const NO_INSETS = { top: 0, bottom: 0, left: 0, right: 0 }
 
 /**
  * Navigation plus scrolling content. The drawer and its gesture are the same at
@@ -25,11 +21,8 @@ export function AppShell({
   const theme = useTheme()
   const { isCompact, isWide } = useBreakpoint()
   // Zero in a browser; the notch and home indicator on a phone. Added to the
-  // shell's own padding so no screen thinks about the status bar itself. Read
-  // through the context with a fallback rather than the hook, which throws
-  // where no provider is mounted — the app gets one from expo-router, a test
-  // rendering the shell alone does not, and both should mean "no insets".
-  const insets = useContext(SafeAreaInsetsContext) ?? NO_INSETS
+  // shell's own padding so no screen thinks about the status bar itself.
+  const insets = useScreenInsets()
   const [open, setOpen] = useState(isWide)
 
   // Crossing the breakpoint changes whether the drawer costs anything to leave

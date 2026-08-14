@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useScreenInsets } from '../hooks/useScreenInsets'
 import { useTheme } from '../theme/ThemeProvider'
 import { NavItem, type NavItemIcon } from './NavItem'
 import { Stack } from './Stack'
@@ -38,6 +39,9 @@ export function SideNav({
   width,
 }: SideNavProps) {
   const theme = useTheme()
+  // The rail runs the full screen height, so its wordmark sat under a phone's
+  // status bar and its account row under the home indicator. Zero on the web.
+  const insets = useScreenInsets()
 
   return (
     <Stack
@@ -46,6 +50,8 @@ export function SideNav({
         width:
           width ?? (collapsed ? theme.layout.sidebarCollapsedWidth : theme.layout.sidebarWidth),
         padding: theme.space.md,
+        paddingTop: theme.space.md + insets.top,
+        paddingBottom: theme.space.md + insets.bottom,
         backgroundColor: theme.color.bg.surface,
         borderRightWidth: theme.borderWidth.thin,
         borderColor: theme.color.border.default,

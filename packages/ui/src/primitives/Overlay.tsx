@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { Platform, Pressable, View, type ViewStyle } from 'react-native'
+import { Modal as NativeModalHost, Platform, Pressable, View, type ViewStyle } from 'react-native'
 import { createPortal } from 'react-dom'
 import { prefersReducedMotion } from '../hooks/motion'
+import { useScreenInsets } from '../hooks/useScreenInsets'
 import { useTheme } from '../theme/ThemeProvider'
 
 /**
@@ -114,6 +115,7 @@ export function Overlay({
   exitMs = OVERLAY_EXIT_MS,
 }: OverlayProps) {
   const theme = useTheme()
+  const insets = useScreenInsets()
   // Mounted covers the exit as well as the visit: it trails `open` by the
   // length of the closing animation.
   const [mounted, setMounted] = useState(open)
@@ -149,9 +151,8 @@ export function Overlay({
     <View
       style={[
         {
-          // On native the portal below is skipped and this falls back to
-          // filling its parent, which is where a native overlay is mounted
-          // anyway.
+          // On native the host below owns the screen, and absolute-fill fills
+          // it; on the web this is viewport-fixed inside the body portal.
           position: Platform.OS === 'web' ? VIEWPORT_FIXED : 'absolute',
           top: 0,
           left: 0,
@@ -161,6 +162,11 @@ export function Overlay({
           flexDirection: 'row',
           alignItems: align === 'center' ? 'center' : 'stretch',
           justifyContent: align === 'center' ? 'center' : 'flex-end',
+          // A centred panel must not reach under the notch or the home
+          // indicator; zero everywhere else. The right-aligned drawer spans
+          // full height on purpose and pads its own content instead.
+          paddingTop: align === 'center' ? insets.top : 0,
+          paddingBottom: align === 'center' ? insets.bottom : 0,
           opacity: shown ? 1 : 0,
         },
         overlayTransition('opacity', shown ? enterMs : exitMs),
@@ -184,7 +190,24 @@ export function Overlay({
     </View>
   )
 
-  return Platform.OS === 'web' && typeof document !== 'undefined'
-    ? createPortal(overlay, document.body)
-    : overlay
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    return createPortal(overlay, document.body)
+  }
+
+  // The native equivalent of the portal. Rendered in place, an "overlay" only
+  // covers its nearest ancestor — the pending-orders dialog painted *inside*
+  // the card that opened it, clipped and scrolling with the page. React
+  // Native's Modal hoists its children to the window the way the body portal
+  // does on the web; the fade stays ours, so `animationType` is none.
+  return (
+    <NativeModalHost
+      visible
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      {overlay}
+    </NativeModalHost>
+  )
 }

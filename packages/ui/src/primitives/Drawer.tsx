@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ScrollView } from 'react-native'
+import { useScreenInsets } from '../hooks/useScreenInsets'
 import { useTheme } from '../theme/ThemeProvider'
 import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
 import { OverlayPanel, usePanelWidth } from './OverlayPanel'
@@ -60,6 +61,9 @@ function DrawerSurface({
   const { shown, enterMs, exitMs } = useOverlayMotion()
   // Clamped so a strip of the page stays visible on a phone (usePanelWidth).
   const effectiveWidth = usePanelWidth(width)
+  // The panel spans the full screen height on purpose; its *content* steps
+  // clear of the notch and the home indicator instead.
+  const insets = useScreenInsets()
 
   return (
     <OverlayPanel
@@ -75,6 +79,8 @@ function DrawerSurface({
           width: effectiveWidth,
           maxWidth: '100%',
           height: '100%',
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
           backgroundColor: theme.color.bg.overlay,
           borderLeftWidth: theme.borderWidth.thin,
           borderColor: theme.color.border.default,
