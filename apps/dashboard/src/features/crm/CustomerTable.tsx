@@ -25,10 +25,14 @@ export function CustomerTable({
   currency: string
   searching: boolean
 }) {
+  // CRM is the one list the server does not paginate, so the whole set is in
+  // hand and sorting it client-side is honest rather than a half-truth about
+  // page one. Phone is the only column not worth sorting.
   const columns: Column<CustomerWithStats>[] = [
     {
       key: 'name',
       header: 'Customer',
+      sortable: true,
       render: (row) => <Text variant="bodyStrong">{row.name}</Text>,
     },
     {
@@ -42,6 +46,8 @@ export function CustomerTable({
       header: 'Orders',
       width: 90,
       align: 'right',
+      sortable: true,
+      sortValue: (row) => row.orderCount,
       render: (row) => <Text>{String(row.orderCount)}</Text>,
     },
     {
@@ -49,6 +55,9 @@ export function CustomerTable({
       header: 'Lifetime spend',
       width: 150,
       align: 'right',
+      sortable: true,
+      // Cents, not the formatted string: "S$120.00" sorts before "S$30.00".
+      sortValue: (row) => row.lifetimeSpendCents,
       render: (row) => (
         <Text variant="bodyStrong">{formatMoney(row.lifetimeSpendCents, currency)}</Text>
       ),

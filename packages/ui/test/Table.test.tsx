@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react'
+import { Text } from 'react-native'
 import { describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
 import { EmptyState } from '../src/primitives/EmptyState'
@@ -75,5 +76,93 @@ describe('Table', () => {
 
     fireEvent.click(screen.getByText('Nasi Lemak'))
     expect(onRowPress).toHaveBeenCalledWith(rows[0])
+  })
+})
+
+type SpendRow = { id: string; name: string; spendCents: number }
+
+const spendRows: SpendRow[] = [
+  { id: 'a', name: 'Aisha', spendCents: 500 },
+  { id: 'b', name: 'Chen', spendCents: 12_000 },
+  { id: 'c', name: 'Bala', spendCents: 3000 },
+]
+
+const spendColumns: Column<SpendRow>[] = [
+  { key: 'name', header: 'Customer', render: (row) => <Text>{row.name}</Text>, sortable: true },
+  {
+    key: 'spend',
+    header: 'Spend',
+    // The rendered cell is money; the sort has to run on the raw cents, which
+    // is the whole reason `sortValue` exists separately from `render`.
+    render: (row) => <Text>{`$${(row.spendCents / 100).toFixed(2)}`}</Text>,
+    sortValue: (row) => row.spendCents,
+    sortable: true,
+  },
+]
+
+/** Row order as rendered — the header is row 0, so it is dropped. */
+const namesInOrder = () =>
+  screen
+    .getAllByRole('row')
+    .slice(1)
+    .map((row) => spendRows.find((candidate) => row.textContent?.includes(candidate.name))?.name)
+
+/** The header label gains an arrow once sorted, so the accessible name is what stays matchable. */
+const pressHeader = (label: string) => fireEvent.click(screen.getByLabelText(`Sort by ${label}`))
+
+describe('Table sorting', () => {
+  it('leaves rows in the given order until a header is pressed', () => {
+    wrap(<Table columns={spendColumns} data={spendRows} keyExtractor={keyExtractor} />)
+    expect(namesInOrder()).toEqual(['Aisha', 'Chen', 'Bala'])
+  })
+
+  it('sorts text ascending on the first press and descending on the second', () => {
+    wrap(<Table columns={spendColumns} data={spendRows} keyExtractor={keyExtractor} />)
+
+    pressHeader('Customer')
+    expect(namesInOrder()).toEqual(['Aisha', 'Bala', 'Chen'])
+
+    pressHeader('Customer')
+    expect(namesInOrder()).toEqual(['Chen', 'Bala', 'Aisha'])
+  })
+
+  it('sorts a numeric column highest-first, because that is the question being asked', () => {
+    wrap(<Table columns={spendColumns} data={spendRows} keyExtractor={keyExtractor} />)
+
+    pressHeader('Spend')
+    expect(namesInOrder()).toEqual(['Chen', 'Bala', 'Aisha'])
+  })
+
+  it('sorts money by its underlying cents, not by the formatted string', () => {
+    wrap(<Table columns={spendColumns} data={spendRows} keyExtractor={keyExtractor} />)
+
+    // Lexicographically "$120.00" < "$30.00" < "$5.00", so sorting the rendered
+    // text ascending would read Chen, Bala, Aisha — the same order this
+    // produces descending, which is why the second press is the real check.
+    pressHeader('Spend')
+    pressHeader('Spend')
+    expect(namesInOrder()).toEqual(['Aisha', 'Bala', 'Chen'])
+  })
+
+  it('does not make a column sortable unless it asks to be', () => {
+    const plain: Column<SpendRow>[] = [
+      { key: 'name', header: 'Customer', render: (row) => <Text>{row.name}</Text> },
+    ]
+    wrap(<Table columns={plain} data={spendRows} keyExtractor={keyExtractor} />)
+
+    expect(screen.queryByLabelText('Sort by Customer')).toBeNull()
+    expect(namesInOrder()).toEqual(['Aisha', 'Chen', 'Bala'])
+  })
+
+  it('starts from defaultSort when one is given', () => {
+    wrap(
+      <Table
+        columns={spendColumns}
+        data={spendRows}
+        keyExtractor={keyExtractor}
+        defaultSort={{ key: 'spend', desc: true }}
+      />,
+    )
+    expect(namesInOrder()).toEqual(['Chen', 'Bala', 'Aisha'])
   })
 })
