@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Platform, View, type HostInstance, type ViewStyle } from 'react-native'
+import {
+  Modal as NativeModalHost,
+  Platform,
+  Pressable,
+  View,
+  useWindowDimensions,
+  type HostInstance,
+  type ViewStyle,
+} from 'react-native'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../theme/ThemeProvider'
 
@@ -57,6 +65,9 @@ export function Popover({
   const contentRef = useRef<HostInstance | null>(null)
   const [anchor, setAnchor] = useState<Anchor | null>(null)
   const [panelWidth, setPanelWidth] = useState(0)
+  // One reactive viewport for both platforms; the same numbers the web read
+  // from window.innerWidth, and the numbers the native Modal spans.
+  const viewport = useWindowDimensions()
 
   const measure = useCallback(() => {
     triggerRef.current?.measureInWindow(
@@ -82,25 +93,6 @@ export function Popover({
       window.removeEventListener('resize', measure)
     }
   }, [open, measure])
-
-  // The panel's own width, which the horizontal clamp needs: a panel anchored
-  // to a control near the right edge has to know how wide it is to know how
-  // far left to slide. Watched rather than measured once, because a calendar
-  // paging between months can change size while open.
-  useEffect(() => {
-    if (!open) return
-    const node = contentRef.current as unknown as HTMLElement | null
-    if (!node || typeof node.getBoundingClientRect !== 'function') return
-
-    setPanelWidth(node.getBoundingClientRect().width)
-    if (typeof ResizeObserver === 'undefined') return
-
-    const observer = new ResizeObserver(() => {
-      setPanelWidth(node.getBoundingClientRect().width)
-    })
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [open])
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return
@@ -136,8 +128,12 @@ export function Popover({
     <View
       ref={contentRef}
       aria-label={label}
+      // Layout is the one width report both platforms give: the web's resize
+      // observer and native's Yoga both land here, and the horizontal clamp
+      // reads whichever spoke last.
+      onLayout={(event) => setPanelWidth(event.nativeEvent.layout.width)}
       style={[
-        placement(anchor, matchTriggerWidth, align, panelWidth),
+        placement(anchor, matchTriggerWidth, align, panelWidth, viewport),
         {
           borderRadius: theme.radius.md,
           borderWidth: theme.borderWidth.thin,
@@ -153,12 +149,35 @@ export function Popover({
     </View>
   ) : null
 
+  if (Platform.OS === 'web') {
+    return (
+      <View ref={triggerRef} style={{ position: 'relative' }}>
+        {children}
+        {panel !== null && typeof document !== 'undefined'
+          ? createPortal(panel, document.body)
+          : panel}
+      </View>
+    )
+  }
+
+  // The native half of the web's body portal, same as Overlay's: rendered in
+  // place, the panel sat wherever its parent's layout put it — detached from
+  // the control it hangs from. The Modal owns the screen, the measured anchor
+  // says where the control is, and the backdrop is the tap-outside-to-close
+  // the web gets from its document listener.
   return (
-    <View ref={triggerRef} style={{ position: 'relative' }}>
+    <View ref={triggerRef}>
       {children}
-      {panel !== null && Platform.OS === 'web' && typeof document !== 'undefined'
-        ? createPortal(panel, document.body)
-        : panel}
+      {panel !== null ? (
+        <NativeModalHost visible transparent animationType="none" onRequestClose={onClose}>
+          <Pressable
+            aria-label="Close"
+            onPress={onClose}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+          {panel}
+        </NativeModalHost>
+      ) : null}
     </View>
   )
 }
@@ -181,30 +200,35 @@ export function clampPanelLeft(
 }
 
 /**
- * Where the panel sits. Before the first measurement — and on native, where
- * there is no portal to escape into — it falls back to hanging off the control
- * in ordinary flow, which is both correct there and invisible here: `open`
+ * Where the panel sits. Before the first measurement it falls back to hanging
+ * off the control in ordinary flow, which is invisible in practice: `open`
  * flips and the measurement lands in the same frame.
+ *
+ * The same arithmetic serves both platforms. On the web the panel is fixed to
+ * the viewport from inside the body portal; on native it is absolute inside a
+ * full-screen Modal, whose coordinate space is the same window that
+ * `measureInWindow` reported the anchor in.
  */
 function placement(
   anchor: Anchor | null,
   matchTriggerWidth: boolean,
   align: 'start' | 'end',
   panelWidth: number,
+  viewport: { width: number; height: number },
 ): ViewStyle {
-  if (anchor === null || Platform.OS !== 'web') {
+  if (anchor === null) {
     return { position: 'absolute', top: '100%', left: 0, right: 0, marginTop: GAP, zIndex: 50 }
   }
 
-  const viewportHeight = typeof window === 'undefined' ? 0 : window.innerHeight
-  const viewportWidth = typeof window === 'undefined' ? 0 : window.innerWidth
+  const viewportHeight = viewport.height
+  const viewportWidth = viewport.width
   const below = viewportHeight - (anchor.top + anchor.height)
   // Upwards only when down is genuinely cramped *and* up is roomier — a panel
   // that flips for the sake of eight pixels reads as a glitch.
   const flipUp = below < MIN_SPACE_BELOW && anchor.top > below
 
   return {
-    position: VIEWPORT_FIXED,
+    position: Platform.OS === 'web' ? VIEWPORT_FIXED : 'absolute',
     zIndex: 150,
     maxHeight: (flipUp ? anchor.top : below) - GAP - VIEWPORT_MARGIN,
     ...(flipUp
