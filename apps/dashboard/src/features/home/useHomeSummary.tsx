@@ -12,6 +12,8 @@ export type Kpi = {
   figure: KpiFigure
   icon?: NavItemIcon
   hint?: string
+  /** The last seven days of the figure, oldest first, for the sparkline. */
+  trend?: number[]
 }
 
 /** The wide card: a count, the share of the book it represents, and a way in. */
@@ -45,18 +47,25 @@ export function useHomeSummary() {
           figure: countFigure(summary.totalOrders),
           hint: 'All time',
           icon: ({ color, size }) => <IconReceipt color={color} size={size} />,
+          trend: summary.dailyTrend.map((day) => day.orderCount),
         },
         {
           label: 'Revenue',
           figure: moneyFigure(summary.revenueCents),
           hint: 'Cancelled orders excluded',
           icon: ({ color, size }) => <IconCash color={color} size={size} />,
+          trend: summary.dailyTrend.map((day) => day.revenueCents),
         },
         {
           label: 'Average order',
           figure: moneyFigure(summary.averageOrderValueCents),
           hint: 'Per earning order',
           icon: ({ color, size }) => <IconCalculator color={color} size={size} />,
+          // Per day the average only exists where an order does; a day that
+          // took nothing shows as nothing rather than as a divide-by-zero.
+          trend: summary.dailyTrend.map((day) =>
+            day.orderCount > 0 ? Math.round(day.revenueCents / day.orderCount) : 0,
+          ),
         },
       ]
     : []

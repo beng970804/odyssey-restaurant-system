@@ -27,6 +27,7 @@ import {
   Select,
   SideNav,
   Skeleton,
+  Sparkline,
   Spinner,
   Stack,
   Surface,
@@ -427,6 +428,7 @@ export function ComponentGallery() {
           <View style={{ width: 200 }}>
             <Skeleton height={16} />
           </View>
+          <Sparkline values={[3, 7, 0, 4, 9, 6, 12]} label="Example seven-day trend" />
         </Inline>
       </Stack>
 

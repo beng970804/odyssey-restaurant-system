@@ -58,6 +58,21 @@ describe('KpiCard', () => {
     expect(seen).toEqual([lightTheme.color.brand.default])
   })
 
+  it('carries the week behind the figure as a sparkline', () => {
+    wrap(
+      <KpiCard
+        kpi={{
+          label: 'Revenue',
+          figure: moneyFigure(100),
+          hint: 'Cancelled orders excluded',
+          trend: [0, 100, 250, 0, 80, 120, 300],
+        }}
+      />,
+    )
+
+    expect(screen.getByLabelText('Last 7 days')).toBeTruthy()
+  })
+
   it('fills its grid cell so cards in a row share a height', () => {
     const { container } = wrap(<KpiCard kpi={{ label: 'Revenue', figure: moneyFigure(100) }} />)
 

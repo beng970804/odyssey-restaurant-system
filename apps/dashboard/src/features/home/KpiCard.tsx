@@ -1,4 +1,14 @@
-import { Card, IconTile, Inline, Skeleton, Stack, Text, useBreakpoint, useCountUp } from '@repo/ui'
+import {
+  Card,
+  IconTile,
+  Inline,
+  Skeleton,
+  Sparkline,
+  Stack,
+  Text,
+  useBreakpoint,
+  useCountUp,
+} from '@repo/ui'
 import { useCurrency } from '../../hooks/useCurrency'
 import { figureTotal, formatFigure } from './kpiFigure'
 import type { Kpi } from './useHomeSummary'
@@ -35,11 +45,18 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
           >
             {formatFigure(kpi.figure, counted, currency)}
           </Text>
-          {kpi.hint ? (
-            <Text variant="caption" color="muted">
-              {kpi.hint}
-            </Text>
-          ) : null}
+          {/* The week's shape rides the hint row: hint left, movement right,
+              so the card answers "how much" and "which way" in one glance. */}
+          <Inline justify="space-between" align="flex-end" gap="md">
+            {kpi.hint ? (
+              <Text variant="caption" color="muted" style={{ flexShrink: 1 }}>
+                {kpi.hint}
+              </Text>
+            ) : null}
+            {kpi.trend ? (
+              <Sparkline values={kpi.trend} height={20} label={`Last ${kpi.trend.length} days`} />
+            ) : null}
+          </Inline>
         </Stack>
       </Stack>
     </Card>
