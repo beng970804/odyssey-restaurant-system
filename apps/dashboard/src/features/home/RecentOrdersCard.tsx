@@ -3,9 +3,9 @@ import { formatMoney } from '@repo/shared'
 import { ORDER_STATUS_LABELS } from '@repo/types'
 import { Badge, Button, Card, Inline, Stack, Table, Text, type Column } from '@repo/ui'
 import { useRouter } from 'expo-router'
-import { toneForStatus } from '../orders/formatting'
+import { formatTime, toneForStatus } from '../orders/formatting'
 
-export function RecentOrdersCard({ currency }: { currency: string }) {
+export function RecentOrdersCard({ currency, timezone }: { currency: string; timezone: string }) {
   const router = useRouter()
   const { data, isLoading, error, refetch } = useListOrders({ pageSize: 5 })
   const rows = unwrap(data)?.data ?? []
@@ -16,6 +16,14 @@ export function RecentOrdersCard({ currency }: { currency: string }) {
       header: 'Order',
       width: 90,
       render: (row) => <Text variant="bodyStrong">{`#${row.orderNumber}`}</Text>,
+    },
+    {
+      key: 'placedAt',
+      header: 'Placed',
+      width: 140,
+      // The same formatter the Orders screen uses, and the same timezone rule:
+      // the restaurant's clock, never the Worker's.
+      render: (row) => <Text color="muted">{formatTime(row.placedAt, timezone)}</Text>,
     },
     {
       key: 'customer',

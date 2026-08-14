@@ -52,7 +52,7 @@ export default function HomeScreen() {
             </Grid>
           )}
 
-          <RecentOrdersCard currency={currency} />
+          <RecentOrdersCard currency={currency} timezone={timezone} />
         </Stack>
       )}
     </>
