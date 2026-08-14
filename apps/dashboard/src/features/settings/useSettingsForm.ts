@@ -103,9 +103,11 @@ export function useSettingsForm() {
     isSaving: update.isPending,
     set: <K extends keyof SettingsDraft>(key: K, value: SettingsDraft[K]) =>
       setDraft((current) => (current ? { ...current, [key]: value } : current)),
-    save: () => {
+    save: (options?: { onSaved?: () => void }) => {
       if (!draft || validationError) return
-      update.mutate({ data: draft })
+      // The per-call onSuccess runs after the hook's own (invalidate, toast),
+      // so a caller can navigate away only once the server has the changes.
+      update.mutate({ data: draft }, { onSuccess: options?.onSaved })
     },
     discard: () => {
       if (!loaded) return

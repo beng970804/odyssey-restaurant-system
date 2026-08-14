@@ -6,18 +6,26 @@ import {
   Field,
   Inline,
   Input,
+  Modal,
   Select,
   Skeleton,
   Stack,
   Switch,
   Text,
 } from '@repo/ui'
+import { useCallback, useState } from 'react'
+import { useNavigationGuard } from '../../../src/components/NavigationGuard'
 import { PageHeader } from '../../../src/components/PageHeader'
 import { OpeningHoursEditor } from '../../../src/features/settings/OpeningHoursEditor'
 import { useSettingsForm } from '../../../src/features/settings/useSettingsForm'
 
 export default function SettingsScreen() {
   const form = useSettingsForm()
+
+  // The navigation the shell is holding while the operator decides.
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+  const requestLeave = useCallback((proceed: () => void) => setPendingLeave(() => proceed), [])
+  useNavigationGuard(form.isDirty ? requestLeave : null)
 
   if (form.error) return <ErrorState error={form.error} onRetry={form.refetch} />
   if (form.isLoading || !form.draft) {
@@ -32,14 +40,42 @@ export default function SettingsScreen() {
 
   const { draft, set } = form
 
+  const leaveWithoutSaving = () => {
+    const proceed = pendingLeave
+    setPendingLeave(null)
+    form.discard()
+    proceed?.()
+  }
+
   return (
     <>
       <PageHeader
         title="Settings"
         description="These rules decide what the ordering API accepts."
+        actions={
+          form.isDirty ? (
+            <>
+              <Button variant="secondary" onPress={form.discard}>
+                Discard
+              </Button>
+              <Button
+                onPress={() => form.save()}
+                disabled={Boolean(form.validationError)}
+                loading={form.isSaving}
+              >
+                Save changes
+              </Button>
+            </>
+          ) : null
+        }
       />
 
       <Stack gap="xl">
+        {form.isDirty ? (
+          <Text color={form.validationError ? 'primary' : 'muted'}>
+            {form.validationError ?? 'You have unsaved changes.'}
+          </Text>
+        ) : null}
         <Section title="Ordering">
           <Field
             label="Default prep time (minutes)"
@@ -65,21 +101,23 @@ export default function SettingsScreen() {
 
         <Section title="Channels">
           <Stack gap="xs">
-            <Switch
-              value={draft.dineInEnabled}
-              onValueChange={(value) => set('dineInEnabled', value)}
-              label="Dine in"
-            />
-            <Switch
-              value={draft.takeawayEnabled}
-              onValueChange={(value) => set('takeawayEnabled', value)}
-              label="Takeaway"
-            />
-            <Switch
-              value={draft.deliveryEnabled}
-              onValueChange={(value) => set('deliveryEnabled', value)}
-              label="Delivery"
-            />
+            <Inline gap="xl" wrap>
+              <Switch
+                value={draft.dineInEnabled}
+                onValueChange={(value) => set('dineInEnabled', value)}
+                label="Dine in"
+              />
+              <Switch
+                value={draft.takeawayEnabled}
+                onValueChange={(value) => set('takeawayEnabled', value)}
+                label="Takeaway"
+              />
+              <Switch
+                value={draft.deliveryEnabled}
+                onValueChange={(value) => set('deliveryEnabled', value)}
+                label="Delivery"
+              />
+            </Inline>
             <Text variant="caption" color="muted">
               A disabled channel disappears from New Order, and the API refuses it outright.
             </Text>
@@ -126,29 +164,38 @@ export default function SettingsScreen() {
             <Input value={draft.timezone} onChangeText={(value) => set('timezone', value)} />
           </Field>
         </Section>
-
-        {form.isDirty ? (
-          <Card padding="md">
-            <Inline justify="space-between" align="center">
-              <Text color={form.validationError ? 'primary' : 'muted'}>
-                {form.validationError ?? 'You have unsaved changes.'}
-              </Text>
-              <Inline gap="sm">
-                <Button variant="secondary" onPress={form.discard}>
-                  Discard
-                </Button>
-                <Button
-                  onPress={form.save}
-                  disabled={Boolean(form.validationError)}
-                  loading={form.isSaving}
-                >
-                  Save changes
-                </Button>
-              </Inline>
-            </Inline>
-          </Card>
-        ) : null}
       </Stack>
+
+      {/* The shell holds the navigation until one of these three answers it. */}
+      <Modal
+        open={pendingLeave !== null}
+        onClose={() => setPendingLeave(null)}
+        title="Unsaved changes"
+        width={440}
+      >
+        <Stack gap="lg">
+          <Text color="muted">
+            {form.validationError
+              ? `These changes cannot be saved yet: ${form.validationError}`
+              : 'Save your changes before leaving, or they will be lost.'}
+          </Text>
+          <Inline gap="sm" justify="flex-end" wrap>
+            <Button variant="ghost" onPress={() => setPendingLeave(null)}>
+              Keep editing
+            </Button>
+            <Button variant="secondary" onPress={leaveWithoutSaving}>
+              Discard changes
+            </Button>
+            <Button
+              onPress={() => form.save({ onSaved: () => pendingLeave?.() })}
+              disabled={Boolean(form.validationError)}
+              loading={form.isSaving}
+            >
+              Save and leave
+            </Button>
+          </Inline>
+        </Stack>
+      </Modal>
     </>
   )
 }

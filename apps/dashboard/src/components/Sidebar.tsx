@@ -26,6 +26,7 @@ import { usePathname, useRouter } from 'expo-router'
 import { type ReactNode, useState } from 'react'
 import { View } from 'react-native'
 import { ACCOUNT } from '../account'
+import { useGuardedNavigation } from './NavigationGuard'
 
 /**
  * A thin adapter over the design system's NavDrawer: it supplies the route
@@ -102,11 +103,16 @@ export function Sidebar({
     route.href === '/orders' ? { ...route, badge: pendingCount } : route,
   )
 
+  const guarded = useGuardedNavigation()
+
   // Typing then pressing Enter is the whole point of the box, so leaving the
-  // query behind would filter the list you have just navigated into.
+  // query behind would filter the list you have just navigated into. Guarded,
+  // so a screen holding unsaved work can ask before it is left.
   const go = (href: string) => {
-    setQuery('')
-    router.push(href as '/')
+    guarded(() => {
+      setQuery('')
+      router.push(href as '/')
+    })
   }
 
   return (
