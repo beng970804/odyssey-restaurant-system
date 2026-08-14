@@ -514,6 +514,16 @@ export function ComponentGallery() {
         <Card padding="md">
           <Table columns={[]} data={[]} keyExtractor={() => ''} loading />
         </Card>
+        {/* Refreshing: rows worth keeping, dimmed while their replacements are
+            fetched — what every list shows on a filter or page change. */}
+        <Card padding="md">
+          <Table
+            columns={NAME_COLUMN}
+            data={[{ name: 'Nasi Lemak' }, { name: 'Teh Tarik' }]}
+            keyExtractor={(r) => r.name}
+            refreshing
+          />
+        </Card>
         <Card padding="md">
           <Table
             columns={[]}
