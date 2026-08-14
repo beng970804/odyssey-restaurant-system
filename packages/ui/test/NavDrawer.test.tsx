@@ -182,6 +182,29 @@ describe('NavDrawer', () => {
     expect(onOpenChange).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['persistent', true],
+    ['sliding', false],
+  ])('writes both surface offsets in %s mode, so neither can go stale', (_mode, persistent) => {
+    // Reanimated only applies the properties the style function returns; it
+    // does not clear ones that disappear from it. Returning marginLeft in one
+    // branch and transform in the other means crossing the wide breakpoint
+    // leaves the abandoned property applied at its last value — an empty 240px
+    // gutter beside content that has stopped being pushed.
+    //
+    // jsdom re-renders inline styles from scratch, so it cannot reproduce the
+    // stale write; what it can hold is the invariant that prevents it.
+    wrap(
+      <NavDrawer {...props} open persistent={persistent}>
+        <Text>Today's orders</Text>
+      </NavDrawer>,
+    )
+
+    const style = screen.getByTestId('nav-drawer-surface').getAttribute('style') ?? ''
+    expect(style).toMatch(/margin-left/)
+    expect(style).toMatch(/transform/)
+  })
+
   it('sizes the menu from the sidebar width token', () => {
     wrap(
       <NavDrawer {...props} open>

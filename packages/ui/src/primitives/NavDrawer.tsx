@@ -131,12 +131,18 @@ export function NavDrawer({
       runOnJS(onOpenChange)(shouldOpen)
     })
 
-  const surfaceStyle = useAnimatedStyle(() =>
-    // Both read the same shared value, so the gesture drives either one.
-    persistent
-      ? { marginLeft: translateX.value }
-      : { transform: [{ translateX: translateX.value }] },
-  )
+  const surfaceStyle = useAnimatedStyle(() => ({
+    // Both read the same shared value, so the gesture drives either one — and
+    // both are always written, with the unused one pinned at zero.
+    //
+    // Returning only the active property would leave the other applied at its
+    // last value: Reanimated writes what the style function returns and never
+    // clears what it stops returning. Crossing the wide breakpoint downward
+    // would strand marginLeft at 240px, leaving an empty gutter beside content
+    // that is no longer being pushed.
+    marginLeft: persistent ? translateX.value : 0,
+    transform: [{ translateX: persistent ? 0 : translateX.value }],
+  }))
 
   const revealStyle = useAnimatedStyle(() => {
     const progress = translateX.value / openWidth
