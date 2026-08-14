@@ -7,6 +7,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // These are whole-screen renders — a New Order test mounts the full menu
+    // grid twice and clicks through it. On CI's two shared cores with five
+    // package suites running at once, the heaviest test has crossed the 5s
+    // default while passing in under a second locally.
+    testTimeout: 15_000,
     setupFiles: ['./test/setup.ts'],
     // Vitest leaves node_modules to Node, which resolves extensionless imports
     // literally and so never sees the `.web.js` builds below. Inlining these
