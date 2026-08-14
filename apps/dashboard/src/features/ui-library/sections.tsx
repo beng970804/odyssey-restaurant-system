@@ -1,15 +1,29 @@
 import {
+  Avatar,
   Badge,
+  Breadcrumbs,
   Button,
   Card,
   ChipGroup,
   DateRangePicker,
   Divider,
+  Drawer,
+  Field,
+  Grid,
+  GridItem,
+  Heading,
   IconButton,
+  IconTile,
   Inline,
   Input,
+  Meter,
+  Modal,
   NavDrawer,
+  NavGroup,
   NavItem,
+  OverlayPanel,
+  Pagination,
+  SearchInput,
   Select,
   SideNav,
   Skeleton,
@@ -20,7 +34,9 @@ import {
   Table,
   Tabs,
   Text,
+  Textarea,
   useTheme,
+  useToast,
   type DateRange,
   type StatusTone,
 } from '@repo/ui'
@@ -33,17 +49,43 @@ import { useState, type ReactNode } from 'react'
 type IconProps = { color: string; size: number }
 import { View } from 'react-native'
 
-/** Hoisted: an icon render prop defined during render is a new component each pass. */
-const CATEGORY_CHIPS = [
-  { value: 'all', label: 'All', icon: (props: IconProps) => <IconToolsKitchen2 {...props} /> },
-  {
-    value: 'noodles',
-    label: 'Noodles & Rice',
-    icon: (props: IconProps) => <IconBowlChopsticks {...props} />,
-  },
-  { value: 'desserts', label: 'Desserts', icon: (props: IconProps) => <IconCake {...props} /> },
-  { value: 'drinks', label: 'Drinks', icon: (props: IconProps) => <IconCoffee {...props} /> },
+/** Hoisted for the same reason as the chip icons: a render prop is a component. */
+const KITCHEN_ICON = (props: IconProps) => <IconToolsKitchen2 {...props} />
+const COFFEE_ICON = (props: IconProps) => <IconCoffee {...props} />
+
+const CHIP_ICONS = [
+  (props: IconProps) => <IconToolsKitchen2 {...props} />,
+  (props: IconProps) => <IconBowlChopsticks {...props} />,
+  (props: IconProps) => <IconCake {...props} />,
+  (props: IconProps) => <IconCoffee {...props} />,
 ]
+
+/**
+ * Long on purpose, and hoisted — an icon render prop defined during render is a
+ * new component each pass.
+ *
+ * The length is the point: the rail only drags and wheel-scrolls when it
+ * overflows, so a demo of four chips would render a row that never moves and
+ * read as the feature being broken. Twelve overflows a laptop.
+ */
+const CATEGORY_CHIPS = [
+  'All',
+  'Starters',
+  'Noodles & Rice',
+  'Mains',
+  'Grills',
+  'Sides',
+  'Salads',
+  'Desserts',
+  'Drinks',
+  'Hot Drinks',
+  'Specials',
+  'Seasonal',
+].map((label, index) => ({
+  value: index === 0 ? 'all' : label.toLowerCase().replaceAll(/[^a-z]+/g, '-'),
+  label,
+  icon: CHIP_ICONS[index % CHIP_ICONS.length],
+}))
 
 const PLAIN_CHIPS = [
   { value: 'all', label: 'Without icons' },
@@ -216,13 +258,25 @@ const NAME_COLUMN = [
 export function ComponentGallery() {
   const [switchValue, setSwitchValue] = useState(true)
   const [inputValue, setInputValue] = useState('')
+  const [searchValue, setSearchValue] = useState('')
+  const [noteValue, setNoteValue] = useState('')
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
   const [tab, setTab] = useState('all')
   const [chip, setChip] = useState('all')
+  const [page, setPage] = useState(1)
 
   return (
     <Stack gap="xl">
+      <Stack gap="sm">
+        <Text variant="bodyStrong">Headings</Text>
+        {/* Heading, not Text: it renders a real h1/h2/h3, which is what a
+            screen reader navigates a page by. */}
+        <Heading level={1}>Level one</Heading>
+        <Heading level={2}>Level two</Heading>
+        <Heading level={3}>Level three</Heading>
+      </Stack>
+
       <Stack gap="sm">
         <Text variant="bodyStrong">Buttons — every variant, size and state</Text>
         {(['primary', 'secondary', 'ghost', 'danger'] as const).map((variant) => (
@@ -286,6 +340,80 @@ export function ComponentGallery() {
           <DateRangePicker value={dateRange} onChange={setDateRange} today={TODAY} />
           <Switch value={switchValue} onValueChange={setSwitchValue} label="Auto-accept" />
         </Inline>
+        <Inline gap="lg" wrap align="flex-start">
+          <View style={{ width: 220 }}>
+            <SearchInput value={searchValue} onChangeText={setSearchValue} />
+          </View>
+          <View style={{ width: 300 }}>
+            <Textarea
+              value={noteValue}
+              onChangeText={setNoteValue}
+              placeholder="Kitchen note"
+              numberOfLines={3}
+            />
+          </View>
+        </Inline>
+      </Stack>
+
+      <Stack gap="sm">
+        <Text variant="bodyStrong">Field — the label, hint and error around a control</Text>
+        {/* Every state at once: the point of Field is that a label, a hint and
+            an error are laid out the same way on every form in the app. */}
+        <Inline gap="lg" wrap align="flex-start">
+          <View style={{ width: 220 }}>
+            <Field label="Item name" hint="Shown on the receipt" required>
+              <Input value={inputValue} onChangeText={setInputValue} placeholder="Nasi Lemak" />
+            </Field>
+          </View>
+          <View style={{ width: 220 }}>
+            <Field label="Price" error="Enter an amount in cents">
+              <Input value="" onChangeText={() => {}} placeholder="0" error />
+            </Field>
+          </View>
+        </Inline>
+      </Stack>
+
+      <Stack gap="sm">
+        <Text variant="bodyStrong">Identity and measures</Text>
+        <Inline gap="lg" wrap align="center">
+          {(['sm', 'md', 'lg'] as const).map((size) => (
+            <Avatar key={size} name="Siti Rahman" size={size} />
+          ))}
+          {(['brand', 'success', 'warning', 'danger', 'info'] as const).map((tone) => (
+            <IconTile key={tone} tone={tone} icon={KITCHEN_ICON} />
+          ))}
+          <IconTile size="lg" icon={COFFEE_ICON} />
+        </Inline>
+        <Inline gap="lg" wrap align="flex-start">
+          {(['success', 'warning', 'danger'] as const).map((tone) => (
+            <View key={tone} style={{ width: 220 }}>
+              <Meter
+                value={tone === 'success' ? 18 : tone === 'warning' ? 46 : 61}
+                max={64}
+                tone={tone}
+                label={`${tone} capacity`}
+              />
+            </View>
+          ))}
+        </Inline>
+      </Stack>
+
+      <Stack gap="sm">
+        <Text variant="bodyStrong">Grid — 12 columns, collapsing by breakpoint</Text>
+        {/* Resize the window: four across a wide screen, two on a laptop, one
+            when compact. The span lives on the cell, not on the grid. */}
+        <Grid columns={4} gap="md">
+          <GridItem span={2}>
+            <Card padding="md">
+              <Text>span 2</Text>
+            </Card>
+          </GridItem>
+          {['span 1', 'span 1', 'span 1'].map((label, index) => (
+            <Card key={`${label}-${index}`} padding="md">
+              <Text>{label}</Text>
+            </Card>
+          ))}
+        </Grid>
       </Stack>
 
       <Stack gap="sm">
@@ -303,11 +431,27 @@ export function ComponentGallery() {
 
       <Stack gap="sm">
         <Text variant="bodyStrong">Navigation</Text>
+        <Breadcrumbs
+          items={[
+            { label: 'Menu', href: '/menu' },
+            { label: 'Noodles & Rice', href: '/menu' },
+            { label: 'Nasi Lemak' },
+          ]}
+          onNavigate={() => {}}
+        />
         <Inline gap="xl" align="flex-start" wrap>
           <Stack gap="xs" style={{ width: 220 }}>
             <NavItem href="/x" label="Default" />
             <NavItem href="/y" label="Active" active />
           </Stack>
+          <View style={{ width: 220 }}>
+            {/* The heading a SideNav puts above a run of items — shown on its
+                own because it is what disappears when the nav collapses. */}
+            <NavGroup title="Service">
+              <NavItem href="/orders" label="Orders" />
+              <NavItem href="/menu" label="Menu" />
+            </NavGroup>
+          </View>
           <View style={{ height: 220 }}>
             <SideNav
               items={[
@@ -345,6 +489,9 @@ export function ComponentGallery() {
           a list that stays put and announces a radiogroup.
         */}
         <ChipGroup chips={CATEGORY_CHIPS} value={chip} onChange={setChip} />
+        <Text variant="caption" color="muted">
+          The rail above overflows on purpose — drag it sideways, or roll a mouse wheel over it.
+        </Text>
         <ChipGroup
           chips={PLAIN_CHIPS}
           value={chip === 'all' ? 'all' : 'plain'}
@@ -376,7 +523,90 @@ export function ComponentGallery() {
         <Card padding="md">
           <Table columns={[]} data={[]} keyExtractor={() => ''} />
         </Card>
+        {/* Under a table because that is the only place it ever appears. */}
+        <Pagination page={page} pageSize={20} total={94} onPageChange={setPage} />
       </Stack>
+
+      <Overlays />
+    </Stack>
+  )
+}
+
+/**
+ * Dialogs need somewhere to be opened from, so they get their own component
+ * rather than another four pieces of state on the gallery.
+ *
+ * The panel below the two buttons is the same chrome Modal and Drawer put
+ * around their contents, shown at rest: it is the piece that has to look
+ * identical in both, and the only way to compare it is side by side.
+ */
+function Overlays() {
+  const theme = useTheme()
+  const toast = useToast()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  return (
+    <Stack gap="sm">
+      <Text variant="bodyStrong">Overlays and feedback</Text>
+      <Inline gap="sm" wrap>
+        <Button onPress={() => setModalOpen(true)}>Open modal</Button>
+        <Button variant="secondary" onPress={() => setDrawerOpen(true)}>
+          Open drawer
+        </Button>
+        {TONES.map((tone) => (
+          <Button key={tone} variant="ghost" onPress={() => toast.show(`A ${tone} toast`, tone)}>
+            {`Toast: ${tone}`}
+          </Button>
+        ))}
+      </Inline>
+
+      <Surface elevation="raised" bordered style={{ width: 360, borderRadius: theme.radius.lg }}>
+        <OverlayPanel
+          title="OverlayPanel"
+          onClose={() => {}}
+          footer={<Button size="sm">Save</Button>}
+        >
+          <Stack gap="sm" style={{ padding: theme.space.lg }}>
+            <Text color="muted">The shared header, rule, body and footer.</Text>
+          </Stack>
+        </OverlayPanel>
+      </Surface>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Modal"
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onPress={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onPress={() => setModalOpen(false)}>
+              Confirm
+            </Button>
+          </>
+        }
+      >
+        <Stack gap="sm" style={{ padding: theme.space.lg }}>
+          <Text color="muted">Escape closes it, and so does the scrim.</Text>
+        </Stack>
+      </Modal>
+
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Drawer"
+        footer={
+          <Button size="sm" onPress={() => setDrawerOpen(false)}>
+            Done
+          </Button>
+        }
+      >
+        <Stack gap="sm" style={{ padding: theme.space.lg }}>
+          <Text color="muted">Same chrome as the modal, arriving from the edge.</Text>
+        </Stack>
+      </Drawer>
     </Stack>
   )
 }
