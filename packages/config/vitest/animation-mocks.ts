@@ -14,6 +14,30 @@ import { vi } from 'vitest'
  * have to sit at the top level rather than inside a setup function.
  */
 
+/**
+ * jsdom ships no `matchMedia`, and anything that asks about motion or colour
+ * scheme reads one. Every query answers false — no reduced-motion preference,
+ * the light theme the assertions are written against — which leaves each test
+ * free to say otherwise for the one query it cares about.
+ */
+const noop = () => {}
+
+if (globalThis.window && !globalThis.window.matchMedia) {
+  globalThis.window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      // React Native Web's `Appearance` subscribes through the deprecated pair,
+      // so a stub without them crashes every render under this environment.
+      addListener: noop,
+      removeListener: noop,
+      addEventListener: noop,
+      removeEventListener: noop,
+      dispatchEvent: () => false,
+    }) as MediaQueryList
+}
+
 vi.mock('react-native-reanimated', async () => {
   const { View } = await import('react-native')
 
