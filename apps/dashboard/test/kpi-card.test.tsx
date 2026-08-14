@@ -9,6 +9,17 @@ import { PendingCard } from '../src/features/home/PendingCard'
 
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
+// jsdom's window is 0×0, which every breakpoint reads as compact — and the
+// compact card is a different card. This file is about the laptop one; the
+// phone one is `home-compact.test.tsx`.
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: 1440, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
+
 // The pending card carries the queue modal, which holds a query.
 const wrap = (ui: ReactElement) =>
   render(

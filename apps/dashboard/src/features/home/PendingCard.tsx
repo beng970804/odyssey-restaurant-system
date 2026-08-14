@@ -47,7 +47,9 @@ export function PendingCard({ pending }: { pending: Pending }) {
           <Text variant="display" accessibilityLabel={String(pending.count)}>
             {Math.round(counted)}
           </Text>
-          <Text variant="caption" color="muted">
+          {/* Shrinks rather than pushing the caption off the card: at 390px the
+              count and the sentence beside it are wider than the row. */}
+          <Text variant="caption" color="muted" style={{ flexShrink: 1 }}>
             {pending.caption}
           </Text>
         </Inline>
@@ -59,7 +61,7 @@ export function PendingCard({ pending }: { pending: Pending }) {
           label={`${pending.count} of ${pending.total} orders awaiting a decision`}
         />
 
-        <Inline justify="space-between">
+        <Inline justify="space-between" wrap>
           <Badge tone={pending.tone}>
             {pending.count > 0 ? 'Awaiting a decision' : 'Nothing waiting'}
           </Badge>

@@ -69,6 +69,32 @@ describe('Grid', () => {
     expect(cell(0)?.style.flex).toBe('1 1 100%')
   })
 
+  it('keeps the columns a compact caller asks to keep', () => {
+    // A phone has room for two of something small side by side, and stacking
+    // them costs a screen of scrolling. The caller says which.
+    viewportWidth = 390
+    wrap(
+      <Grid columns={5} compactColumns={2}>
+        {cells}
+      </Grid>,
+    )
+
+    expect(cell(0)?.style.flex).toBe('1 1 50%')
+  })
+
+  it('clamps a span to the compact columns too', () => {
+    viewportWidth = 390
+    wrap(
+      <Grid columns={5} compactColumns={2}>
+        <GridItem span={2}>
+          <View testID="cell-0" />
+        </GridItem>
+      </Grid>,
+    )
+
+    expect(cell(0)?.style.flex).toBe('1 1 100%')
+  })
+
   it('gives a cell the width it asks for', () => {
     wrap(
       <Grid columns={5}>

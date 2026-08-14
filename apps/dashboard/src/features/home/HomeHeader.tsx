@@ -1,4 +1,4 @@
-import { Inline, Stack, Text, useTheme } from '@repo/ui'
+import { Inline, Stack, Text, useBreakpoint, useTheme } from '@repo/ui'
 import { useCallback } from 'react'
 import { ACCOUNT, lastName } from '../../account'
 import { NavToggle } from '../../components/NavToggle'
@@ -16,6 +16,7 @@ import { useNow } from '../../hooks/useNow'
 
 export function HomeHeader({ timezone }: { timezone: string }) {
   const theme = useTheme()
+  const { isCompact } = useBreakpoint()
 
   // Formatted inside the tick so the date rolls over at midnight too, rather
   // than showing yesterday for the whole of the night shift.
@@ -23,10 +24,19 @@ export function HomeHeader({ timezone }: { timezone: string }) {
   const clock = useNow(format)
 
   return (
-    <Inline gap="md" align="center" style={{ marginBottom: theme.space.xl }}>
+    <Inline
+      gap="md"
+      align="center"
+      style={{ marginBottom: isCompact ? theme.space.lg : theme.space.xl }}
+    >
       <NavToggle />
-      <Stack gap="xs">
-        <Text variant="display">{`Welcome back, ${lastName(ACCOUNT.name)} 👋`}</Text>
+      {/* The column that gives. A row child does not shrink by default under
+          React Native, so at display size the greeting ran off the right edge
+          of the phone rather than wrapping inside it. */}
+      <Stack gap="xs" flex={1}>
+        <Text variant={isCompact ? 'h1' : 'display'}>
+          {`Welcome back, ${lastName(ACCOUNT.name)} 👋`}
+        </Text>
         <Text variant="body" color="muted">
           {clock}
         </Text>

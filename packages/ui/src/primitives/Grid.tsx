@@ -7,6 +7,13 @@ export type GridProps = {
   children: ReactNode
   /** Columns at the widest layout; narrow viewports collapse toward one. */
   columns?: number
+  /**
+   * Columns to keep once compact. One by default, because most things that sit
+   * side by side on a laptop are unreadable at a third of a phone — but a row of
+   * small figures is not one of them, and stacking those costs a screen of
+   * scrolling to read four numbers.
+   */
+  compactColumns?: number
   gap?: SpaceToken
   style?: StyleProp<ViewStyle>
 }
@@ -39,12 +46,16 @@ const spanOf = (child: ReactNode) =>
  * The 12-column grid from the tokens, expressed in flexbox because React Native
  * has no CSS Grid. Collapsing is decided here rather than per screen.
  */
-export function Grid({ children, columns = 3, gap = 'lg', style }: GridProps) {
+export function Grid({ children, columns = 3, compactColumns = 1, gap = 'lg', style }: GridProps) {
   const theme = useTheme()
   const { isCompact, isWide } = useBreakpoint()
   // Four cards across a laptop are narrower than the numbers they hold, so
-  // anything above two halves once before it collapses to a single column.
-  const effective = isCompact ? 1 : isWide ? columns : Math.min(columns, 2)
+  // anything above two halves once before it collapses to the compact count.
+  const effective = isCompact
+    ? Math.min(columns, compactColumns)
+    : isWide
+      ? columns
+      : Math.min(columns, 2)
   const gapValue = theme.space[gap]
   const gutter = gapValue / 2
 
