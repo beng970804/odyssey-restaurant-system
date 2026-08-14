@@ -147,9 +147,9 @@ describe('updating settings', () => {
   })
 
   it('accepts a supported currency', async () => {
-    const res = await patch({ currency: 'MYR' })
+    const res = await patch({ currency: 'EUR' })
     expect(res.status).toBe(200)
-    expect((await getSettings()).currency).toBe('MYR')
+    expect((await getSettings()).currency).toBe('EUR')
 
     await patch({ currency: 'SGD' })
   })
@@ -159,6 +159,22 @@ describe('updating settings', () => {
     // zone would throw inside Intl on every order placed.
     const res = await patch({ timezone: 'Mars/Olympus_Mons' })
     expect(res.status).toBe(422)
+  })
+
+  it('rejects a real zone that is not on the supported list', async () => {
+    // Resolvable, but not one of the two restaurants' zones — the list is
+    // closed for the same reason currency's is.
+    const res = await patch({ timezone: 'America/New_York' })
+    expect(res.status).toBe(422)
+    expect(await errorCode(res)).toBe('VALIDATION_FAILED')
+  })
+
+  it('accepts a supported timezone', async () => {
+    const res = await patch({ timezone: 'Europe/Paris' })
+    expect(res.status).toBe(200)
+    expect((await getSettings()).timezone).toBe('Europe/Paris')
+
+    await patch({ timezone: 'Asia/Singapore' })
   })
 
   it('leaves the singleton alone — id is not writable', async () => {

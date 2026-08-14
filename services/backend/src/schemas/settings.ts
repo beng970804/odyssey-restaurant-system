@@ -1,6 +1,6 @@
 import { createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
-import { SUPPORTED_CURRENCIES } from '@repo/types'
+import { SUPPORTED_CURRENCIES, SUPPORTED_TIMEZONES } from '@repo/types'
 import { settings } from '../db/schema'
 import { isoDateTime } from './common'
 
@@ -35,23 +35,11 @@ export const openingHoursSchema = z
   .openapi('OpeningHours')
 
 /**
- * Every opening-hours comparison runs through Intl with this string. A zone the
- * runtime cannot resolve throws on every order placed, so it is rejected at the
- * boundary rather than discovered in production.
+ * Every opening-hours comparison runs through Intl with this string. A closed
+ * list rather than an "is it resolvable" probe: the probe let through every one
+ * of the world's ~400 zones, and the restaurants only ever sit in two.
  */
-const timezoneString = z.string().refine(
-  (tz) => {
-    try {
-      // Called without `new` — it constructs either way, and this is a probe
-      // for the RangeError an unresolvable zone throws, not a formatter we keep.
-      Intl.DateTimeFormat('en-US', { timeZone: tz })
-      return true
-    } catch {
-      return false
-    }
-  },
-  { message: 'Expected an IANA timezone, e.g. Asia/Singapore' },
-)
+const timezoneString = z.enum(SUPPORTED_TIMEZONES)
 
 export const settingsSchema = createSelectSchema(settings, {
   openingHours: openingHoursSchema,

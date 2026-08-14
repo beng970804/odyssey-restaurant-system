@@ -131,8 +131,8 @@ export const UpdateSettingsBody = zod.object({
   "deliveryEnabled": zod.boolean().optional(),
   "deliveryFeeCents": zod.int().min(updateSettingsBodyDeliveryFeeCentsMin).optional(),
   "taxRatePercent": zod.int().min(updateSettingsBodyTaxRatePercentMin).max(updateSettingsBodyTaxRatePercentMax).optional(),
-  "currency": zod.enum(['SGD', 'MYR', 'IDR', 'THB', 'PHP', 'VND', 'USD', 'EUR', 'GBP', 'AUD', 'JPY']).optional(),
-  "timezone": zod.string().optional(),
+  "currency": zod.enum(['SGD', 'EUR']).optional(),
+  "timezone": zod.enum(['Asia/Singapore', 'Europe/Paris']).optional(),
   "openingHours": zod.object({
   "mon": zod.union([zod.object({
   "closed": zod.literal(true)

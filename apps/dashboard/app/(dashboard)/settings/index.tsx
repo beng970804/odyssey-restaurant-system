@@ -1,4 +1,9 @@
-import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@repo/types'
+import {
+  SUPPORTED_CURRENCIES,
+  SUPPORTED_TIMEZONES,
+  type SupportedCurrency,
+  type SupportedTimezone,
+} from '@repo/types'
 import {
   Button,
   Card,
@@ -160,8 +165,15 @@ export default function SettingsScreen() {
               onChange={(value) => set('currency', value as SupportedCurrency)}
             />
           </Field>
-          <Field label="Timezone" hint="An IANA name, e.g. Asia/Singapore">
-            <Input value={draft.timezone} onChangeText={(value) => set('timezone', value)} />
+          <Field label="Timezone" hint="Decides when the restaurant counts as open">
+            {/* Closed for the same reason as currency: a typed near-miss like
+                "Asia/Singapor" resolves nowhere and silently breaks the
+                opening-hours check. */}
+            <Select
+              options={SUPPORTED_TIMEZONES.map((zone) => ({ value: zone, label: zone }))}
+              value={draft.timezone}
+              onChange={(value) => set('timezone', value as SupportedTimezone)}
+            />
           </Field>
         </Section>
       </Stack>

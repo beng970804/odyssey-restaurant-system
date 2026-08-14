@@ -10,14 +10,5 @@ export type UpdateSettingsCurrency = typeof UpdateSettingsCurrency[keyof typeof 
 
 export const UpdateSettingsCurrency = {
   SGD: 'SGD',
-  MYR: 'MYR',
-  IDR: 'IDR',
-  THB: 'THB',
-  PHP: 'PHP',
-  VND: 'VND',
-  USD: 'USD',
   EUR: 'EUR',
-  GBP: 'GBP',
-  AUD: 'AUD',
-  JPY: 'JPY',
 } as const;

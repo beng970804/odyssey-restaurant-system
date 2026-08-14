@@ -954,20 +954,15 @@
             "type": "string",
             "enum": [
               "SGD",
-              "MYR",
-              "IDR",
-              "THB",
-              "PHP",
-              "VND",
-              "USD",
-              "EUR",
-              "GBP",
-              "AUD",
-              "JPY"
+              "EUR"
             ]
           },
           "timezone": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "Asia/Singapore",
+              "Europe/Paris"
+            ]
           },
           "openingHours": {
             "$ref": "#/components/schemas/OpeningHours"

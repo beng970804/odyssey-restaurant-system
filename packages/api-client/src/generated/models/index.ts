@@ -65,3 +65,4 @@ export * from './updateCustomer';
 export * from './updateMenuItem';
 export * from './updateSettings';
 export * from './updateSettingsCurrency';
+export * from './updateSettingsTimezone';

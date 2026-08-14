@@ -81,7 +81,7 @@ const guarded = () => (
 const dirty = () => {
   // Any edit will do; the currency select is the cheapest to drive.
   fireEvent.click(screen.getByText('SGD'))
-  fireEvent.click(screen.getByText('MYR'))
+  fireEvent.click(screen.getByText('EUR'))
 }
 
 beforeEach(() => {
@@ -99,7 +99,22 @@ describe('SettingsScreen', () => {
     // Choosing a currency dirties the form; saving sends the choice.
     fireEvent.click(screen.getByText('Save changes'))
     expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ currency: 'MYR' }) }),
+      expect.objectContaining({ data: expect.objectContaining({ currency: 'EUR' }) }),
+      expect.anything(),
+    )
+  })
+
+  it('offers timezones from the supported list instead of free text', () => {
+    wrap(<SettingsScreen />)
+
+    // A typo like "Asia/Singapor" resolves nowhere and would break the
+    // opening-hours check, so the field is a closed list too.
+    fireEvent.click(screen.getByText('Asia/Singapore'))
+    fireEvent.click(screen.getByText('Europe/Paris'))
+
+    fireEvent.click(screen.getByText('Save changes'))
+    expect(mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ timezone: 'Europe/Paris' }) }),
       expect.anything(),
     )
   })
@@ -173,7 +188,7 @@ describe('SettingsScreen', () => {
     fireEvent.click(screen.getByText('Save and leave'))
 
     expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ currency: 'MYR' }) }),
+      expect.objectContaining({ data: expect.objectContaining({ currency: 'EUR' }) }),
       expect.anything(),
     )
     // Navigation waits for the server to accept the save.

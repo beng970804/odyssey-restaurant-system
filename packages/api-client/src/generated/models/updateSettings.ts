@@ -6,6 +6,7 @@
  */
 import type { OpeningHours } from './openingHours';
 import type { UpdateSettingsCurrency } from './updateSettingsCurrency';
+import type { UpdateSettingsTimezone } from './updateSettingsTimezone';
 
 export interface UpdateSettings {
   /** @exclusiveMinimum 0 */
@@ -22,6 +23,6 @@ export interface UpdateSettings {
      */
   taxRatePercent?: number;
   currency?: UpdateSettingsCurrency;
-  timezone?: string;
+  timezone?: UpdateSettingsTimezone;
   openingHours?: OpeningHours;
 }
