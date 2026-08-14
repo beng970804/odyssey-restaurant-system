@@ -14,6 +14,12 @@ export type TextProps = {
   align?: 'left' | 'center' | 'right'
   numberOfLines?: number
   /**
+   * Same advance for every digit. For figures that animate or align in
+   * columns — proportional digits make "888" wider than "911", so a counting
+   * value flickers in width and anything laid out after it dances.
+   */
+  tabular?: boolean
+  /**
    * What assistive tech reads instead of the rendered characters. For text that
    * is mid-animation, or shorthand a screen reader would spell out wrongly.
    */
@@ -27,6 +33,7 @@ export function Text({
   color = 'primary',
   align,
   numberOfLines,
+  tabular,
   accessibilityLabel,
   style,
 }: TextProps) {
@@ -42,6 +49,7 @@ export function Text({
           color: color === 'brand' ? theme.color.brand.default : theme.color.text[color],
           textAlign: align,
         },
+        tabular ? { fontVariant: ['tabular-nums'] } : null,
         style,
       ]}
     >

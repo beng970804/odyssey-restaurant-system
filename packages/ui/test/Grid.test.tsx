@@ -82,6 +82,31 @@ describe('Grid', () => {
     expect(cell(0)?.style.flex).toBe('1 1 50%')
   })
 
+  it('holds at two columns until the width a caller names', () => {
+    // Just past lg the sidebar still eats 240px of the window, so five KPI
+    // cards left a money figure no room — it wrapped mid-number, and the
+    // count-up animation made the wrap flicker, bouncing the whole row.
+    viewportWidth = 1440
+    wrap(
+      <Grid columns={5} fullAt="xl">
+        {cells}
+      </Grid>,
+    )
+
+    expect(cell(0)?.style.flex).toBe('1 1 50%')
+  })
+
+  it('expands past the named width', () => {
+    viewportWidth = 1700
+    wrap(
+      <Grid columns={5} fullAt="xl">
+        {cells}
+      </Grid>,
+    )
+
+    expect(cell(0)?.style.flex).toBe('1 1 20%')
+  })
+
   it('clamps a span to the compact columns too', () => {
     viewportWidth = 390
     wrap(

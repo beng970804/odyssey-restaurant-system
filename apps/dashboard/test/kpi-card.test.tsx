@@ -58,6 +58,16 @@ describe('KpiCard', () => {
     expect(seen).toEqual([lightTheme.color.brand.default])
   })
 
+  it('sets the figure in tabular numerals, so counting up cannot change its width', () => {
+    // Digits in the text face have their own widths — "888" is wider than
+    // "911" — so a figure animating through values flickered across the wrap
+    // threshold and bounced the row. Tabular numerals give every digit the
+    // same advance; the width only ever grows with the digit count.
+    wrap(<KpiCard kpi={{ label: 'Revenue', figure: moneyFigure(341_203) }} />)
+
+    expect(screen.getByLabelText('S$3,412.03')).toHaveStyle({ fontVariant: 'tabular-nums' })
+  })
+
   it('carries the week behind the figure as a sparkline', () => {
     wrap(
       <KpiCard

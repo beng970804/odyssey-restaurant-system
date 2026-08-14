@@ -41,6 +41,10 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
               would have a screen reader announce every frame of it. */}
           <Text
             variant={isCompact ? 'h1' : 'display'}
+            // Tabular, because this value is animating: proportional digits
+            // change the string's width every frame, and near a wrap threshold
+            // that width flicker bounced the whole card.
+            tabular
             accessibilityLabel={formatFigure(kpi.figure, total, currency)}
           >
             {formatFigure(kpi.figure, counted, currency)}

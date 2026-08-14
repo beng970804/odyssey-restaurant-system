@@ -14,6 +14,13 @@ export type GridProps = {
    * scrolling to read four numbers.
    */
   compactColumns?: number
+  /**
+   * The breakpoint at which the full column count engages; two until then.
+   * `lg` by default. The KPI row asks for `xl`, because just past lg the
+   * sidebar still eats 240px of the window and five money figures do not fit
+   * what remains.
+   */
+  fullAt?: 'lg' | 'xl'
   gap?: SpaceToken
   style?: StyleProp<ViewStyle>
 }
@@ -46,14 +53,22 @@ const spanOf = (child: ReactNode) =>
  * The 12-column grid from the tokens, expressed in flexbox because React Native
  * has no CSS Grid. Collapsing is decided here rather than per screen.
  */
-export function Grid({ children, columns = 3, compactColumns = 1, gap = 'lg', style }: GridProps) {
+export function Grid({
+  children,
+  columns = 3,
+  compactColumns = 1,
+  fullAt = 'lg',
+  gap = 'lg',
+  style,
+}: GridProps) {
   const theme = useTheme()
-  const { isCompact, isWide } = useBreakpoint()
+  const { isCompact, isWide, isExtraWide } = useBreakpoint()
   // Four cards across a laptop are narrower than the numbers they hold, so
   // anything above two halves once before it collapses to the compact count.
+  const full = fullAt === 'xl' ? isExtraWide : isWide
   const effective = isCompact
     ? Math.min(columns, compactColumns)
-    : isWide
+    : full
       ? columns
       : Math.min(columns, 2)
   const gapValue = theme.space[gap]

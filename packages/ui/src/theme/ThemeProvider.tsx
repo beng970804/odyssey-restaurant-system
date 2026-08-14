@@ -66,5 +66,6 @@ export function useBreakpoint() {
     width,
     isCompact: width < breakpoints.md,
     isWide: width >= breakpoints.lg,
+    isExtraWide: width >= breakpoints.xl,
   }
 }

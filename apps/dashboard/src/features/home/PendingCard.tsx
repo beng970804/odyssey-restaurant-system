@@ -44,7 +44,7 @@ export function PendingCard({ pending }: { pending: Pending }) {
         </Inline>
 
         <Inline gap="md" align="baseline">
-          <Text variant="display" accessibilityLabel={String(pending.count)}>
+          <Text variant="display" tabular accessibilityLabel={String(pending.count)}>
             {Math.round(counted)}
           </Text>
           {/* Shrinks rather than pushing the caption off the card: at 390px the

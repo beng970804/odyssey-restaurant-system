@@ -20,7 +20,10 @@ export function HomeKpiRow({ kpis, pending }: { kpis: Kpi[]; pending: Pending | 
   const loading = !pending
 
   return (
-    <Grid columns={5} compactColumns={2} gap="lg">
+    // `fullAt="xl"`: just past lg the sidebar still eats 240px, and five
+    // columns leave a 32px money figure no room — it wrapped mid-number, and
+    // the count-up flickered the wrap, bouncing the row.
+    <Grid columns={5} compactColumns={2} fullAt="xl" gap="lg">
       {loading
         ? [0, 1, 2].map((index) => <KpiCardSkeleton key={index} />)
         : kpis.map((kpi) => <KpiCard key={kpi.label} kpi={kpi} />)}
