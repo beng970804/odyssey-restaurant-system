@@ -102,4 +102,37 @@ describe('Sidebar', () => {
     expect(screen.getByText(ACCOUNT.email)).toBeTruthy()
     expect(screen.getByTestId('nav-user-avatar')).toBeTruthy()
   })
+
+  it('closes the drawer after the footer buttons, like the nav items do', () => {
+    // On a phone every press in the drawer is a decision to be somewhere else:
+    // the nav items already close it on the way, and the two footer controls
+    // were the odd ones out — the drawer stayed over the page they had just
+    // acted on.
+    const onOpenChange = vi.fn()
+    wrap(
+      <Sidebar open onOpenChange={onOpenChange} persistent={false}>
+        <Text>Today's orders</Text>
+      </Sidebar>,
+    )
+
+    fireEvent.click(screen.getByTestId('nav-settings-button'))
+    expect(push).toHaveBeenCalledWith('/settings')
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+
+    onOpenChange.mockClear()
+    fireEvent.click(screen.getByText(/mode$/))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('leaves the pinned drawer open, where closing costs nothing to undo', () => {
+    const onOpenChange = vi.fn()
+    wrap(
+      <Sidebar open onOpenChange={onOpenChange} persistent>
+        <Text>Today's orders</Text>
+      </Sidebar>,
+    )
+
+    fireEvent.click(screen.getByTestId('nav-settings-button'))
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
 })

@@ -115,6 +115,14 @@ export function Sidebar({
     })
   }
 
+  // What NavDrawer already does after a nav item, applied to the footer's own
+  // controls: on a phone every press in the drawer is a decision to be
+  // somewhere else, and the two footer buttons were the odd ones out.
+  const closing = (action: () => void) => () => {
+    action()
+    if (!persistent) onOpenChange(false)
+  }
+
   return (
     <NavDrawer
       items={items}
@@ -165,7 +173,7 @@ export function Sidebar({
         <Stack gap="sm">
           <Inline justify="space-between">
             <View ref={themeToggleRef}>
-              <Button variant="ghost" size="sm" onPress={toggle} icon={THEME_ICON[mode]}>
+              <Button variant="ghost" size="sm" onPress={closing(toggle)} icon={THEME_ICON[mode]}>
                 {mode === 'dark' ? 'Light mode' : 'Dark mode'}
               </Button>
             </View>
@@ -173,7 +181,7 @@ export function Sidebar({
               testID="nav-settings-button"
               label="Settings"
               size="sm"
-              onPress={() => go(SETTINGS.href)}
+              onPress={closing(() => go(SETTINGS.href))}
             >
               <IconSettings color={theme.color.text.secondary} size={20} />
             </IconButton>
