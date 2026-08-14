@@ -25,12 +25,18 @@ import { Text } from './Text'
 // Record<string, any> but not to Record<string, unknown>.
 type Row = Record<string, any>
 
+export type Align = 'left' | 'center' | 'right'
+
+/** One mapping from column alignment to the row axis, shared by cell and header. */
+const alignItems = (align: Align = 'left'): ViewStyle['alignItems'] =>
+  align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start'
+
 export type Column<T> = {
   key: string
   header: string
   render: (row: T) => ReactNode
   width?: number
-  align?: 'left' | 'right'
+  align?: Align
   /** Opt in per column: a header that cannot sort must not look like it can. */
   sortable?: boolean
   /**
@@ -192,7 +198,7 @@ function HeaderCell({
 }: {
   label: string
   width?: number
-  align?: 'left' | 'right'
+  align?: Align
   sortable: boolean
   direction: false | 'asc' | 'desc'
   onPress?: (event: unknown) => void
@@ -225,7 +231,7 @@ function HeaderCell({
   )
 }
 
-type Cell = { key: string; width?: number; align?: 'left' | 'right'; content: ReactNode }
+type Cell = { key: string; width?: number; align?: Align; content: ReactNode }
 
 function TableRow({ cells, onPress }: { cells: Cell[]; onPress?: () => void }) {
   const theme = useTheme()
@@ -255,10 +261,7 @@ function TableRow({ cells, onPress }: { cells: Cell[]; onPress?: () => void }) {
       {cells.map((cell) => (
         <View
           key={cell.key}
-          style={[
-            cellWidth(cell.width),
-            { alignItems: cell.align === 'right' ? 'flex-end' : 'flex-start' },
-          ]}
+          style={[cellWidth(cell.width), { alignItems: alignItems(cell.align) }]}
         >
           {cell.content}
         </View>

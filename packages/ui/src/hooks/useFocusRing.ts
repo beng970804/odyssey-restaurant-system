@@ -12,6 +12,19 @@ import type { Theme } from '../theme/types'
  * React Native's style types do not admit. On native the outline properties are
  * ignored entirely, which is correct: native has no keyboard focus ring.
  */
+/** The gap between a control's edge and its focus ring. */
+const RING_OFFSET = 2
+
+/**
+ * How far the ring reaches outside the control it belongs to — what a scrolling
+ * container has to leave spare so it does not clip the ring off its first and
+ * last child. Derived here rather than guessed at the call site, so a wider ring
+ * never silently starts getting cut.
+ */
+export function focusRingBleed(theme: Theme): number {
+  return RING_OFFSET + theme.borderWidth.medium
+}
+
 export function focusRingStyle(
   theme: Theme,
   state: Pick<InteractionState, 'focused' | 'pressed'>,
@@ -22,6 +35,6 @@ export function focusRingStyle(
     outlineStyle: 'solid',
     outlineWidth: theme.borderWidth.medium,
     outlineColor: theme.color.border.focus,
-    outlineOffset: 2,
+    outlineOffset: RING_OFFSET,
   }
 }

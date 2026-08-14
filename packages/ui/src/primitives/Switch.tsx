@@ -8,14 +8,27 @@ import { Text } from './Text'
 export type SwitchProps = {
   value: boolean
   onValueChange: (value: boolean) => void
+  /** Printed beside the control *and* used as its accessible name. */
   label?: string
+  /**
+   * The accessible name when the control must not print one — a switch in a
+   * table row is named by its row, and repeating "Ngoh Hiang available" beside
+   * every toggle says out loud what the row already says.
+   */
+  accessibilityLabel?: string
   disabled?: boolean
 }
 
 const TRACK_WIDTH = 40
 const KNOB = 16
 
-export function Switch({ value, onValueChange, label, disabled = false }: SwitchProps) {
+export function Switch({
+  value,
+  onValueChange,
+  label,
+  accessibilityLabel,
+  disabled = false,
+}: SwitchProps) {
   const theme = useTheme()
   const { state, handlers } = useInteractionState()
 
@@ -23,7 +36,7 @@ export function Switch({ value, onValueChange, label, disabled = false }: Switch
     <Pressable
       role="switch"
       aria-checked={value}
-      aria-label={label}
+      aria-label={label ?? accessibilityLabel}
       aria-disabled={disabled}
       disabled={disabled}
       focusable

@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, View } from 'react-native'
-import { focusRingStyle } from '../hooks/useFocusRing'
+import { focusRingBleed, focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
 import type { NavItemIcon } from './NavItem'
@@ -51,8 +51,19 @@ export function ChipGroup<T extends string>({
 
   if (!scrollable) return row
 
+  // A scroller clips what overflows it, and the first chip's focus ring sits
+  // outside the row on every side — so the content is inset by exactly the
+  // ring's reach, and the scroller is told not to be squashed by whatever
+  // column it lands in. Margin cancels the inset so chips stay flush left.
+  const bleed = focusRingBleed(theme)
+
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ flexGrow: 0, flexShrink: 0, marginHorizontal: -bleed }}
+      contentContainerStyle={{ padding: bleed }}
+    >
       {row}
     </ScrollView>
   )

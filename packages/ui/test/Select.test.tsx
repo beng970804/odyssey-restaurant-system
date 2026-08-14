@@ -71,4 +71,11 @@ describe('Switch', () => {
     wrap(<Switch value onValueChange={vi.fn()} label="Auto-accept" />)
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true')
   })
+
+  it('names itself without printing the name when only accessibilityLabel is given', () => {
+    wrap(<Switch value onValueChange={vi.fn()} accessibilityLabel="Otah available" />)
+
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-label', 'Otah available')
+    expect(screen.queryByText('Otah available')).toBeNull()
+  })
 })

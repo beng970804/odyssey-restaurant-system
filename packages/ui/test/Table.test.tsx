@@ -173,6 +173,19 @@ describe('Table sorting', () => {
     expect(cell?.style.flex).toBe('1 1 0%')
   })
 
+  it('centres a centred column in its cell', () => {
+    // A control column — a toggle, say — reads as its own column only when it
+    // sits under the middle of its header rather than hard against the number
+    // in the column before it.
+    const centred: Column<Row>[] = [
+      { key: 'name', header: 'Name', render: (row) => row.name },
+      { key: 'id', header: 'Reference', render: (row) => row.id, width: 120, align: 'center' },
+    ]
+    wrap(<Table columns={centred} data={rows} keyExtractor={keyExtractor} />)
+
+    expect(screen.getByText('a1').parentElement?.style.alignItems).toBe('center')
+  })
+
   it('starts from defaultSort when one is given', () => {
     wrap(
       <Table

@@ -28,9 +28,10 @@ export function MenuItemTable({
   const columns: Column<MenuItemWithCategory>[] = [
     { key: 'name', header: 'Item', render: (row) => <Text variant="bodyStrong">{row.name}</Text> },
     {
+      // Flexible rather than fixed: sharing the slack with the name column puts
+      // the category beside the item it belongs to instead of a screen away.
       key: 'category',
       header: 'Category',
-      width: 160,
       render: (row) => <Text color="muted">{row.categoryName}</Text>,
     },
     {
@@ -41,13 +42,17 @@ export function MenuItemTable({
       render: (row) => <Text>{formatMoney(row.priceCents, currency)}</Text>,
     },
     {
+      // The row already says which item this is, so the switch is named for
+      // screen readers only — printing "Ngoh Hiang available" beside it both
+      // repeats the row and wraps to three lines.
       key: 'available',
       header: 'Available',
-      width: 120,
+      width: 110,
+      align: 'center',
       render: (row) => (
         <Switch
           value={row.isAvailable}
-          label={`${row.name} available`}
+          accessibilityLabel={`${row.name} available`}
           onValueChange={(isAvailable) => onToggleAvailability(row, isAvailable)}
         />
       ),
@@ -55,7 +60,8 @@ export function MenuItemTable({
     {
       key: 'actions',
       header: '',
-      width: 170,
+      width: 150,
+      align: 'right',
       render: (row) => (
         <Inline gap="xs">
           <Button variant="ghost" size="sm" onPress={() => onEdit(row)}>
