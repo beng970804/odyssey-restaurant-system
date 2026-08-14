@@ -1,6 +1,6 @@
 import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { NewOrderScreen } from '../src/features/orders/NewOrderScreen'
@@ -81,14 +81,21 @@ describe('NewOrderScreen, compact', () => {
     expect(cell?.style.flex).toBe('1 1 50%')
   })
 
-  it('restates the order in the bottom bar, so the total needs no drawer', () => {
+  it('restates the order in the bottom bar, so the total needs no drawer', async () => {
     wrap(<NewOrderScreen />)
 
-    expect(screen.getByText('0 items · S$0.00')).toBeTruthy()
+    expect(screen.getByText(/0 items ·/)).toBeTruthy()
+    expect(screen.getByLabelText('S$0.00')).toBeTruthy()
 
     fireEvent.click(screen.getByLabelText('Add Laksa'))
-    // 850 + 9% tax (77).
-    expect(screen.getByText('1 item · S$9.27')).toBeTruthy()
+
+    // The settled figure is the accessible one from the first frame — a value
+    // ticking up would have a screen reader announce every step of it.
+    expect(screen.getByText(/1 item ·/)).toBeTruthy()
+    expect(screen.getByLabelText('S$9.27')).toBeTruthy()
+
+    // The visible figure ticks toward 850 + 9% tax (77) rather than jumping.
+    await waitFor(() => expect(screen.getByText('S$9.27')).toBeTruthy())
   })
 
   it('opens the same summary panel in a drawer to review and place', () => {

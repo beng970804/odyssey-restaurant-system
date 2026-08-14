@@ -23,6 +23,7 @@ import {
   Surface,
   Text,
   useBreakpoint,
+  useCountUp,
   useTheme,
   useToast,
 } from '@repo/ui'
@@ -40,6 +41,26 @@ import { useNewOrderForm } from './useNewOrderForm'
 type UnavailableDetail = { unavailableItems?: { id: string; name: string }[] }
 
 const SUMMARY_WIDTH = 360
+
+/** Quicker than the KPIs' reveal: this ticks mid-flow, under a working thumb. */
+const BAR_TICK_MS = 350
+
+/**
+ * The bar's total ticks toward each add, so tapping a dish is answered by the
+ * number moving even while the summary itself is off in its drawer. Only here:
+ * the Place order button also prints the total, and a figure someone is about
+ * to commit to must never be mid-tick when they press it.
+ */
+function TickingMoney({ cents, currency }: { cents: number; currency: string }) {
+  const counted = useCountUp(cents, BAR_TICK_MS)
+  return (
+    // The settled figure is the accessible one — a value counting up would
+    // have a screen reader announce every frame of it.
+    <Text variant="bodyStrong" accessibilityLabel={formatMoney(cents, currency)}>
+      {formatMoney(Math.round(counted), currency)}
+    </Text>
+  )
+}
 
 /**
  * The POS layout: the menu owns the screen, the order rides beside it. Wide
@@ -243,7 +264,8 @@ export function NewOrderScreen() {
           >
             <Inline justify="space-between" align="center">
               <Text variant="bodyStrong">
-                {`${String(form.lines.length)} item${form.lines.length === 1 ? '' : 's'} · ${formatMoney(form.estimate.totalCents, currency)}`}
+                {`${String(form.lines.length)} item${form.lines.length === 1 ? '' : 's'} · `}
+                <TickingMoney cents={form.estimate.totalCents} currency={currency} />
               </Text>
               <Button onPress={() => setReviewing(true)} disabled={!form.isValid}>
                 Review order
