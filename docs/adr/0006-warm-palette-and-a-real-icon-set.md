@@ -2,6 +2,8 @@
 
 The design system started slate-and-blue. It is now cream-and-burnt-orange, and the dashboard pulls line icons from `@tabler/icons-react-native` rather than shipping none.
 
+> Partly superseded by [ADR 0007](0007-dark-mode-goes-cool.md): dark mode is a blue-slate again. The warm direction below holds for light mode and for the brand; only "the dark is warm because the light is" was reversed.
+
 The palette moved because the product is a restaurant floor tool, and a cool slate board reads as a finance product. The direction was taken from a reference design, but not copied from it: three of its decisions did not survive contact with the constraints already in this repo.
 
 **The brand is darker than the reference's orange.** A saturated `#F97316` carries white label text at 2.9:1, which fails WCAG AA outright. The brand darkens to `#C2410C`, where white clears 4.5:1, so the accent is usable on a button rather than only on decoration. Dark mode cannot use that colour — it disappears into a near-black canvas — so it brightens to `#FF8A4C` and flips `onBrand` to a dark label instead. Same brand, opposite label, both modes accessible.
@@ -10,7 +12,7 @@ The palette moved because the product is a restaurant floor tool, and a cool sla
 
 **Money did not turn orange.** In the reference every price is orange, which works when a card shows one number. A thirty-row Orders table with every total in orange turns the accent into noise and destroys the signal that orange means actionable. Orange is reserved for the active nav pill, primary buttons, the focus ring, and at most one emphasized figure per screen.
 
-The direction is enforced rather than trusted: `packages/ui/test/tokens.test.ts` asserts that every surface and the whole text ramp lean warm, that the brand stays inside the orange band in both modes, and that warning keeps its distance from the brand hue — on top of the AA contrast and light/dark parity checks that were already there. Its first run caught `bg.raised` still being pure white.
+The direction is enforced rather than trusted: `packages/ui/test/tokens.test.ts` asserts that every surface and the whole text ramp lean the way their mode does (warm in light, cool in dark since ADR 0007), that the brand stays inside the orange band in both modes, and that warning keeps its distance from the brand hue — on top of the AA contrast and light/dark parity checks that were already there. Its first run caught `bg.raised` still being pure white.
 
 ## The icon set
 

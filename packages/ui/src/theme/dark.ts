@@ -11,11 +11,15 @@ import type { Theme } from './types'
  *    border tokens carry the separation instead.
  * 3. Status tones desaturate — the light-mode pastels would glare — while the
  *    brand keeps its hue, so it stays recognisable in both modes.
- * 4. The dark is warm, because the light is. A blue-slate dark mode under a
- *    cream light mode makes the toggle feel like two different products, so the
- *    neutrals are a warm charcoal rather than a navy one. Warm, not brown: at
- *    this lightness a tint strong enough to read as brown reads as a dirty
- *    black instead, so every surface leans warm by only a few units.
+ * 4. The dark is *cool*, where the light is warm — the one rule that reversed.
+ *    A warm dark is the tidier theory, but below about 10% lightness a warm
+ *    tint has nowhere to go: too little and the canvas is a plain black, enough
+ *    to read as brown and it reads as a black that got dirty. A blue-slate has
+ *    room to be tinted and still look intentional. See ADR 0006.
+ *
+ * Continuity across the toggle is carried by the brand instead of the
+ * neutrals, and orange on blue-slate is a complementary pair rather than an
+ * accident — the accent is louder here than it ever was on brown.
  *
  * The brand inverts its label colour rather than its hue. Light mode darkens
  * the orange until white text clears AA on it; dark mode brightens it until it
@@ -30,27 +34,29 @@ export const darkTheme: Theme = {
   mode: 'dark',
   color: {
     bg: {
-      // Lifted off black on purpose. A canvas down at 0.6% luminance leaves the
-      // three surface steps within 1.07:1 of each other — ordered, but too close
-      // to resolve, so a card only reads as a card because of its border.
-      // Starting at 1.1% buys perceptible steps without ever getting bright.
-      canvas: '#1E1B19',
-      surface: '#272321',
-      raised: '#322C29',
-      overlay: '#322C29',
-      inset: '#161413',
+      // An even ramp: each step adds roughly 12 per channel, holding the blue
+      // lead constant so the tint never drifts as surfaces stack. The canvas
+      // stays genuinely dark while the steps land at 1.13:1 and 1.17:1 — far
+      // enough apart that a card reads as raised before its border is noticed.
+      canvas: '#121420',
+      surface: '#1E202C',
+      raised: '#2A2C37',
+      overlay: '#2A2C37',
+      inset: '#0D0F19',
     },
     text: {
-      primary: '#F2E9E1',
-      secondary: '#D9CCC1',
-      muted: '#A89A8E',
-      inverse: '#1C1917',
-      onBrand: '#1C1917',
+      // Cool grey, tracking the surfaces. A warm ramp on these would be the
+      // same mismatch the light theme avoids, pointing the other way.
+      primary: '#E9EBF2',
+      secondary: '#C4C8D6',
+      muted: '#8F94A6',
+      inverse: '#121420',
+      onBrand: '#121420',
     },
     border: {
-      subtle: '#322C29',
-      default: '#423A35',
-      strong: '#574C45',
+      subtle: '#262834',
+      default: '#333543',
+      strong: '#454857',
       focus: '#FF8A4C',
     },
     brand: {
@@ -60,15 +66,17 @@ export const darkTheme: Theme = {
       default: '#FF8A4C',
       hover: '#FFA06B',
       active: '#FFB88C',
-      subtle: '#43271A',
-      onBrand: '#1C1917',
+      // The nav pill: the brand mixed down into the canvas rather than a brown
+      // picked by hand, so it reads as tinted canvas and not as a third neutral.
+      subtle: '#3D2928',
+      onBrand: '#121420',
     },
     status: {
       success: { bg: '#12301E', fg: '#86EFAC', border: '#1C5334' },
       warning: { bg: '#33280A', fg: '#FCD34D', border: '#7A5E10' },
       danger: { bg: '#3A1512', fg: '#FCA5A5', border: '#7F2420' },
       info: { bg: '#0E2A3A', fg: '#7DD3FC', border: '#10557C' },
-      neutral: { bg: '#322C29', fg: '#D9CCC1', border: '#423A35' },
+      neutral: { bg: '#2A2C37', fg: '#C4C8D6', border: '#333543' },
     },
   },
   elevation: {

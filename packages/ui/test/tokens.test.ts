@@ -47,6 +47,17 @@ const THEMES: [string, Theme][] = [
   ['dark', darkTheme],
 ]
 
+/**
+ * Which way each mode's neutrals lean. Light is warm cream; dark is a cool
+ * blue-slate, because below 10% lightness a warm tint reads as a dirty black
+ * rather than a brown (ADR 0007). The temperatures differ, but within a mode
+ * every neutral agrees — that is the property worth protecting.
+ */
+const TEMPERATURE: [string, Theme, 1 | -1][] = [
+  ['light', lightTheme, 1],
+  ['dark', darkTheme, -1],
+]
+
 describe('token structure', () => {
   it('light and dark expose identical token paths', () => {
     // The guarantee that dark mode can never be half-finished: a missing dark
@@ -151,21 +162,30 @@ describe('palette discipline', () => {
   })
 })
 
-describe('warmth', () => {
-  // The palette is warm on purpose, and warmth is the kind of decision that
-  // erodes one well-meaning hex at a time. These tests are what stop a cool
-  // slate grey being pasted back in six commits from now.
+describe('temperature', () => {
+  // Each mode leans one way on purpose, and temperature is the kind of decision
+  // that erodes one well-meaning hex at a time. These tests are what stop a
+  // stray warm grey landing in dark mode six commits from now, or a cool one in
+  // light — a single neutral pointing the wrong way is the loudest possible
+  // tell that two palettes were merged.
 
-  it.each(THEMES)('%s: every surface leans warm', (_name, theme) => {
+  it.each(TEMPERATURE)('%s: every surface leans the way its mode does', (_name, theme, sign) => {
     for (const [role, value] of Object.entries(theme.color.bg)) {
-      expect(warmth(value), `bg.${role}`).toBeGreaterThan(0)
+      expect(warmth(value) * sign, `bg.${role}`).toBeGreaterThan(0)
     }
   })
 
-  it.each(THEMES)('%s: the text ramp is warm grey, never cool grey', (_name, theme) => {
+  it.each(TEMPERATURE)('%s: the text ramp is a tinted grey, never a neutral one', (_n, t, sign) => {
     for (const role of ['primary', 'secondary', 'muted'] as const) {
-      expect(warmth(theme.color.text[role]), `text.${role}`).toBeGreaterThan(0)
+      expect(warmth(t.color.text[role]) * sign, `text.${role}`).toBeGreaterThan(0)
     }
+  })
+
+  it('keeps the two modes on opposite sides, rather than drifting together', () => {
+    // The reversal is the decision. If dark ever warms back up to meet light,
+    // that is drift rather than a choice, and this is where it surfaces.
+    expect(warmth(lightTheme.color.bg.canvas)).toBeGreaterThan(0)
+    expect(warmth(darkTheme.color.bg.canvas)).toBeLessThan(0)
   })
 
   it.each(THEMES)('%s: the brand is an orange', (_name, theme) => {
@@ -177,12 +197,15 @@ describe('warmth', () => {
     }
   })
 
-  it.each(THEMES)('%s: the neutral status tone sits on the canvas, not against it', (_n, theme) => {
-    // A cool grey chip on a cream canvas is the loudest possible tell that two
-    // palettes were merged, and neutral is on screen more than any other tone.
-    expect(warmth(theme.color.status.neutral.bg)).toBeGreaterThan(0)
-    expect(warmth(theme.color.status.neutral.fg)).toBeGreaterThan(0)
-  })
+  it.each(TEMPERATURE)(
+    '%s: the neutral status tone sits on the canvas, not against it',
+    (_n, theme, sign) => {
+      // Neutral is on screen more than any other tone, so it is the chip most
+      // likely to give away a temperature mismatch.
+      expect(warmth(theme.color.status.neutral.bg) * sign).toBeGreaterThan(0)
+      expect(warmth(theme.color.status.neutral.fg) * sign).toBeGreaterThan(0)
+    },
+  )
 
   it.each(THEMES)('%s: warning stays clear of the brand hue', (_name, theme) => {
     // Once the brand is orange, an amber Pending badge reads as a button. The
