@@ -13,6 +13,9 @@ export type InputProps = {
   numberOfLines?: number
   keyboardType?: TextInputProps['keyboardType']
   ariaLabel?: string
+  /** Fired on Enter (or the keyboard's submit key), so a field can act on itself. */
+  onSubmitEditing?: () => void
+  testID?: string
 }
 
 export function Input({
@@ -25,14 +28,18 @@ export function Input({
   numberOfLines,
   keyboardType,
   ariaLabel,
+  onSubmitEditing,
+  testID,
 }: InputProps) {
   const theme = useTheme()
   const { state, handlers } = useInteractionState()
 
   return (
     <TextInput
+      testID={testID}
       value={value}
       onChangeText={onChangeText}
+      onSubmitEditing={onSubmitEditing}
       placeholder={placeholder}
       placeholderTextColor={theme.color.text.muted}
       editable={!disabled}

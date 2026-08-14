@@ -1,5 +1,6 @@
 import { Inline, Stack, Text, useTheme } from '@repo/ui'
 import { useCallback } from 'react'
+import { ACCOUNT, lastName } from '../../account'
 import { NavToggle } from '../../components/NavToggle'
 import { useNow } from '../../hooks/useNow'
 
@@ -8,11 +9,10 @@ import { useNow } from '../../hooks/useNow'
  * greets you, and a one-caller variant on a component every other screen uses
  * would be an abstraction paying for itself nowhere.
  *
- * The name is hardcoded. There is no auth in this product and no operator
- * record to read one from, so this is a placeholder standing in for whoever is
- * signed in once there is a session to ask.
+ * The greeting names the same account the sidebar shows, by family name: it is
+ * how the pass addresses you mid-service, and it keeps the line short enough to
+ * stay on one row beside the drawer toggle.
  */
-const OPERATOR_NAME = 'Robert'
 
 export function HomeHeader({ timezone }: { timezone: string }) {
   const theme = useTheme()
@@ -26,7 +26,7 @@ export function HomeHeader({ timezone }: { timezone: string }) {
     <Inline gap="md" align="center" style={{ marginBottom: theme.space.xl }}>
       <NavToggle />
       <Stack gap="xs">
-        <Text variant="display">{`Welcome back, ${OPERATOR_NAME} 👋`}</Text>
+        <Text variant="display">{`Welcome back, ${lastName(ACCOUNT.name)} 👋`}</Text>
         <Text variant="body" color="muted">
           {clock}
         </Text>

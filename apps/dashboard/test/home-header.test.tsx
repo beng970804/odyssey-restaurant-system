@@ -2,6 +2,7 @@ import { ThemeProvider } from '@repo/ui'
 import { act, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ACCOUNT, lastName } from '../src/account'
 import { NavToggleProvider } from '../src/components/NavToggle'
 import { HomeHeader } from '../src/features/home/HomeHeader'
 
@@ -25,9 +26,11 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe('HomeHeader', () => {
-  it('greets by name', () => {
+  it('greets the signed-in account by last name', () => {
+    // The same person the sidebar's account row names — one placeholder, so the
+    // two cannot drift apart.
     wrap(<HomeHeader timezone="Asia/Singapore" />)
-    expect(screen.getByText(/Welcome back, /)).toBeTruthy()
+    expect(screen.getByText(`Welcome back, ${lastName(ACCOUNT.name)} 👋`)).toBeTruthy()
   })
 
   it('reads the clock from the restaurant timezone, never the server', () => {
