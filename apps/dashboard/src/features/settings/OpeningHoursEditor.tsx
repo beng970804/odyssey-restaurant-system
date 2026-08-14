@@ -1,5 +1,13 @@
 import type { DayKey, OpeningHours } from '@repo/shared'
 import { Inline, Input, Stack, Switch, Text } from '@repo/ui'
+import { View } from 'react-native'
+
+/**
+ * A time is five characters, so the field takes a five-character width. Left
+ * free, the two inputs took ~150px each and the row ran to ~500px — off the
+ * right edge of a phone, with the closing time clipped and unreachable.
+ */
+const TIME_FIELD_WIDTH = 90
 
 const DAYS: { key: DayKey; label: string }[] = [
   { key: 'mon', label: 'Monday' },
@@ -27,7 +35,9 @@ export function OpeningHoursEditor({
         const openHours = hours.closed ? null : hours
 
         return (
-          <Inline key={day.key} gap="md" align="center">
+          // Wrapping is what keeps the row on a phone: the time pair drops to
+          // its own line under the label instead of running off the edge.
+          <Inline key={day.key} gap="md" align="center" wrap>
             <Text style={{ width: 110 }}>{day.label}</Text>
             <Switch
               value={openHours !== null}
@@ -43,21 +53,27 @@ export function OpeningHoursEditor({
               <Text color="muted">Closed</Text>
             ) : (
               <Inline gap="sm">
-                <Input
-                  value={openHours.open}
-                  ariaLabel={`${day.label} opening time`}
-                  onChangeText={(open) => onChange({ ...value, [day.key]: { ...openHours, open } })}
-                  placeholder="11:00"
-                />
+                <View style={{ width: TIME_FIELD_WIDTH }}>
+                  <Input
+                    value={openHours.open}
+                    ariaLabel={`${day.label} opening time`}
+                    onChangeText={(open) =>
+                      onChange({ ...value, [day.key]: { ...openHours, open } })
+                    }
+                    placeholder="11:00"
+                  />
+                </View>
                 <Text color="muted">to</Text>
-                <Input
-                  value={openHours.close}
-                  ariaLabel={`${day.label} closing time`}
-                  onChangeText={(close) =>
-                    onChange({ ...value, [day.key]: { ...openHours, close } })
-                  }
-                  placeholder="22:00"
-                />
+                <View style={{ width: TIME_FIELD_WIDTH }}>
+                  <Input
+                    value={openHours.close}
+                    ariaLabel={`${day.label} closing time`}
+                    onChangeText={(close) =>
+                      onChange({ ...value, [day.key]: { ...openHours, close } })
+                    }
+                    placeholder="22:00"
+                  />
+                </View>
               </Inline>
             )}
           </Inline>
