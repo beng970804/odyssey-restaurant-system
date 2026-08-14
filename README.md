@@ -4,23 +4,83 @@ A staff-facing dashboard and ordering API for a single restaurant: take orders a
 channels, move them through a kitchen workflow, manage the menu and customers, and change the rules
 that govern all of it from a settings page.
 
-The frontend's types and data hooks are **generated from the database schema**, not hand-written.
+It is a pnpm monorepo — a Hono API on Cloudflare Workers over Postgres, and an Expo Router
+dashboard that runs in the browser. The frontend's types and data hooks are **generated from the
+database schema**, not hand-written.
 
-## Run it locally
+## Prerequisites
+
+| Tool       | Version     | Check with  | Get it                                                         |
+| ---------- | ----------- | ----------- | -------------------------------------------------------------- |
+| **Node**   | 24 or newer | `node -v`   | [nodejs.org](https://nodejs.org) or `nvm install 24`           |
+| **pnpm**   | 11          | `pnpm -v`   | `corepack enable pnpm` (ships with Node 24)                    |
+| **Docker** | any recent  | `docker -v` | [Docker Desktop](https://docs.docker.com/get-docker/), running |
+
+Three things worth knowing before you start:
+
+- **pnpm only.** `engine-strict` is on, so npm and yarn will refuse to install this workspace.
+- **Docker must actually be running**, not just installed — it hosts the Postgres database.
+- **Ports 5433, 8787 and 8081 must be free** (database, API, dashboard).
+
+## Run it
+
+From the repository root, in order:
 
 ```bash
+# 1. Install dependencies for every package in the workspace
 pnpm install
-pnpm db:up                                              # docker Postgres on :5433
+
+# 2. Start Postgres 17 in Docker, on host port 5433
+pnpm db:up
+
+# 3. Point both runtimes at that database.
+#    .env      is read by the migrate/seed scripts, which run in Node.
+#    .dev.vars is read by wrangler, which runs the API as a Worker.
+cp services/backend/.env.example services/backend/.env
 cp services/backend/.env.example services/backend/.dev.vars
+
+# 4. Create the tables
 pnpm db:migrate
-pnpm db:seed                                            # 6 categories, 33 items, 15 customers, 60 orders
-pnpm dev                                                # backend :8787, dashboard :8081
+
+# 5. Fill them with demo data — 8 categories, 70 menu items, 15 customers, 60 orders
+pnpm db:seed
+
+# 6. Start the API and the dashboard together
+pnpm dev
 ```
 
-Then open `localhost:8081` for the dashboard, or `localhost:8787/reference` for the API docs.
+Leave that last command running, then open:
 
-Requirements: Node 24, pnpm 11, Docker. The test suite needs none of them — it runs Postgres
-in-process via PGlite.
+| URL                                                         | What it is                    |
+| ----------------------------------------------------------- | ----------------------------- |
+| **[localhost:8081](http://localhost:8081)**                 | The dashboard — start here    |
+| [localhost:8787/reference](http://localhost:8787/reference) | Interactive API documentation |
+
+Steps 1–5 are one-time setup. On any later run, `pnpm db:up` and `pnpm dev` are enough.
+
+To stop: `Ctrl-C` the dev server, then `docker compose down` to stop the database. The data survives
+in a Docker volume; `docker compose down -v` deletes it too.
+
+### Running the tests
+
+```bash
+pnpm test        # 487 tests across every package
+```
+
+The test suite needs neither Docker nor the steps above — it runs Postgres in-process via PGlite.
+`pnpm typecheck`, `pnpm lint` and `pnpm format:check` are the other three commands CI runs.
+
+### If something goes wrong
+
+| Symptom                                      | Fix                                                                                      |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `DATABASE_URL is not set`                    | Step 3 was skipped — copy `.env.example` to **both** `.env` and `.dev.vars`.             |
+| `Cannot connect` / `ECONNREFUSED` on migrate | Docker is not running, or `pnpm db:up` has not finished. Check with `docker ps`.         |
+| Port 5433 already allocated                  | Something else holds the port. Stop it, or change the host port in `docker-compose.yml`. |
+| Expo asks to use port 8082 instead           | Port 8081 is taken by another Expo instance. Close it — the dashboard expects 8081.      |
+| Dashboard loads but every screen errors      | The API is not up. Check `localhost:8787/reference` responds.                            |
+| Data looks duplicated after seeding twice    | `pnpm db:reset` — drops everything, re-migrates and re-seeds from scratch.               |
+| `ERR_PNPM_UNSUPPORTED_ENGINE`                | Node is older than 24. `node -v`, then upgrade.                                          |
 
 ## Architecture
 
@@ -106,7 +166,7 @@ review pass visible as its own commit.
 
 ## Testing
 
-230 tests: 146 backend, 50 design system, 17 dashboard, 17 shared and types.
+487 tests: 154 backend, 159 design system, 146 dashboard, 28 shared and types.
 
 - **Backend** runs against real Postgres via PGlite — real constraints, real transactions, no Docker
   and no network. `createTestApp(db)` exercises the full route stack including validation and the
