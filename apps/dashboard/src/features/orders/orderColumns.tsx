@@ -1,18 +1,35 @@
 import type { OrderRow } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
 import { ORDER_STATUSES } from '@repo/types'
-import { Text, type Column } from '@repo/ui'
+import { Text, useTheme, type Column } from '@repo/ui'
 import { CHANNEL_LABELS, formatTime } from './formatting'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
 export type OrderColumnKey =
   | 'orderNumber'
   | 'placedAt'
+  | 'readyAt'
   | 'customer'
   | 'channel'
   | 'items'
   | 'total'
   | 'status'
+
+/** Statuses where the kitchen still owes the food, so a past estimate is late. */
+const STILL_COOKING = ['pending', 'accepted', 'preparing']
+
+function ReadyByCell({ row, timezone }: { row: OrderRow; timezone: string }) {
+  const theme = useTheme()
+  if (!row.estimatedReadyAt) return <Text color="muted">—</Text>
+
+  const overdue = STILL_COOKING.includes(row.status) && new Date(row.estimatedReadyAt) < new Date()
+  if (!overdue) return <Text color="muted">{formatTime(row.estimatedReadyAt, timezone)}</Text>
+  return (
+    <Text style={{ color: theme.color.status.danger.fg }}>
+      {`${formatTime(row.estimatedReadyAt, timezone)} · overdue`}
+    </Text>
+  )
+}
 
 /**
  * Every way an order is shown in a row, in one place.
@@ -53,6 +70,16 @@ export function orderColumns({
       sortValue: (row) => row.placedAt,
       // The restaurant's clock, never the Worker's.
       render: (row) => <Text color="muted">{formatTime(row.placedAt, timezone)}</Text>,
+    },
+    readyAt: {
+      key: 'readyAt',
+      header: 'Ready by',
+      width: 160,
+      sortable: true,
+      // Soonest due first — the queue is triaged by who is waiting longest.
+      sortDescFirst: false,
+      sortValue: (row) => row.estimatedReadyAt ?? '',
+      render: (row) => <ReadyByCell row={row} timezone={timezone} />,
     },
     customer: {
       key: 'customer',

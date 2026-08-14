@@ -66,6 +66,15 @@ export function OrderDetailDrawer({ orderId, onClose, currency, timezone }: Prop
             </Text>
           </Inline>
 
+          {order.estimatedReadyAt ? (
+            <Stack gap="xs">
+              <Text variant="caption" color="muted">
+                Estimated ready
+              </Text>
+              <Text variant="bodyStrong">{formatTime(order.estimatedReadyAt, timezone)}</Text>
+            </Stack>
+          ) : null}
+
           <Stack gap="xs">
             <Text variant="caption" color="muted">
               Customer

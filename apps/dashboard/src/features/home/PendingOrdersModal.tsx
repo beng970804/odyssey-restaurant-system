@@ -14,7 +14,7 @@ const PENDING_QUERY = { status: 'pending', pageSize: 20 } as const
  * Narrower than the Orders screen: everything here is Pending, so a status
  * column would repeat the title, and the channel is not what you triage on.
  */
-const COLUMNS = ['orderNumber', 'placedAt', 'customer', 'total'] as const
+const COLUMNS = ['orderNumber', 'placedAt', 'readyAt', 'customer', 'total'] as const
 
 /**
  * The queue behind the Pending card, without leaving the dashboard.

@@ -7,7 +7,12 @@ import { PendingOrdersModal } from '../src/features/home/PendingOrdersModal'
 
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
-const order = (id: string, orderNumber: number, customerName: string | null) => ({
+const order = (
+  id: string,
+  orderNumber: number,
+  customerName: string | null,
+  estimatedReadyAt: string | null = null,
+) => ({
   id,
   orderNumber,
   customerId: null,
@@ -21,12 +26,15 @@ const order = (id: string, orderNumber: number, customerName: string | null) => 
   totalCents: 1090,
   notes: null,
   cancellationReason: null,
-  estimatedReadyAt: null,
+  estimatedReadyAt,
   placedAt: '2026-08-13T13:31:00.000Z',
   updatedAt: '2026-08-13T13:31:00.000Z',
 })
 
-const rows = [order('order-1', 166, 'Marcus Lim'), order('order-2', 167, null)]
+const rows = [
+  order('order-1', 166, 'Marcus Lim', '2026-08-13T14:30:00.000Z'),
+  order('order-2', 167, null, '2026-08-13T13:40:00.000Z'),
+]
 
 vi.mock('@repo/api-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@repo/api-client')>()),
@@ -70,5 +78,20 @@ describe('PendingOrdersModal', () => {
     expect(screen.getByText('Walk-in')).toBeTruthy()
     // Both rows were placed at the same minute in this fixture.
     expect(screen.getAllByText('13 Aug, 21:31')).toHaveLength(rows.length)
+  })
+
+  it('shows when each order should be ready, flagging the late ones', () => {
+    // 22:00 in Singapore: order #166 is due at 22:30, #167 blew its 21:40 estimate.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-13T14:00:00Z'))
+    try {
+      wrap(modal())
+
+      expect(screen.getByText('Ready by')).toBeTruthy()
+      expect(screen.getByText('13 Aug, 22:30')).toBeTruthy()
+      expect(screen.getByText(/13 Aug, 21:40.*overdue/)).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
