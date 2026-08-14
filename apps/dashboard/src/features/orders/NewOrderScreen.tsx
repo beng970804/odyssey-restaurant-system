@@ -179,7 +179,9 @@ export function NewOrderScreen() {
     <Stack gap="md" flex={1}>
       <SearchInput value={search} onChangeText={setSearch} placeholder="Search menu" />
       <CategoryFilter categories={categories} value={category} onChange={setCategory} />
-      <Grid gap="md" columns={4}>
+      {/* Two to a row on a phone: a tile is a photo, a name and a price, and
+          one per row made picking three dishes three screens of scrolling. */}
+      <Grid gap="md" columns={4} compactColumns={2}>
         {visibleItems.map((item) => (
           <GridItem key={item.id}>
             <MenuPickCard

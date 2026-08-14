@@ -71,6 +71,16 @@ const wrap = (ui: ReactElement) =>
   )
 
 describe('NewOrderScreen, compact', () => {
+  it('pairs the menu tiles two to a row rather than one giant card each', () => {
+    // A tile is a photo band, a name and a price — half a phone carries it
+    // comfortably, and one per row made picking three dishes three screens of
+    // scrolling.
+    wrap(<NewOrderScreen />)
+
+    const cell = screen.getByLabelText('Add Laksa').parentElement?.parentElement
+    expect(cell?.style.flex).toBe('1 1 50%')
+  })
+
   it('restates the order in the bottom bar, so the total needs no drawer', () => {
     wrap(<NewOrderScreen />)
 
