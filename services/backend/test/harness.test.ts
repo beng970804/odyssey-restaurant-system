@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest'
 import { orders } from '../src/db/schema'
 import { seed } from '../src/db/seed'
+import { seedCategories } from '../src/db/seed-data'
 import { createTestApp } from './helpers/app'
 import { createTestDb, type TestDb } from './helpers/db'
 
@@ -42,7 +43,9 @@ it('serves a route through the full stack, bound to the test db', async () => {
   expect(res.status).toBe(200)
 
   const body = (await res.json()) as { data: { name: string }[]; meta: { total: number } }
-  expect(body.meta.total).toBe(6)
+  // Counted from the seed rather than restated, so adding a category to the
+  // menu does not fail a test about the route stack.
+  expect(body.meta.total).toBe(seedCategories.length)
   expect(body.data.map((c) => c.name)).toContain('Mains')
 })
 

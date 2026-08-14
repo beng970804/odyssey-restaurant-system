@@ -14,7 +14,16 @@ function renderIcon(name: string) {
 
 describe('categoryIcon', () => {
   it('gives every seeded category its own icon', () => {
-    const seeded = ['Starters', 'Mains', 'Noodles & Rice', 'Sides', 'Desserts', 'Drinks']
+    const seeded = [
+      'Starters',
+      'Mains',
+      'Noodles & Rice',
+      'Dim Sum',
+      'Soups',
+      'Sides',
+      'Desserts',
+      'Drinks',
+    ]
     const paths = seeded.map((name) => renderIcon(name)?.innerHTML)
 
     expect(paths.every(Boolean)).toBe(true)

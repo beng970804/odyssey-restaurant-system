@@ -4,9 +4,11 @@ export const seedCategories = [
   { name: 'Starters', sortOrder: 1 },
   { name: 'Mains', sortOrder: 2 },
   { name: 'Noodles & Rice', sortOrder: 3 },
-  { name: 'Sides', sortOrder: 4 },
-  { name: 'Desserts', sortOrder: 5 },
-  { name: 'Drinks', sortOrder: 6 },
+  { name: 'Dim Sum', sortOrder: 4 },
+  { name: 'Soups', sortOrder: 5 },
+  { name: 'Sides', sortOrder: 6 },
+  { name: 'Desserts', sortOrder: 7 },
+  { name: 'Drinks', sortOrder: 8 },
 ] as const
 
 export type SeedCategoryName = (typeof seedCategories)[number]['name']
@@ -51,6 +53,30 @@ export const seedMenuItems: SeedMenuItem[] = [
     description: 'Grilled spiced fish cake in banana leaf',
     priceCents: 640,
     isAvailable: false,
+  },
+  {
+    category: 'Starters',
+    name: 'Har Cheong Gai',
+    description: 'Prawn paste chicken wings, six pieces',
+    priceCents: 780,
+  },
+  {
+    category: 'Starters',
+    name: 'Kueh Pie Tee',
+    description: 'Crisp cups, turnip and prawn',
+    priceCents: 840,
+  },
+  {
+    category: 'Starters',
+    name: 'Rojak',
+    description: 'Fruit and dough fritter, prawn paste',
+    priceCents: 720,
+  },
+  {
+    category: 'Starters',
+    name: 'Vadai',
+    description: 'Lentil fritter, curry leaf',
+    priceCents: 400,
   },
 
   // Mains
@@ -97,6 +123,37 @@ export const seedMenuItems: SeedMenuItem[] = [
     description: 'Red snapper, okra, aubergine',
     priceCents: 3400,
   },
+  {
+    category: 'Mains',
+    name: 'Salted Egg Chicken',
+    description: 'Curry leaf, chilli padi',
+    priceCents: 1620,
+  },
+  {
+    category: 'Mains',
+    name: 'Sweet and Sour Pork',
+    description: 'Crisp pork, pineapple, capsicum',
+    priceCents: 1680,
+  },
+  {
+    category: 'Mains',
+    name: 'Curry Chicken',
+    description: 'Potato, coconut gravy, baguette',
+    priceCents: 1580,
+  },
+  {
+    category: 'Mains',
+    name: 'Roast Duck',
+    description: 'Half bird, plum sauce',
+    priceCents: 2600,
+  },
+  {
+    category: 'Mains',
+    name: 'Sambal Petai Prawns',
+    description: 'Stink beans, chilli paste',
+    priceCents: 2200,
+    isAvailable: false,
+  },
 
   // Noodles & Rice
   {
@@ -141,6 +198,101 @@ export const seedMenuItems: SeedMenuItem[] = [
     description: 'Char siu, prawn wontons',
     priceCents: 1080,
   },
+  {
+    category: 'Noodles & Rice',
+    name: 'Nasi Briyani',
+    description: 'Basmati, mutton, achar',
+    priceCents: 1450,
+  },
+  {
+    category: 'Noodles & Rice',
+    name: 'Beef Hor Fun',
+    description: 'Wok-charred flat noodles, egg gravy',
+    priceCents: 1380,
+  },
+  {
+    category: 'Noodles & Rice',
+    name: 'Seafood Fried Rice',
+    description: 'Prawn, crab meat, spring onion',
+    priceCents: 1280,
+  },
+  {
+    category: 'Noodles & Rice',
+    name: 'Fried Bee Hoon',
+    description: 'Cabbage, egg, fish cake',
+    priceCents: 880,
+  },
+
+  // Dim Sum
+  {
+    category: 'Dim Sum',
+    name: 'Har Gow',
+    description: 'Steamed prawn dumplings, four pieces',
+    priceCents: 720,
+  },
+  {
+    category: 'Dim Sum',
+    name: 'Siew Mai',
+    description: 'Pork and prawn, four pieces',
+    priceCents: 680,
+  },
+  {
+    category: 'Dim Sum',
+    name: 'Char Siew Bao',
+    description: 'Steamed barbecue pork bun',
+    priceCents: 560,
+  },
+  {
+    category: 'Dim Sum',
+    name: 'Xiao Long Bao',
+    description: 'Soup dumplings, six pieces',
+    priceCents: 880,
+  },
+  {
+    category: 'Dim Sum',
+    name: 'Chee Cheong Fun',
+    description: 'Rice rolls, sweet soy, sesame',
+    priceCents: 620,
+  },
+  {
+    category: 'Dim Sum',
+    name: 'Lo Mai Gai',
+    description: 'Glutinous rice and chicken, lotus leaf',
+    priceCents: 740,
+    isAvailable: false,
+  },
+
+  // Soups
+  {
+    category: 'Soups',
+    name: 'Bak Kut Teh',
+    description: 'Peppery pork rib broth, youtiao',
+    priceCents: 1280,
+  },
+  {
+    category: 'Soups',
+    name: 'Sup Kambing',
+    description: 'Mutton soup, fried shallots',
+    priceCents: 1180,
+  },
+  {
+    category: 'Soups',
+    name: 'Fish Maw Soup',
+    description: 'Crab meat, egg ribbon',
+    priceCents: 1380,
+  },
+  {
+    category: 'Soups',
+    name: 'Lotus Root Soup',
+    description: 'Pork ribs, peanuts, red dates',
+    priceCents: 980,
+  },
+  {
+    category: 'Soups',
+    name: 'ABC Soup',
+    description: 'Potato, carrot, corn, pork ribs',
+    priceCents: 880,
+  },
 
   // Sides
   {
@@ -163,6 +315,30 @@ export const seedMenuItems: SeedMenuItem[] = [
   },
   { category: 'Sides', name: 'Achar', description: 'Pickled vegetables, peanuts', priceCents: 520 },
   { category: 'Sides', name: 'Fried Egg', description: 'Runny yolk, soy', priceCents: 260 },
+  {
+    category: 'Sides',
+    name: 'Sambal Eggplant',
+    description: 'Brinjal, dried shrimp',
+    priceCents: 980,
+  },
+  {
+    category: 'Sides',
+    name: 'Crispy Baby Squid',
+    description: 'Sweet chilli, peanuts',
+    priceCents: 1080,
+  },
+  {
+    category: 'Sides',
+    name: 'Sambal Long Beans',
+    description: 'Wok-fried, minced pork',
+    priceCents: 860,
+  },
+  {
+    category: 'Sides',
+    name: 'Chye Sim, Oyster Sauce',
+    description: 'Blanched greens, fried garlic',
+    priceCents: 780,
+  },
 
   // Desserts
   {
@@ -189,6 +365,31 @@ export const seedMenuItems: SeedMenuItem[] = [
     description: 'Pomelo, coconut cream',
     priceCents: 680,
   },
+  {
+    category: 'Desserts',
+    name: 'Bubur Cha Cha',
+    description: 'Sweet potato, yam, coconut milk',
+    priceCents: 640,
+  },
+  {
+    category: 'Desserts',
+    name: 'Tau Huay',
+    description: 'Silken beancurd, ginger syrup',
+    priceCents: 380,
+  },
+  {
+    category: 'Desserts',
+    name: 'Ondeh Ondeh',
+    description: 'Pandan balls, gula melaka, coconut',
+    priceCents: 520,
+  },
+  {
+    category: 'Desserts',
+    name: 'Durian Pengat',
+    description: 'D24 pulp, coconut cream',
+    priceCents: 980,
+    isAvailable: false,
+  },
 
   // Drinks
   { category: 'Drinks', name: 'Teh Tarik', description: 'Pulled milk tea', priceCents: 320 },
@@ -211,6 +412,26 @@ export const seedMenuItems: SeedMenuItem[] = [
     description: 'Cold pressed',
     priceCents: 380,
     isAvailable: false,
+  },
+  {
+    category: 'Drinks',
+    name: 'Milo Dinosaur',
+    description: 'Iced Milo, extra powder',
+    priceCents: 420,
+  },
+  { category: 'Drinks', name: 'Teh Halia', description: 'Ginger milk tea', priceCents: 340 },
+  { category: 'Drinks', name: 'Barley Water', description: 'Chilled, with lemon', priceCents: 300 },
+  {
+    category: 'Drinks',
+    name: 'Soya Bean Milk',
+    description: 'Freshly ground, lightly sweet',
+    priceCents: 320,
+  },
+  {
+    category: 'Drinks',
+    name: 'Chrysanthemum Tea',
+    description: 'Lightly sweetened, chilled',
+    priceCents: 320,
   },
 ]
 

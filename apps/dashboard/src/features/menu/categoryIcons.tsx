@@ -1,6 +1,8 @@
 import IconBowlChopsticks from '@tabler/icons-react-native/IconBowlChopsticks'
+import IconBread from '@tabler/icons-react-native/IconBread'
 import IconCake from '@tabler/icons-react-native/IconCake'
 import IconCoffee from '@tabler/icons-react-native/IconCoffee'
+import IconDumpling from '@tabler/icons-react-native/IconDumpling'
 import IconMeat from '@tabler/icons-react-native/IconMeat'
 import IconSalad from '@tabler/icons-react-native/IconSalad'
 import IconSoup from '@tabler/icons-react-native/IconSoup'
@@ -22,8 +24,12 @@ type TablerIcon = ComponentType<{ color?: string; size?: number | string; stroke
  * First match wins, so the more specific patterns come first.
  */
 const BY_KEYWORD: [RegExp, TablerIcon][] = [
-  [/starter|appetis|appetiz|small plate/i, IconSoup],
+  [/starter|appetis|appetiz|small plate/i, IconBread],
+  [/dim sum|dumpling|bao|steamed bun/i, IconDumpling],
+  // After noodles on purpose: 'Noodle Soup' is a noodle dish, and first match
+  // wins. A category called plainly 'Soups' reaches this line either way.
   [/noodle|rice|pasta|congee/i, IconBowlChopsticks],
+  [/soup|broth|stew|porridge/i, IconSoup],
   [/dessert|sweet|cake|ice cream/i, IconCake],
   [/drink|beverage|coffee|tea|juice/i, IconCoffee],
   [/side|salad|veg/i, IconSalad],
