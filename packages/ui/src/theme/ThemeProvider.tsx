@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useColorScheme, useWindowDimensions } from 'react-native'
 import { darkTheme } from './dark'
 import { lightTheme } from './tokens'
@@ -31,6 +31,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({ mode, setMode: setOverride, isSystem: override === null }),
     [mode, override],
   )
+
+  /**
+   * The parts of the page the browser paints itself — scrollbars above all —
+   * take their colour from `color-scheme`, not from ours. Left unset they stay
+   * light, so a dark dashboard gets a bright scrollbar down its edge and a
+   * white flash behind every form control.
+   */
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.documentElement.style.colorScheme = mode
+  }, [mode])
 
   return (
     <ThemeContext.Provider value={theme}>
