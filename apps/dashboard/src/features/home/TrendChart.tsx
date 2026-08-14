@@ -1,14 +1,66 @@
 import { formatMoney } from '@repo/shared'
-import { Card, Stack, Text, useTheme } from '@repo/ui'
+import { Card, Stack, Text, prefersReducedMotion, useDomFocusRing, useTheme } from '@repo/ui'
 import { barY, defineChart } from '@tanstack/charts'
-import { Chart } from '@tanstack/charts/react'
+import { motion } from '@tanstack/charts/motion'
+import { Chart } from '@tanstack/charts/react/core'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export type TrendDay = { date: string; orderCount: number; revenueCents: number }
 
 const CHART_HEIGHT = 200
+
+/**
+ * The library's optional motion renderer rather than a hand-rolled tween: it
+ * keeps updates keyed to painted geometry and snaps for `prefers-reduced-motion`
+ * on its own.
+ *
+ * Its `initial` option is no use here. The React adapter pre-renders the SVG
+ * into the container before mounting, so the renderer finds a chart already in
+ * the DOM and treats it as adopted server markup — which it deliberately does
+ * not replay an entrance for. The entrance below is therefore staged as an
+ * *update*, which is the path that does animate.
+ */
+const RENDERER = motion<TrendDay, string, number>({
+  transition: { type: 'spring', stiffness: 170, damping: 20 },
+})
+
+/** The bars arrive left to right, a day at a time, rather than all at once. */
+const BAR_STAGGER = 60
+
+/**
+ * Whether a frame has ever arrived. The staged entrance below hands the
+ * renderer a flat chart and lets it spring up, and the renderer springs on the
+ * frame clock — so somewhere without one (a headless browser, a tab that has
+ * never been foregrounded) the bars would sit flat indefinitely. Probing once
+ * at import means the chart falls back to painting the real data outright.
+ */
+let framesFlow = false
+if (typeof requestAnimationFrame === 'function') {
+  requestAnimationFrame(() => {
+    framesFlow = true
+  })
+}
+
+/**
+ * True from the tick after mount. The first paint draws the bars flat, and the
+ * flip to real revenue is an update — the phase this renderer will animate.
+ *
+ * A timer rather than a frame, because the flip itself must happen even where
+ * the probe above says the animation cannot.
+ */
+function useEnterAfterMount() {
+  const [entered, setEntered] = useState(() => prefersReducedMotion() || !framesFlow)
+
+  useEffect(() => {
+    if (entered) return
+    const timer = setTimeout(() => setEntered(true), 0)
+    return () => clearTimeout(timer)
+  }, [entered])
+
+  return entered
+}
 
 /** "2026-08-13" → "08-13". The year is redundant across seven days. */
 const shortDate = (date: string) => date.slice(5)
@@ -28,23 +80,50 @@ const shortDate = (date: string) => date.slice(5)
  */
 export function TrendChart({ days, currency }: { days: TrendDay[]; currency: string }) {
   const theme = useTheme()
+  const entered = useEnterAfterMount()
+  // The chart's <svg> is focusable and is not ours to style inline, so the ring
+  // is published as a rule instead of a prop.
+  const focusRing = useDomFocusRing('trend-chart')
+
+  // The axis is scaled from the real week in both states, so the flat first
+  // paint and the sprung second one share a y-axis and only the bars move.
+  const ceiling = Math.max(...days.map((day) => day.revenueCents), 0)
+  const plotted = entered ? days : days.map((day) => ({ ...day, revenueCents: 0 }))
 
   const definition = useMemo(
     () =>
       defineChart({
+        // The library's palette is built for a white page. Handing it the four
+        // colours it reasons with is what makes the axis legible in dark mode
+        // instead of near-black text on a near-black card.
+        theme: {
+          foreground: theme.color.text.primary,
+          muted: theme.color.text.muted,
+          grid: theme.color.border.subtle,
+          background: theme.color.bg.surface,
+        },
         marks: [
-          barY(days, {
+          barY(plotted, {
             x: (day: TrendDay) => shortDate(day.date),
             // Cents all the way into the scale. The division to dollars happens
             // in the tick formatter and nowhere else.
             y: (day: TrendDay) => day.revenueCents,
             fill: theme.color.brand.default,
             radius: theme.radius.sm,
+            // `key` is what lets an update retarget a bar instead of replacing
+            // it, so a refetch moves the geometry that is already painted.
+            key: (day: TrendDay) => day.date,
+            motion: (context) => ({
+              delay: context.phase === 'enter' ? context.datumIndex * BAR_STAGGER : 0,
+            }),
           }),
         ],
         x: { scale: () => scaleBand().padding(0.25), axis: { line: false } },
         y: {
-          scale: scaleLinear,
+          // A configured instance rather than the factory: the factory would
+          // infer its domain from whatever is plotted, and the flat first paint
+          // would collapse the axis to zero before springing it back open.
+          scale: scaleLinear().domain([0, ceiling]),
           nice: true,
           grid: true,
           axis: {
@@ -53,7 +132,7 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
           },
         },
       }),
-    [days, currency, theme],
+    [plotted, ceiling, currency, theme],
   )
 
   const total = days.reduce((sum, day) => sum + day.revenueCents, 0)
@@ -70,6 +149,8 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
 
         <Chart
           definition={definition}
+          renderer={RENDERER}
+          className={focusRing}
           height={CHART_HEIGHT}
           // A chart carries its values in geometry, which a screen reader cannot
           // see. These two carry the same facts as text — and through the same

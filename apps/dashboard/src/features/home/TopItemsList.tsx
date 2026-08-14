@@ -5,7 +5,7 @@ export type TopItem = { menuItemId: string; name: string; quantitySold: number }
 
 export function TopItemsList({ items }: { items: TopItem[] }) {
   return (
-    <Card padding="lg">
+    <Card padding="lg" flex={1}>
       <Stack gap="md">
         <Text variant="h3">Top items</Text>
         {items.length === 0 ? (

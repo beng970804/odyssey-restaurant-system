@@ -40,7 +40,7 @@ export function RecentOrdersCard({ currency }: { currency: string }) {
   ]
 
   return (
-    <Card padding="lg">
+    <Card padding="lg" flex={1}>
       <Stack gap="md">
         <Inline justify="space-between">
           <Text variant="h3">Recent orders</Text>

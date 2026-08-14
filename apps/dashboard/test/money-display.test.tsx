@@ -10,15 +10,19 @@ const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
 describe('money at the display boundary', () => {
   it('renders cents as currency, never as a raw integer', () => {
-    wrap(<KpiCard kpi={{ label: 'Revenue', value: formatMoney(2602, 'SGD') }} />)
+    wrap(<KpiCard kpi={{ label: 'Revenue', amount: 2602, format: (c) => formatMoney(c, 'SGD') }} />)
 
-    expect(screen.getByText('S$26.02')).toBeTruthy()
+    // By label, not by text: the figure counts up, so the settled value is the
+    // one the card publishes rather than whatever frame this assertion catches.
+    expect(screen.getByLabelText('S$26.02')).toBeTruthy()
     expect(screen.queryByText('2602')).toBeNull()
   })
 
   it('formats zero rather than showing an empty card', () => {
-    wrap(<KpiCard kpi={{ label: 'Average order', value: formatMoney(0, 'SGD') }} />)
-    expect(screen.getByText('S$0.00')).toBeTruthy()
+    wrap(
+      <KpiCard kpi={{ label: 'Average order', amount: 0, format: (c) => formatMoney(c, 'SGD') }} />,
+    )
+    expect(screen.getByLabelText('S$0.00')).toBeTruthy()
   })
 
   it('describes the trend in currency, so the chart is not the only way to read it', () => {
