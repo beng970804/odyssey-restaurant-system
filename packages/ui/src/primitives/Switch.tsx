@@ -3,6 +3,7 @@ import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
 import { Inline } from './Inline'
+import { overlayTransition } from './Overlay'
 import { Text } from './Text'
 
 export type SwitchProps = {
@@ -21,6 +22,9 @@ export type SwitchProps = {
 
 const TRACK_WIDTH = 40
 const KNOB = 16
+
+/** One clock for the knob's slide and the track's colour behind it. */
+const TOGGLE_MS = 150
 
 export function Switch({
   value,
@@ -52,17 +56,22 @@ export function Switch({
           backgroundColor: value ? theme.color.brand.default : theme.color.border.strong,
           opacity: disabled ? 0.5 : 1,
         },
+        overlayTransition('background-color', TOGGLE_MS),
         focusRingStyle(theme, state),
       ]}
     >
       <View
-        style={{
-          width: KNOB,
-          height: KNOB,
-          borderRadius: theme.radius.full,
-          backgroundColor: theme.color.bg.surface,
-          transform: [{ translateX: value ? TRACK_WIDTH - KNOB - 8 : 0 }],
-        }}
+        testID="switch-knob"
+        style={[
+          {
+            width: KNOB,
+            height: KNOB,
+            borderRadius: theme.radius.full,
+            backgroundColor: theme.color.bg.surface,
+            transform: [{ translateX: value ? TRACK_WIDTH - KNOB - 8 : 0 }],
+          },
+          overlayTransition('transform', TOGGLE_MS),
+        ]}
       />
     </Pressable>
   )
