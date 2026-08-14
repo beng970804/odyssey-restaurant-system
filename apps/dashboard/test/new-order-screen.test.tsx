@@ -1,6 +1,6 @@
-import { ApiProvider } from '@repo/api-client'
+import { ApiError, ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { NewOrderScreen } from '../src/features/orders/NewOrderScreen'
@@ -46,6 +46,9 @@ const items = [
 
 const mutate = vi.fn()
 
+/** The options the screen hands useCreateOrder, so a test can fire its onError. */
+let createOrderOptions: { mutation?: { onError?: (error: unknown) => void } } | undefined
+
 vi.mock('@repo/api-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@repo/api-client')>()),
   useGetSettings: () => ({
@@ -80,7 +83,10 @@ vi.mock('@repo/api-client', async (importOriginal) => ({
   useListCustomers: () => ({
     data: { status: 200, data: { data: [], meta: { page: 1, pageSize: 100, total: 0 } } },
   }),
-  useCreateOrder: () => ({ mutate, isPending: false }),
+  useCreateOrder: (options: { mutation?: { onError?: (error: unknown) => void } }) => {
+    createOrderOptions = options
+    return { mutate, isPending: false }
+  },
 }))
 
 const wrap = (ui: ReactElement) =>
@@ -156,5 +162,20 @@ describe('NewOrderScreen', () => {
         }),
       }),
     )
+  })
+
+  it('surfaces the closed-restaurant refusal against the channel field', () => {
+    wrap(<NewOrderScreen />)
+
+    fireEvent.click(screen.getByLabelText('Add Laksa'))
+    fireEvent.click(screen.getByRole('button', { name: /Place order/ }))
+    act(() => {
+      createOrderOptions?.mutation?.onError?.(
+        new ApiError(422, 'OUTSIDE_OPENING_HOURS', 'The restaurant is closed'),
+      )
+    })
+
+    // The envelope's message, against the field that caused it — not a toast.
+    expect(screen.getByText('The restaurant is closed')).toBeTruthy()
   })
 })
