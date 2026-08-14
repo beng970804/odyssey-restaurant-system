@@ -1,10 +1,27 @@
 import type { ReactNode } from 'react'
-import { View, type StyleProp, type ViewStyle } from 'react-native'
+import { View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native'
 import { useTheme } from '../theme/ThemeProvider'
 import { Divider } from './Divider'
 import { IconButton } from './IconButton'
 import { Inline } from './Inline'
 import { Text } from './Text'
+
+/**
+ * What a panel must leave of the viewport, and the least it may keep for
+ * itself. A Modal splits the gutter across both sides; a Drawer spends all of
+ * it on the one edge it is not anchored to. Either way a panel as wide as the
+ * page *is* the page — nothing behind it says "you have not navigated away",
+ * and the tap-to-close backdrop has nowhere left to be tapped. The floor keeps
+ * a zero-width test viewport from collapsing the panel entirely.
+ */
+const EDGE_GUTTER = 48
+const MIN_PANEL_WIDTH = 280
+
+/** The width a panel may actually take: what it asked for, viewport allowing. */
+export function usePanelWidth(requested: number): number {
+  const viewport = useWindowDimensions().width
+  return Math.min(requested, Math.max(MIN_PANEL_WIDTH, viewport - EDGE_GUTTER))
+}
 
 export type OverlayPanelProps = {
   title: string

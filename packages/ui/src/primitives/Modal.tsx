@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTheme } from '../theme/ThemeProvider'
 import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
-import { OverlayPanel } from './OverlayPanel'
+import { OverlayPanel, usePanelWidth } from './OverlayPanel'
 import { Stack } from './Stack'
 
 export type ModalProps = {
@@ -46,6 +46,10 @@ function ModalSurface({
 }) {
   const theme = useTheme()
   const { shown, enterMs, exitMs } = useOverlayMotion()
+  // Clamped, not `maxWidth: '100%'`: full width on a phone is edge to edge,
+  // and a dialog with no ground around it reads as a navigation. The clamp
+  // leaves half the gutter each side, since this panel is centred.
+  const effectiveWidth = usePanelWidth(width)
 
   return (
     <OverlayPanel
@@ -58,8 +62,7 @@ function ModalSurface({
         },
         overlayTransition('transform', shown ? enterMs : exitMs),
         {
-          width,
-          maxWidth: '100%',
+          width: effectiveWidth,
           maxHeight: '90%',
           borderRadius: theme.radius.lg,
           backgroundColor: theme.color.bg.overlay,
