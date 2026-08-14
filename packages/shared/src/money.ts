@@ -23,6 +23,31 @@ export function formatMoney(cents: number, currency = 'SGD', locale = 'en-SG'): 
   return parts.map((p) => (p.type === 'currency' && override ? override : p.value)).join('')
 }
 
+/**
+ * The inbound half of the money boundary: a dollar string a human typed becomes
+ * integer cents. Kept beside `formatMoney` so both directions of the conversion
+ * live in one file and neither leaks into a form component.
+ *
+ * Returns `null` rather than `NaN` or `0` for unparseable input — a form has to
+ * distinguish "not a number" from "free", and a silent `0` prices an item at
+ * nothing.
+ */
+export function dollarInputToCents(input: string): number | null {
+  const trimmed = input.trim()
+  if (!/^\d*\.?\d*$/.test(trimmed) || trimmed === '' || trimmed === '.') return null
+
+  const [dollars = '', decimals = ''] = trimmed.split('.')
+  // String surgery rather than `value * 100`: 8.85 * 100 is 884.99999999999989,
+  // and money that rounds is money that is wrong.
+  const cents = `${decimals}00`.slice(0, 2)
+  return Number(dollars || '0') * 100 + Number(cents)
+}
+
+/** Cents as the editable dollar string a text input holds — no currency symbol. */
+export function centsToDollarInput(cents: number): string {
+  return (cents / 100).toFixed(2)
+}
+
 export function calcTaxCents(subtotalCents: number, ratePercent: number): number {
   return Math.round((subtotalCents * ratePercent) / 100)
 }
