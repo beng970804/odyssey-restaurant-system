@@ -122,8 +122,10 @@ export function MenuPickCard({
       <View
         testID="stepper-row"
         aria-hidden={!inOrder}
-        pointerEvents={inOrder ? 'auto' : 'none'}
-        style={[{ opacity: inOrder ? 1 : 0 }, overlayTransition('opacity', 150)]}
+        style={[
+          { opacity: inOrder ? 1 : 0, pointerEvents: inOrder ? 'auto' : 'none' },
+          overlayTransition('opacity', 150),
+        ]}
       >
         <Inline
           justify="space-between"
