@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   ChipGroup,
+  DateRangePicker,
   Divider,
   IconButton,
   Inline,
@@ -20,6 +21,7 @@ import {
   Tabs,
   Text,
   useTheme,
+  type DateRange,
   type StatusTone,
 } from '@repo/ui'
 import IconBowlChopsticks from '@tabler/icons-react-native/IconBowlChopsticks'
@@ -200,6 +202,9 @@ export function LayoutTokens() {
   )
 }
 
+/** The gallery is a static page; a fixed "today" keeps it that way. */
+const TODAY = '2026-08-14'
+
 const TONES: StatusTone[] = ['success', 'warning', 'danger', 'info', 'neutral']
 
 // Defined outside the component: a render function declared inline is treated
@@ -212,6 +217,7 @@ export function ComponentGallery() {
   const [switchValue, setSwitchValue] = useState(true)
   const [inputValue, setInputValue] = useState('')
   const [selectValue, setSelectValue] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
   const [tab, setTab] = useState('all')
   const [chip, setChip] = useState('all')
 
@@ -264,7 +270,9 @@ export function ComponentGallery() {
           <View style={{ width: 220 }}>
             <Input value="" onChangeText={() => {}} placeholder="Disabled" disabled />
           </View>
-          <View style={{ width: 220, zIndex: 10 }}>
+          {/* No z-index: both of these open through Popover, which mounts its
+              panel above the page rather than beside the control. */}
+          <View style={{ width: 220 }}>
             <Select
               options={[
                 { label: 'Dine in', value: 'dine_in' },
@@ -275,6 +283,7 @@ export function ComponentGallery() {
               placeholder="Channel"
             />
           </View>
+          <DateRangePicker value={dateRange} onChange={setDateRange} today={TODAY} />
           <Switch value={switchValue} onValueChange={setSwitchValue} label="Auto-accept" />
         </Inline>
       </Stack>

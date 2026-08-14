@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native'
 import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
+import { Popover } from './Popover'
 import { Text } from './Text'
 
 export type SelectOption<T extends string> = { label: string; value: T }
@@ -20,7 +21,8 @@ export type SelectProps<T extends string> = {
 /**
  * A menu rather than a native picker: the same control, styled identically, on
  * web and native. The list closes on choice so a screen never manages its
- * open state.
+ * open state — and, through Popover, on a press anywhere else, so two selects
+ * side by side never stand open together.
  */
 export function Select<T extends string>({
   options,
@@ -36,8 +38,43 @@ export function Select<T extends string>({
 
   const selected = options.find((option) => option.value === value)
 
+  const menu = (
+    <View
+      // RN's Role union omits listbox; RNW forwards aria-* through as-is.
+      role="menu"
+    >
+      {onClear ? (
+        <SelectRow
+          label="Any"
+          muted
+          onPress={() => {
+            onClear()
+            setOpen(false)
+          }}
+        />
+      ) : null}
+      {options.map((option) => (
+        <SelectRow
+          key={option.value}
+          label={option.label}
+          selected={option.value === value}
+          onPress={() => {
+            onChange(option.value)
+            setOpen(false)
+          }}
+        />
+      ))}
+    </View>
+  )
+
   return (
-    <View style={{ position: 'relative' }}>
+    <Popover
+      open={open && !disabled}
+      onClose={() => setOpen(false)}
+      content={menu}
+      matchTriggerWidth
+      label="Options"
+    >
       <Pressable
         role="button"
         aria-haspopup="listbox"
@@ -71,51 +108,7 @@ export function Select<T extends string>({
           {open ? '▲' : '▼'}
         </Text>
       </Pressable>
-
-      {open ? (
-        <View
-          // RN's Role union omits listbox; RNW forwards aria-* through as-is.
-          aria-label="Options"
-          style={[
-            {
-              position: 'absolute',
-              top: 44,
-              left: 0,
-              right: 0,
-              zIndex: 10,
-              borderRadius: theme.radius.md,
-              borderWidth: theme.borderWidth.thin,
-              borderColor: theme.color.border.default,
-              backgroundColor: theme.color.bg.overlay,
-              paddingVertical: theme.space.xs,
-            },
-            theme.elevation.overlay,
-          ]}
-        >
-          {onClear ? (
-            <SelectRow
-              label="Any"
-              muted
-              onPress={() => {
-                onClear()
-                setOpen(false)
-              }}
-            />
-          ) : null}
-          {options.map((option) => (
-            <SelectRow
-              key={option.value}
-              label={option.label}
-              selected={option.value === value}
-              onPress={() => {
-                onChange(option.value)
-                setOpen(false)
-              }}
-            />
-          ))}
-        </View>
-      ) : null}
-    </View>
+    </Popover>
   )
 }
 

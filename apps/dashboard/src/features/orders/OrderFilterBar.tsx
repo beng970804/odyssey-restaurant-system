@@ -34,14 +34,16 @@ export function OrderFilterBar({ filters }: { filters: ReturnType<typeof useOrde
         />
         <DateRangePicker
           value={{ from: filters.from ?? null, to: filters.to ?? null }}
-          onChange={(range) => {
-            filters.setFrom(range.from ?? undefined)
-            filters.setTo(range.to ?? undefined)
-          }}
+          today={filters.today}
+          onChange={(range) => filters.setRange(range.from ?? undefined, range.to ?? undefined)}
         />
         {filters.activeCount > 0 ? (
           <Inline gap="sm">
-            <Badge tone="info">{`${filters.activeCount} active`}</Badge>
+            {/* Centred against the taller "Clear all" beside it, rather than
+                riding the top of the row on the Badge's default alignment. */}
+            <Badge tone="info" style={{ alignSelf: 'center' }}>
+              {`${filters.activeCount} active`}
+            </Badge>
             <Button variant="ghost" size="sm" onPress={filters.clearAll}>
               Clear all
             </Button>

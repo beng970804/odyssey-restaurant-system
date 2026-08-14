@@ -49,6 +49,60 @@ export function addMinutes(date: Date, n: number): Date {
   return new Date(date.getTime() + n * 60_000)
 }
 
+/**
+ * How far `timeZone` runs ahead of UTC at this instant, in milliseconds.
+ *
+ * Formatting an instant into a zone and reading it back as if it were UTC gives
+ * the offset by subtraction — the same Intl-only approach as `localParts`, so
+ * DST comes from the same table the rest of the app trusts.
+ */
+function offsetMs(date: Date, timeZone: string): number {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+  const p = Object.fromEntries(fmt.formatToParts(date).map((part) => [part.type, part.value]))
+  const asUtc = Date.UTC(
+    Number(p.year),
+    Number(p.month) - 1,
+    Number(p.day),
+    p.hour === '24' ? 0 : Number(p.hour),
+    Number(p.minute),
+    Number(p.second),
+  )
+  return asUtc - date.getTime()
+}
+
+/**
+ * The instant a local calendar day (YYYY-MM-DD) begins in `timeZone`.
+ *
+ * A date filter is typed as a day, not an instant: "orders on 14 Aug" means the
+ * restaurant's 14 Aug, not UTC's. Treating the key as UTC midnight shifts the
+ * window by the offset — eight hours in Singapore, which quietly drops the
+ * evening service off one end and adds someone else's off the other.
+ *
+ * Measured twice: the first offset is read at the wrong instant when the day
+ * begins on a DST boundary, and the second is read at the answer.
+ */
+export function startOfLocalDay(dateKey: string, timeZone: string): Date {
+  const utcMidnight = new Date(`${dateKey}T00:00:00.000Z`)
+  const firstGuess = new Date(utcMidnight.getTime() - offsetMs(utcMidnight, timeZone))
+  return new Date(utcMidnight.getTime() - offsetMs(firstGuess, timeZone))
+}
+
+/** The last instant of a local calendar day — an inclusive range's far end. */
+export function endOfLocalDay(dateKey: string, timeZone: string): Date {
+  const nextDay = new Date(`${dateKey}T00:00:00.000Z`)
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1)
+  return new Date(startOfLocalDay(nextDay.toISOString().slice(0, 10), timeZone).getTime() - 1)
+}
+
 /** The calendar date (YYYY-MM-DD) of `date` as seen in `timeZone`. en-CA formats as ISO. */
 export function localDateKey(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', {

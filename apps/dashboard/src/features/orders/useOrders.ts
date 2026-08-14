@@ -7,9 +7,14 @@ import { useOrderFilters } from './useOrderFilters'
  * a page count.
  */
 export function useOrders() {
-  const filters = useOrderFilters()
-  const { data, isLoading, error, refetch } = useListOrders(filters.query)
   const settings = unwrap(useGetSettings().data)
+  // Timezone comes from settings, never the browser: the restaurant's day is
+  // not the viewer's — and a date filter is a day, so the filters need it
+  // before they can turn one into an instant.
+  const timezone = settings?.timezone ?? 'Asia/Singapore'
+
+  const filters = useOrderFilters(timezone)
+  const { data, isLoading, error, refetch } = useListOrders(filters.query)
   const list = unwrap(data)
 
   return {
@@ -19,10 +24,8 @@ export function useOrders() {
     isLoading,
     error: error as Error | null,
     refetch,
-    // Timezone comes from settings, never the browser: the restaurant's day is
-    // not the viewer's.
     currency: settings?.currency ?? 'SGD',
-    timezone: settings?.timezone ?? 'Asia/Singapore',
+    timezone,
   }
 }
 

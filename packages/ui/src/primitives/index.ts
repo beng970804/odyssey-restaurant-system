@@ -8,6 +8,14 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './Button'
+export {
+  Calendar,
+  formatMonth,
+  monthOf,
+  shiftMonth,
+  type CalendarProps,
+  type DateKey,
+} from './Calendar'
 export { Card, type CardProps } from './Card'
 export { ChipGroup, type Chip, type ChipGroupProps } from './ChipGroup'
 export { DateRangePicker, type DateRange, type DateRangePickerProps } from './DateRangePicker'
@@ -36,6 +44,7 @@ export {
 } from './Overlay'
 export { OverlayPanel, type OverlayPanelProps } from './OverlayPanel'
 export { Pagination, type PaginationProps } from './Pagination'
+export { Popover, type PopoverProps } from './Popover'
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export { Select, type SelectOption, type SelectProps } from './Select'
 export { SideNav, type SideNavItem, type SideNavProps } from './SideNav'

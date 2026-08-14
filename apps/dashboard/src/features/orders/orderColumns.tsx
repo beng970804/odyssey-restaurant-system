@@ -1,5 +1,6 @@
 import type { OrderRow } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
+import { ORDER_STATUSES } from '@repo/types'
 import { Text, type Column } from '@repo/ui'
 import { CHANNEL_LABELS, formatTime } from './formatting'
 import { OrderStatusBadge } from './OrderStatusBadge'
@@ -35,24 +36,37 @@ export function orderColumns({
       key: 'orderNumber',
       header: 'Order',
       width: 90,
+      sortable: true,
+      // Newest first, because an order number is a clock in disguise.
+      sortDescFirst: true,
+      sortValue: (row) => row.orderNumber,
       render: (row) => <Text variant="bodyStrong">{`#${row.orderNumber}`}</Text>,
     },
     placedAt: {
       key: 'placedAt',
       header: 'Placed',
       width: 140,
+      sortable: true,
+      sortDescFirst: true,
+      // The ISO string, not the rendered "14 Aug, 00:55" — that sorts by day
+      // name.
+      sortValue: (row) => row.placedAt,
       // The restaurant's clock, never the Worker's.
       render: (row) => <Text color="muted">{formatTime(row.placedAt, timezone)}</Text>,
     },
     customer: {
       key: 'customer',
       header: 'Customer',
+      sortable: true,
+      sortValue: (row) => row.customerName ?? 'Walk-in',
       render: (row) => <Text>{row.customerName ?? 'Walk-in'}</Text>,
     },
     channel: {
       key: 'channel',
       header: 'Channel',
       width: 110,
+      // Not sortable: grouping by channel is what the channel filter is for,
+      // and a sortable header that only reshuffles three values is noise.
       render: (row) => <Text color="muted">{CHANNEL_LABELS[row.channel] ?? row.channel}</Text>,
     },
     items: {
@@ -60,6 +74,9 @@ export function orderColumns({
       header: 'Items',
       width: 70,
       align: 'right',
+      sortable: true,
+      sortDescFirst: true,
+      sortValue: (row) => row.itemCount,
       render: (row) => <Text color="muted">{String(row.itemCount)}</Text>,
     },
     total: {
@@ -67,12 +84,24 @@ export function orderColumns({
       header: 'Total',
       width: 110,
       align: 'right',
+      sortable: true,
+      sortDescFirst: true,
+      // Cents, not "S$120.00" — the rendered string puts S$120.00 below S$30.00.
+      sortValue: (row) => row.totalCents,
       render: (row) => <Text variant="bodyStrong">{formatMoney(row.totalCents, currency)}</Text>,
     },
     status: {
       key: 'status',
       header: 'Status',
       width: 130,
+      sortable: true,
+      // Earliest in the pipeline first, despite the numeric sort value: the
+      // reason to sort by status is to find what still needs doing.
+      sortDescFirst: false,
+      // Lifecycle order, not alphabetical: sorting Status should walk the pass
+      // from pending to completed, and "accepted, cancelled, completed" is not
+      // an order anyone thinks in.
+      sortValue: (row) => ORDER_STATUSES.indexOf(row.status),
       render: (row) => <OrderStatusBadge status={row.status} />,
     },
   }
