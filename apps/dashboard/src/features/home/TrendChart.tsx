@@ -1,11 +1,12 @@
 import { formatMoney } from '@repo/shared'
 import { Card, Stack, Text, prefersReducedMotion, useDomFocusRing, useTheme } from '@repo/ui'
-import { barY, defineChart } from '@tanstack/charts'
+import { barY, defineChart, type ChartPoint } from '@tanstack/charts'
 import { motion } from '@tanstack/charts/motion'
 import { Chart } from '@tanstack/charts/react/core'
+import { tooltip } from '@tanstack/charts/tooltip'
 import { scaleBand } from '@tanstack/charts/scales/band'
 import { scaleLinear } from '@tanstack/charts/scales/linear'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 
 export type TrendDay = { date: string; orderCount: number; revenueCents: number }
 
@@ -66,6 +67,16 @@ function useEnterAfterMount() {
 const shortDate = (date: string) => date.slice(5)
 
 /**
+ * What the tooltip says. Exported because it is the only place on this screen
+ * where a figure is written as a sentence, and a sentence about money is worth
+ * a test — it goes through `formatMoney` like every other figure.
+ */
+export function describeDay(day: TrendDay, currency: string) {
+  const orders = day.orderCount === 1 ? '1 order' : `${day.orderCount} orders`
+  return `${shortDate(day.date)}\n${formatMoney(day.revenueCents, currency)} · ${orders}`
+}
+
+/**
  * Revenue by day, drawn with TanStack Charts.
  *
  * **This component is web-only.** It uses the library's DOM adapter, which
@@ -118,6 +129,12 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
             }),
           }),
         ],
+        // `nearest-x` resolves the containing bar first, so the whole column is
+        // the target rather than the few pixels at its top — and with no
+        // distance limit the two days that took nothing still answer, which is
+        // the point of asking a chart about an empty day.
+        focus: 'nearest-x',
+        maxFocusDistance: Number.POSITIVE_INFINITY,
         x: { scale: () => scaleBand().padding(0.25), axis: { line: false } },
         y: {
           // A configured instance rather than the factory: the factory would
@@ -135,6 +152,21 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
     [plotted, ceiling, currency, theme],
   )
 
+  const interactive = useMemo(
+    () =>
+      defineChart(definition, {
+        tooltip: {
+          use: tooltip,
+          // Anchored to the bar and placed above it, which is where a pointer
+          // sitting on the bar is not already covering.
+          anchor: 'point',
+          placement: 'top',
+          format: (point: ChartPoint<TrendDay>) => describeDay(point.datum, currency),
+        },
+      }),
+    [definition, currency],
+  )
+
   const total = days.reduce((sum, day) => sum + day.revenueCents, 0)
 
   return (
@@ -148,10 +180,22 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
         </Stack>
 
         <Chart
-          definition={definition}
+          definition={interactive}
           renderer={RENDERER}
           className={focusRing}
           height={CHART_HEIGHT}
+          // The tooltip surface is the library's own DOM, themed the way it
+          // asks to be: every one of these is a documented custom property with
+          // a system-colour fallback, and they inherit from the chart host.
+          style={
+            {
+              '--ts-chart-tooltip-background': theme.color.bg.raised,
+              '--ts-chart-tooltip-color': theme.color.text.primary,
+              '--ts-chart-tooltip-border': `${theme.borderWidth.thin}px solid ${theme.color.border.default}`,
+              '--ts-chart-tooltip-border-radius': `${theme.radius.md}px`,
+              '--ts-chart-tooltip-font': `500 ${theme.typography.caption.fontSize}px/1.5 system-ui, sans-serif`,
+            } as CSSProperties
+          }
           // A chart carries its values in geometry, which a screen reader cannot
           // see. These two carry the same facts as text — and through the same
           // money boundary, so raw cents never reach them either.

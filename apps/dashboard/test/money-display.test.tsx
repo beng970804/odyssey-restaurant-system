@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { KpiCard } from '../src/features/home/KpiCard'
-import { TrendChart } from '../src/features/home/TrendChart'
+import { TrendChart, describeDay } from '../src/features/home/TrendChart'
 
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
@@ -42,5 +42,21 @@ describe('money at the display boundary', () => {
     expect(screen.getByLabelText(/S\$26\.02 in total/)).toBeTruthy()
     expect(screen.getByLabelText(/Revenue for the last 2 days/)).toBeTruthy()
     expect(screen.queryByText('2602')).toBeNull()
+  })
+
+  it("states a day's exact takings in the tooltip, not its geometry", () => {
+    // The bar says "about a thousand"; the tooltip is where the figure is
+    // exact, and it crosses the same money boundary as everything else.
+    const line = describeDay({ date: '2026-08-13', orderCount: 17, revenueCents: 109363 }, 'SGD')
+
+    expect(line).toContain('S$1,093.63')
+    expect(line).toContain('17 orders')
+    expect(line).not.toContain('109363')
+  })
+
+  it('counts one order in the singular', () => {
+    const line = describeDay({ date: '2026-08-13', orderCount: 1, revenueCents: 2602 }, 'SGD')
+    expect(line).toContain('1 order')
+    expect(line).not.toContain('1 orders')
   })
 })
