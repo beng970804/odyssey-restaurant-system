@@ -25,15 +25,7 @@ const clockIcon = ({ color, size }: { color: string; size: number }) => (
  * is a job rather than a fact, so it is the one that gets the room, the share
  * of the book it represents, and the way through to acting on it.
  */
-export function PendingCard({
-  pending,
-  currency,
-  timezone,
-}: {
-  pending: Pending
-  currency: string
-  timezone: string
-}) {
+export function PendingCard({ pending }: { pending: Pending }) {
   // The queue opens over the dashboard rather than navigating away from it: the
   // question "what is waiting?" is worth answering without losing the screen
   // that asked it.
@@ -52,7 +44,7 @@ export function PendingCard({
         </Inline>
 
         <Inline gap="md" align="baseline">
-          <Text variant="display" accessibilityLabel={pending.value}>
+          <Text variant="display" accessibilityLabel={String(pending.count)}>
             {Math.round(counted)}
           </Text>
           <Text variant="caption" color="muted">
@@ -64,7 +56,7 @@ export function PendingCard({
           value={counted}
           max={pending.total}
           tone={pending.tone}
-          label={`${pending.value} of ${pending.total} orders awaiting a decision`}
+          label={`${pending.count} of ${pending.total} orders awaiting a decision`}
         />
 
         <Inline justify="space-between">
@@ -76,12 +68,7 @@ export function PendingCard({
           </Button>
         </Inline>
       </Stack>
-      <PendingOrdersModal
-        open={reviewing}
-        onClose={() => setReviewing(false)}
-        currency={currency}
-        timezone={timezone}
-      />
+      <PendingOrdersModal open={reviewing} onClose={() => setReviewing(false)} />
     </Card>
   )
 }

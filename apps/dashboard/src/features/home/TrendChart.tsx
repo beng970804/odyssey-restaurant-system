@@ -1,5 +1,14 @@
 import { formatMoney } from '@repo/shared'
-import { Card, Stack, Text, prefersReducedMotion, useDomFocusRing, useTheme } from '@repo/ui'
+import {
+  Card,
+  Skeleton,
+  Stack,
+  Text,
+  frameClockRuns,
+  prefersReducedMotion,
+  useDomFocusRing,
+  useTheme,
+} from '@repo/ui'
 import { barY, defineChart, type ChartPoint } from '@tanstack/charts'
 import { motion } from '@tanstack/charts/motion'
 import { Chart } from '@tanstack/charts/react/core'
@@ -31,20 +40,6 @@ const RENDERER = motion<TrendDay, string, number>({
 const BAR_STAGGER = 60
 
 /**
- * Whether a frame has ever arrived. The staged entrance below hands the
- * renderer a flat chart and lets it spring up, and the renderer springs on the
- * frame clock — so somewhere without one (a headless browser, a tab that has
- * never been foregrounded) the bars would sit flat indefinitely. Probing once
- * at import means the chart falls back to painting the real data outright.
- */
-let framesFlow = false
-if (typeof requestAnimationFrame === 'function') {
-  requestAnimationFrame(() => {
-    framesFlow = true
-  })
-}
-
-/**
  * True from the tick after mount. The first paint draws the bars flat, and the
  * flip to real revenue is an update — the phase this renderer will animate.
  *
@@ -52,7 +47,11 @@ if (typeof requestAnimationFrame === 'function') {
  * the probe above says the animation cannot.
  */
 function useEnterAfterMount() {
-  const [entered, setEntered] = useState(() => prefersReducedMotion() || !framesFlow)
+  // The staged entrance hands the renderer a flat chart and lets it spring up,
+  // and the renderer springs on the frame clock — so without one the bars would
+  // sit flat indefinitely. `frameClockRuns` is what makes it paint the real
+  // data outright instead.
+  const [entered, setEntered] = useState(() => prefersReducedMotion() || !frameClockRuns())
 
   useEffect(() => {
     if (entered) return
@@ -204,6 +203,21 @@ export function TrendChart({ days, currency }: { days: TrendDay[]; currency: str
             .map((day) => `${shortDate(day.date)}: ${formatMoney(day.revenueCents, currency)}`)
             .join(', ')}
         />
+      </Stack>
+    </Card>
+  )
+}
+
+/** The card's own shape, so the row does not resize when the week arrives. */
+export function TrendChartSkeleton() {
+  return (
+    <Card padding="lg">
+      <Stack gap="md">
+        <Stack gap="xs">
+          <Skeleton width={140} height={20} />
+          <Skeleton width={220} height={12} />
+        </Stack>
+        <Skeleton height={CHART_HEIGHT} radius="md" />
       </Stack>
     </Card>
   )

@@ -35,21 +35,41 @@ export function HomeHeader({ timezone }: { timezone: string }) {
   )
 }
 
+/**
+ * Built once per timezone and kept.
+ *
+ * `Intl.DateTimeFormat` is expensive to construct and cheap to reuse, and this
+ * runs on every tick of a one-second clock — two new formatters a second, for
+ * a string that changes once a minute. Constructing them per call is what made
+ * the midnight-rollover test, which advances fourteen hours, run for longer
+ * than its timeout.
+ */
+const CLOCK_FORMATS = new Map<string, { date: Intl.DateTimeFormat; time: Intl.DateTimeFormat }>()
+
+function clockFormats(timeZone: string) {
+  const cached = CLOCK_FORMATS.get(timeZone)
+  if (cached) return cached
+
+  const built = {
+    date: new Intl.DateTimeFormat('en-SG', {
+      timeZone,
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+    time: new Intl.DateTimeFormat('en-SG', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }),
+  }
+  CLOCK_FORMATS.set(timeZone, built)
+  return built
+}
+
 /** The restaurant's clock, never the server's — a Worker runs in UTC. */
 function formatClock(now: number, timeZone: string): string {
-  const date = new Intl.DateTimeFormat('en-SG', {
-    timeZone,
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(now)
-
-  const time = new Intl.DateTimeFormat('en-SG', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(now)
-
-  return `${date} – ${time}`
+  const { date, time } = clockFormats(timeZone)
+  return `${date.format(now)} – ${time.format(now)}`
 }

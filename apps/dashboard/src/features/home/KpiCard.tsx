@@ -1,8 +1,12 @@
 import { Card, IconTile, Inline, Skeleton, Stack, Text, useCountUp } from '@repo/ui'
+import { useCurrency } from '../../hooks/useCurrency'
+import { figureTotal, formatFigure } from './kpiFigure'
 import type { Kpi } from './useHomeSummary'
 
 export function KpiCard({ kpi }: { kpi: Kpi }) {
-  const counted = useCountUp(kpi.amount)
+  const currency = useCurrency()
+  const total = figureTotal(kpi.figure)
+  const counted = useCountUp(total)
 
   return (
     <Card padding="lg" flex={1}>
@@ -18,8 +22,8 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
         <Stack gap="xs">
           {/* The settled figure is the accessible one: a value counting up
               would have a screen reader announce every frame of it. */}
-          <Text variant="display" accessibilityLabel={kpi.format(kpi.amount)}>
-            {kpi.format(counted)}
+          <Text variant="display" accessibilityLabel={formatFigure(kpi.figure, total, currency)}>
+            {formatFigure(kpi.figure, counted, currency)}
           </Text>
           {kpi.hint ? (
             <Text variant="caption" color="muted">

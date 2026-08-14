@@ -1,16 +1,23 @@
-import { formatMoney } from '@repo/shared'
+import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider } from '@repo/ui'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
+import { moneyFigure } from '../src/features/home/kpiFigure'
 import { KpiCard } from '../src/features/home/KpiCard'
 import { TrendChart, describeDay } from '../src/features/home/TrendChart'
 
-const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
+// The KPI card reads the currency from settings, so it needs a query client.
+const wrap = (ui: ReactElement) =>
+  render(
+    <ThemeProvider>
+      <ApiProvider>{ui}</ApiProvider>
+    </ThemeProvider>,
+  )
 
 describe('money at the display boundary', () => {
   it('renders cents as currency, never as a raw integer', () => {
-    wrap(<KpiCard kpi={{ label: 'Revenue', amount: 2602, format: (c) => formatMoney(c, 'SGD') }} />)
+    wrap(<KpiCard kpi={{ label: 'Revenue', figure: moneyFigure(2602) }} />)
 
     // By label, not by text: the figure counts up, so the settled value is the
     // one the card publishes rather than whatever frame this assertion catches.
@@ -19,9 +26,7 @@ describe('money at the display boundary', () => {
   })
 
   it('formats zero rather than showing an empty card', () => {
-    wrap(
-      <KpiCard kpi={{ label: 'Average order', amount: 0, format: (c) => formatMoney(c, 'SGD') }} />,
-    )
+    wrap(<KpiCard kpi={{ label: 'Average order', figure: moneyFigure(0) }} />)
     expect(screen.getByLabelText('S$0.00')).toBeTruthy()
   })
 

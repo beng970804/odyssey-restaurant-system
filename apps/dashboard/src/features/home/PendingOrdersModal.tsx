@@ -1,13 +1,20 @@
-import { getListOrdersQueryKey, unwrap, useListOrders, type OrderRow } from '@repo/api-client'
-import { formatMoney } from '@repo/shared'
-import { Button, EmptyState, Modal, Table, Text, type Column } from '@repo/ui'
+import { getListOrdersQueryKey, unwrap, useListOrders } from '@repo/api-client'
+import { Button, EmptyState, Modal, Table } from '@repo/ui'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { formatTime } from '../orders/formatting'
+import { useCurrency } from '../../hooks/useCurrency'
+import { useTimezone } from '../../hooks/useTimezone'
 import { OrderDetailDrawer } from '../orders/OrderDetailDrawer'
+import { pickOrderColumns } from '../orders/orderColumns'
 
 /** The whole queue, not a page of it — five pending orders is a busy lunch. */
 const PENDING_QUERY = { status: 'pending', pageSize: 20 } as const
+
+/**
+ * Narrower than the Orders screen: everything here is Pending, so a status
+ * column would repeat the title, and the channel is not what you triage on.
+ */
+const COLUMNS = ['orderNumber', 'placedAt', 'customer', 'total'] as const
 
 /**
  * The queue behind the Pending card, without leaving the dashboard.
@@ -16,18 +23,10 @@ const PENDING_QUERY = { status: 'pending', pageSize: 20 } as const
  * of it is there — the receipt, the notes, and the action bar that accepts or
  * cancels it. The list needs no buttons of its own.
  */
-export function PendingOrdersModal({
-  open,
-  onClose,
-  currency,
-  timezone,
-}: {
-  open: boolean
-  onClose: () => void
-  currency: string
-  timezone: string
-}) {
+export function PendingOrdersModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter()
+  const currency = useCurrency()
+  const timezone = useTimezone()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
 
   // Mounted whether or not it is open, so it can animate out — but the queue is
@@ -36,33 +35,6 @@ export function PendingOrdersModal({
     query: { enabled: open, queryKey: getListOrdersQueryKey(PENDING_QUERY) },
   })
   const rows = unwrap(data)?.data ?? []
-
-  const columns: Column<OrderRow>[] = [
-    {
-      key: 'orderNumber',
-      header: 'Order',
-      width: 80,
-      render: (row) => <Text variant="bodyStrong">{`#${row.orderNumber}`}</Text>,
-    },
-    {
-      key: 'placedAt',
-      header: 'Placed',
-      width: 130,
-      render: (row) => <Text color="muted">{formatTime(row.placedAt, timezone)}</Text>,
-    },
-    {
-      key: 'customer',
-      header: 'Customer',
-      render: (row) => <Text>{row.customerName ?? 'Walk-in'}</Text>,
-    },
-    {
-      key: 'total',
-      header: 'Total',
-      width: 100,
-      align: 'right',
-      render: (row) => <Text>{formatMoney(row.totalCents, currency)}</Text>,
-    },
-  ]
 
   return (
     <>
@@ -78,7 +50,7 @@ export function PendingOrdersModal({
         width={640}
       >
         <Table
-          columns={columns}
+          columns={pickOrderColumns({ currency, timezone }, COLUMNS)}
           data={rows}
           keyExtractor={(row) => row.id}
           loading={isLoading}

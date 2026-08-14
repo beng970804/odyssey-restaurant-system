@@ -3,6 +3,7 @@ import { ThemeProvider, lightTheme } from '@repo/ui'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { countFigure, moneyFigure } from '../src/features/home/kpiFigure'
 import { KpiCard } from '../src/features/home/KpiCard'
 import { PendingCard } from '../src/features/home/PendingCard'
 
@@ -18,7 +19,7 @@ const wrap = (ui: ReactElement) =>
 
 describe('KpiCard', () => {
   it('leads with the number, at display size', () => {
-    wrap(<KpiCard kpi={{ label: 'Total orders', amount: 60, format: String, hint: 'All time' }} />)
+    wrap(<KpiCard kpi={{ label: 'Total orders', figure: countFigure(60), hint: 'All time' }} />)
 
     expect(screen.getByLabelText('60')).toHaveStyle({
       fontSize: `${lightTheme.typography.display.fontSize}px`,
@@ -34,8 +35,7 @@ describe('KpiCard', () => {
       <KpiCard
         kpi={{
           label: 'Revenue',
-          amount: 100,
-          format: () => 'S$1.00',
+          figure: moneyFigure(100),
           icon: ({ color }) => {
             seen.push(color)
             return null
@@ -48,9 +48,7 @@ describe('KpiCard', () => {
   })
 
   it('fills its grid cell so cards in a row share a height', () => {
-    const { container } = wrap(
-      <KpiCard kpi={{ label: 'Revenue', amount: 100, format: () => 'S$1.00' }} />,
-    )
+    const { container } = wrap(<KpiCard kpi={{ label: 'Revenue', figure: moneyFigure(100) }} />)
 
     expect(container.firstElementChild).toHaveStyle({ flexGrow: 1 })
   })
@@ -58,7 +56,6 @@ describe('KpiCard', () => {
 
 describe('PendingCard', () => {
   const pending = {
-    value: '5',
     count: 5,
     total: 60,
     caption: 'of 60 orders all time',
@@ -66,7 +63,7 @@ describe('PendingCard', () => {
   }
 
   it('shows the count as a share of the book, not just a number', () => {
-    wrap(<PendingCard pending={pending} currency="SGD" timezone="Asia/Singapore" />)
+    wrap(<PendingCard pending={pending} />)
 
     const meter = screen.getByRole('progressbar')
     expect(meter).toHaveAttribute('aria-valuemax', '60')
@@ -77,20 +74,14 @@ describe('PendingCard', () => {
   })
 
   it('offers the way through to acting on it', () => {
-    wrap(<PendingCard pending={pending} currency="SGD" timezone="Asia/Singapore" />)
+    wrap(<PendingCard pending={pending} />)
 
     expect(screen.getByText('Awaiting a decision')).toBeTruthy()
     expect(screen.getByText('Review orders')).toBeTruthy()
   })
 
   it('says so plainly when nothing is waiting', () => {
-    wrap(
-      <PendingCard
-        pending={{ ...pending, value: '0', count: 0, tone: 'success' }}
-        currency="SGD"
-        timezone="Asia/Singapore"
-      />,
-    )
+    wrap(<PendingCard pending={{ ...pending, count: 0, tone: 'success' }} />)
 
     expect(screen.getByText('Nothing waiting')).toBeTruthy()
   })

@@ -47,9 +47,7 @@ const wrap = (ui: ReactElement) =>
     </ThemeProvider>,
   )
 
-const modal = () => (
-  <PendingOrdersModal open onClose={vi.fn()} currency="SGD" timezone="Asia/Singapore" />
-)
+const modal = () => <PendingOrdersModal open onClose={vi.fn()} />
 
 describe('PendingOrdersModal', () => {
   it('opens the order in the drawer, with no buttons of its own', () => {

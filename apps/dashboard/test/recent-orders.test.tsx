@@ -48,7 +48,7 @@ const wrap = (ui: ReactElement) =>
     </ThemeProvider>,
   )
 
-const card = () => <RecentOrdersCard currency="SGD" timezone="Asia/Singapore" />
+const card = () => <RecentOrdersCard />
 
 describe('RecentOrdersCard', () => {
   it('is the Orders screen table, not a thinner copy of it', () => {

@@ -16,14 +16,13 @@ const wrap = (ui: ReactElement) =>
   )
 
 const pending = {
-  value: '5',
   count: 5,
   total: 60,
   caption: 'of 60 orders all time',
   tone: 'warning' as const,
 }
 
-const card = () => <PendingCard pending={pending} currency="SGD" timezone="Asia/Singapore" />
+const card = () => <PendingCard pending={pending} />
 
 describe('reviewing the pending queue', () => {
   it('keeps the dashboard and opens the queue over it', () => {

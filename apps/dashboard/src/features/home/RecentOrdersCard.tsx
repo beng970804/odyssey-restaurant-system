@@ -2,6 +2,8 @@ import { unwrap, useListOrders } from '@repo/api-client'
 import { Button, Card, Inline, Stack, Text } from '@repo/ui'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
+import { useCurrency } from '../../hooks/useCurrency'
+import { useTimezone } from '../../hooks/useTimezone'
 import { OrderDetailDrawer } from '../orders/OrderDetailDrawer'
 import { OrdersTable } from '../orders/OrdersTable'
 
@@ -11,8 +13,10 @@ import { OrdersTable } from '../orders/OrdersTable'
  * is where you notice something, so it should also be where you can look at it
  * — and, through the drawer's action bar, act on it.
  */
-export function RecentOrdersCard({ currency, timezone }: { currency: string; timezone: string }) {
+export function RecentOrdersCard() {
   const router = useRouter()
+  const currency = useCurrency()
+  const timezone = useTimezone()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const { data, isLoading, error, refetch } = useListOrders({ pageSize: 5 })
   const rows = unwrap(data)?.data ?? []
