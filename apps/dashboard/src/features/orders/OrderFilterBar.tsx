@@ -1,5 +1,6 @@
 import { ORDER_CHANNELS, ORDER_STATUS_LABELS, ORDER_STATUSES } from '@repo/types'
 import { Badge, Button, Card, DateRangePicker, Inline, SearchInput, Select } from '@repo/ui'
+import { View } from 'react-native'
 import { CHANNEL_LABELS } from './formatting'
 import type { useOrderFilters } from './useOrderFilters'
 
@@ -13,11 +14,15 @@ export function OrderFilterBar({ filters }: { filters: ReturnType<typeof useOrde
   return (
     <Card padding="md">
       <Inline gap="md" wrap align="center">
-        <SearchInput
-          value={filters.searchInput}
-          onChangeText={filters.setSearch}
-          placeholder="Order number or customer"
-        />
+        {/* Wide enough for its own placeholder — cut off, the field reads as
+            order-number-only and nobody discovers customer search. */}
+        <View style={{ minWidth: 280 }}>
+          <SearchInput
+            value={filters.searchInput}
+            onChangeText={filters.setSearch}
+            placeholder="Order number or customer"
+          />
+        </View>
         <Select
           options={STATUS_OPTIONS}
           value={filters.status ?? null}
