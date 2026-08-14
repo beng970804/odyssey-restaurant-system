@@ -2,8 +2,24 @@ import type { CustomerWithStats } from '@repo/api-client'
 import { ThemeProvider } from '@repo/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CustomerTable } from '../src/features/crm/CustomerTable'
+
+// jsdom's 0×0 window reads as compact, where the table renders as a list. The
+// width is faked so both layouts can be pinned.
+let viewportWidth = 1440
+
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: viewportWidth, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
+
+beforeEach(() => {
+  viewportWidth = 1440
+})
 
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
@@ -156,5 +172,51 @@ describe('CustomerTable', () => {
 
     expect(screen.queryByLabelText('Sort by Phone')).toBeNull()
     expect(screen.getByLabelText('Sort by Customer')).toBeTruthy()
+  })
+
+  it('trades the table for a list on a phone, spend still in view', () => {
+    // Four columns on a 390px screen leave Orders and Lifetime spend behind a
+    // sideways scroll. The list keeps a whole customer on the screen at once,
+    // and a row still opens the same drawer.
+    viewportWidth = 390
+    const onRowPress = vi.fn()
+    wrap(
+      <CustomerTable
+        customers={[customer()]}
+        loading={false}
+        error={null}
+        onRetry={() => {}}
+        onRowPress={onRowPress}
+        onAddCustomer={() => {}}
+        currency="SGD"
+        searching={false}
+      />,
+    )
+
+    expect(screen.queryByRole('columnheader')).toBeNull()
+    expect(screen.getByText('Aisha Rahman')).toBeTruthy()
+    expect(screen.getByText('S$123.45')).toBeTruthy()
+    expect(screen.getByText('+65 9123 4567 · 3 orders')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Aisha Rahman'))
+    expect(onRowPress).toHaveBeenCalledWith(expect.objectContaining({ id: 'customer-1' }))
+  })
+
+  it('says the order count alone when there is no phone', () => {
+    viewportWidth = 390
+    wrap(
+      <CustomerTable
+        customers={[customer({ phone: null, orderCount: 1 })]}
+        loading={false}
+        error={null}
+        onRetry={() => {}}
+        onRowPress={() => {}}
+        onAddCustomer={() => {}}
+        currency="SGD"
+        searching={false}
+      />,
+    )
+
+    expect(screen.getByText('1 order')).toBeTruthy()
   })
 })
