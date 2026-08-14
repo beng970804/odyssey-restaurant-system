@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { KpiCard } from '../src/features/home/KpiCard'
-import { TrendBars } from '../src/features/home/TrendBars'
+import { TrendChart } from '../src/features/home/TrendChart'
 
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
@@ -21,9 +21,9 @@ describe('money at the display boundary', () => {
     expect(screen.getByText('S$0.00')).toBeTruthy()
   })
 
-  it('keeps a day with no revenue readable in the trend', () => {
+  it('describes the trend in currency, so the chart is not the only way to read it', () => {
     wrap(
-      <TrendBars
+      <TrendChart
         currency="SGD"
         days={[
           { date: '2026-08-12', orderCount: 0, revenueCents: 0 },
@@ -32,7 +32,11 @@ describe('money at the display boundary', () => {
       />,
     )
 
-    expect(screen.getByText('S$26.02')).toBeTruthy()
-    expect(screen.getByText('08-13')).toBeTruthy()
+    // A chart carries its values in geometry, which a screen reader cannot see.
+    // These labels are the accessible equivalent — and they go through the same
+    // money boundary, so raw cents never reach them either.
+    expect(screen.getByLabelText(/S\$26\.02 in total/)).toBeTruthy()
+    expect(screen.getByLabelText(/Revenue for the last 2 days/)).toBeTruthy()
+    expect(screen.queryByText('2602')).toBeNull()
   })
 })
