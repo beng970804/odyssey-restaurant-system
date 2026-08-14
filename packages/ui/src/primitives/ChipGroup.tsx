@@ -1,4 +1,4 @@
-import { useRef, type ComponentRef } from 'react'
+import { useCallback, useEffect, useRef, type ComponentRef } from 'react'
 import { Platform, Pressable, ScrollView, View, type PointerEvent } from 'react-native'
 import { focusRingBleed, focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
@@ -79,6 +79,36 @@ function useDragToScroll(getNode: () => HTMLElement | null) {
   }
 }
 
+/**
+ * Web only: a mouse has no sideways wheel, and this row hides its scrollbar —
+ * so without this the only ways out of an overflowing category list are a drag
+ * or shift-scroll, and a till operator will find neither.
+ *
+ * The listener is native rather than a React prop because it must be able to
+ * `preventDefault`, and React's wheel handler is passive. It only swallows the
+ * wheel when the row can actually take it: at either end, the page scrolls.
+ */
+function useWheelToScroll(getNode: () => HTMLElement | null) {
+  useEffect(() => {
+    const node = Platform.OS === 'web' ? getNode() : null
+    if (!node) return
+
+    const onWheel = (wheel: WheelEvent) => {
+      if (Math.abs(wheel.deltaY) <= Math.abs(wheel.deltaX)) return
+
+      const room = node.scrollWidth - node.clientWidth
+      const next = Math.min(Math.max(node.scrollLeft + wheel.deltaY, 0), room)
+      if (next === node.scrollLeft) return
+
+      wheel.preventDefault()
+      node.scrollLeft = next
+    }
+
+    node.addEventListener('wheel', onWheel, { passive: false })
+    return () => node.removeEventListener('wheel', onWheel)
+  }, [getNode])
+}
+
 export function ChipGroup<T extends string>({
   chips,
   value,
@@ -87,11 +117,13 @@ export function ChipGroup<T extends string>({
 }: ChipGroupProps<T>) {
   const theme = useTheme()
   const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null)
-  const onPointerDown = useDragToScroll(() => {
+  const getNode = useCallback(() => {
     // Typed as a native node handle; on web it is the scrollable DOM element.
     const node: unknown = scrollRef.current?.getScrollableNode()
     return node instanceof HTMLElement ? node : null
-  })
+  }, [])
+  const onPointerDown = useDragToScroll(getNode)
+  useWheelToScroll(getNode)
 
   const row = (
     <View role="radiogroup" style={{ flexDirection: 'row', gap: theme.space.sm }}>

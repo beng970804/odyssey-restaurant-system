@@ -81,6 +81,49 @@ describe('ChipGroup', () => {
   })
 })
 
+/** jsdom lays nothing out, so the row is told how far it overflows. */
+function overflowBy(element: HTMLElement, overflow: number) {
+  Object.defineProperty(element, 'clientWidth', { value: 200, configurable: true })
+  Object.defineProperty(element, 'scrollWidth', { value: 200 + overflow, configurable: true })
+}
+
+describe('ChipGroup wheel-to-scroll', () => {
+  it('turns a vertical wheel over the row into sideways scrolling', () => {
+    wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
+    const scroller = screen.getByTestId('chip-scroller')
+    overflowBy(scroller, 300)
+
+    fireEvent.wheel(scroller, { deltaY: 120, deltaX: 0 })
+
+    expect(scroller.scrollLeft).toBe(120)
+  })
+
+  it('leaves the page to scroll when the row has nowhere left to go', () => {
+    wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
+    const scroller = screen.getByTestId('chip-scroller')
+    overflowBy(scroller, 300)
+    scroller.scrollLeft = 300
+
+    const wheel = new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })
+    fireEvent(scroller, wheel)
+
+    // Not swallowed: the row is at its end, so the wheel belongs to the page.
+    expect(wheel.defaultPrevented).toBe(false)
+    expect(scroller.scrollLeft).toBe(300)
+  })
+
+  it('leaves a sideways wheel to the browser', () => {
+    wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
+    const scroller = screen.getByTestId('chip-scroller')
+    overflowBy(scroller, 300)
+
+    const wheel = new WheelEvent('wheel', { deltaX: 80, bubbles: true, cancelable: true })
+    fireEvent(scroller, wheel)
+
+    expect(wheel.defaultPrevented).toBe(false)
+  })
+})
+
 describe('ChipGroup drag-to-scroll', () => {
   it('scrolls the row by dragging it with the pointer', () => {
     wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
