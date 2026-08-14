@@ -132,6 +132,16 @@ describe('palette discipline', () => {
     expect(luminance(raised)).toBeGreaterThan(luminance(surface))
   })
 
+  it('spaces the dark surface steps far enough apart to see', () => {
+    // Ordering alone is not depth. Dark mode carries separation on the surfaces
+    // rather than the shadows, so a step the eye cannot resolve is a card that
+    // does not look like a card. 1.08:1 is about where the boundary stops
+    // needing a border to be found.
+    const { canvas, surface, raised } = darkTheme.color.bg
+    expect(contrast(canvas, surface)).toBeGreaterThanOrEqual(1.08)
+    expect(contrast(surface, raised)).toBeGreaterThanOrEqual(1.08)
+  })
+
   it('softens shadows in dark mode, where they read poorly', () => {
     for (const level of ['raised', 'overlay', 'modal'] as const) {
       expect(darkTheme.elevation[level].shadowOpacity).toBeLessThanOrEqual(

@@ -13,7 +13,9 @@ import type { Theme } from './types'
  *    brand keeps its hue, so it stays recognisable in both modes.
  * 4. The dark is warm, because the light is. A blue-slate dark mode under a
  *    cream light mode makes the toggle feel like two different products, so the
- *    canvas is a near-black brown rather than a near-black navy.
+ *    neutrals are a warm charcoal rather than a navy one. Warm, not brown: at
+ *    this lightness a tint strong enough to read as brown reads as a dirty
+ *    black instead, so every surface leans warm by only a few units.
  *
  * The brand inverts its label colour rather than its hue. Light mode darkens
  * the orange until white text clears AA on it; dark mode brightens it until it
@@ -28,11 +30,15 @@ export const darkTheme: Theme = {
   mode: 'dark',
   color: {
     bg: {
-      canvas: '#16110E',
-      surface: '#1F1815',
-      raised: '#2A211C',
-      overlay: '#2A211C',
-      inset: '#100C0A',
+      // Lifted off black on purpose. A canvas down at 0.6% luminance leaves the
+      // three surface steps within 1.07:1 of each other — ordered, but too close
+      // to resolve, so a card only reads as a card because of its border.
+      // Starting at 1.1% buys perceptible steps without ever getting bright.
+      canvas: '#1E1B19',
+      surface: '#272321',
+      raised: '#322C29',
+      overlay: '#322C29',
+      inset: '#161413',
     },
     text: {
       primary: '#F2E9E1',
@@ -42,9 +48,9 @@ export const darkTheme: Theme = {
       onBrand: '#1C1917',
     },
     border: {
-      subtle: '#2A211C',
-      default: '#3B302A',
-      strong: '#52443B',
+      subtle: '#322C29',
+      default: '#423A35',
+      strong: '#574C45',
       focus: '#FF8A4C',
     },
     brand: {
@@ -54,7 +60,7 @@ export const darkTheme: Theme = {
       default: '#FF8A4C',
       hover: '#FFA06B',
       active: '#FFB88C',
-      subtle: '#3A2116',
+      subtle: '#43271A',
       onBrand: '#1C1917',
     },
     status: {
@@ -62,7 +68,7 @@ export const darkTheme: Theme = {
       warning: { bg: '#33280A', fg: '#FCD34D', border: '#7A5E10' },
       danger: { bg: '#3A1512', fg: '#FCA5A5', border: '#7F2420' },
       info: { bg: '#0E2A3A', fg: '#7DD3FC', border: '#10557C' },
-      neutral: { bg: '#2A211C', fg: '#D9CCC1', border: '#3B302A' },
+      neutral: { bg: '#322C29', fg: '#D9CCC1', border: '#423A35' },
     },
   },
   elevation: {
