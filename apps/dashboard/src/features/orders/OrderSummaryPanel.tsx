@@ -51,11 +51,15 @@ export function OrderSummaryPanel({
   return (
     <Stack gap="md">
       <Field label="Channel" error={channelError ?? undefined}>
-        <Select
-          options={channelOptions}
-          value={form.channel}
-          onChange={(value) => form.setChannel(value as OrderChannel)}
-        />
+        {channelOptions.length === 0 ? (
+          <Text color="muted">All channels are switched off in Settings.</Text>
+        ) : (
+          <Select
+            options={channelOptions}
+            value={form.channel}
+            onChange={(value) => form.setChannel(value as OrderChannel)}
+          />
+        )}
       </Field>
 
       <Field label="Customer" hint="Leave empty for a walk-in">

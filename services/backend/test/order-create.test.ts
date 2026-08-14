@@ -156,6 +156,26 @@ describe('POST /orders', () => {
     expect(((await res.json()) as ErrorBody).error.code).toBe('CHANNEL_DISABLED')
   })
 
+  it('rejects dine-in when it is switched off', async () => {
+    await fixtures.setSettings({ dineInEnabled: false })
+    const res = await post({
+      channel: 'dine_in',
+      items: [{ menuItemId: fixtures.tehTarik.id, quantity: 1 }],
+    })
+    expect(res.status).toBe(422)
+    expect(((await res.json()) as ErrorBody).error.code).toBe('CHANNEL_DISABLED')
+  })
+
+  it('rejects takeaway when it is switched off', async () => {
+    await fixtures.setSettings({ takeawayEnabled: false })
+    const res = await post({
+      channel: 'takeaway',
+      items: [{ menuItemId: fixtures.tehTarik.id, quantity: 1 }],
+    })
+    expect(res.status).toBe(422)
+    expect(((await res.json()) as ErrorBody).error.code).toBe('CHANNEL_DISABLED')
+  })
+
   it('rejects an order placed outside opening hours', async () => {
     vi.setSystemTime(new Date('2026-08-13T01:00:00Z')) // 09:00 Singapore, opens 11:00
     const res = await post({

@@ -61,11 +61,23 @@ export function NewOrderScreen() {
   const categories = unwrap(useListCategories().data)?.data ?? []
   const customers = unwrap(useListCustomers({ pageSize: 100 }).data)
 
+  // Only channels Settings has switched on — the server would refuse the rest.
+  const enabledChannels = ORDER_CHANNELS.filter((channel) =>
+    settings
+      ? {
+          dine_in: settings.dineInEnabled,
+          takeaway: settings.takeawayEnabled,
+          delivery: settings.deliveryEnabled,
+        }[channel]
+      : true,
+  )
+
   const form = useNewOrderForm({
     settings: {
       taxRatePercent: settings?.taxRatePercent ?? 9,
       deliveryFeeCents: settings?.deliveryFeeCents ?? 0,
     },
+    enabledChannels,
   })
 
   const [search, setSearch] = useState('')
@@ -76,16 +88,10 @@ export function NewOrderScreen() {
 
   const currency = settings?.currency ?? 'SGD'
 
-  // Only channels Settings has switched on — the server would refuse the rest.
-  const channelOptions = ORDER_CHANNELS.filter((channel) =>
-    settings
-      ? {
-          dine_in: settings.dineInEnabled,
-          takeaway: settings.takeawayEnabled,
-          delivery: settings.deliveryEnabled,
-        }[channel]
-      : true,
-  ).map((value) => ({ value, label: CHANNEL_LABELS[value] ?? value }))
+  const channelOptions = enabledChannels.map((value) => ({
+    value,
+    label: CHANNEL_LABELS[value] ?? value,
+  }))
 
   const customerOptions = (customers?.data ?? []).map((customer) => ({
     value: customer.id,

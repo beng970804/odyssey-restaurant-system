@@ -55,7 +55,7 @@ vi.mock('@repo/api-client', async (importOriginal) => ({
         currency: 'SGD',
         taxRatePercent: 9,
         deliveryFeeCents: 500,
-        dineInEnabled: true,
+        dineInEnabled: false,
         takeawayEnabled: true,
         deliveryEnabled: false,
       },
@@ -136,8 +136,9 @@ describe('NewOrderScreen', () => {
 
   it('offers only the channels Settings has switched on', () => {
     wrap(<NewOrderScreen />)
-    // deliveryEnabled: false in the mocked settings.
+    // dineInEnabled and deliveryEnabled are false in the mocked settings.
     expect(screen.queryByText('Delivery')).toBeNull()
+    expect(screen.queryByText('Dine in')).toBeNull()
   })
 
   it('submits the form payload through the generated mutation', () => {
@@ -149,6 +150,8 @@ describe('NewOrderScreen', () => {
     expect(mutate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          // Takeaway is the only channel Settings has switched on.
+          channel: 'takeaway',
           items: [{ menuItemId: 'item-1', quantity: 1, notes: null }],
         }),
       }),

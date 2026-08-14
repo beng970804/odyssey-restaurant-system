@@ -2,6 +2,7 @@ import { ThemeProvider } from '@repo/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useEffect, type ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import type { OrderChannel } from '@repo/types'
 import { OrderSummaryPanel } from '../src/features/orders/OrderSummaryPanel'
 import { useNewOrderForm, type PickableItem } from '../src/features/orders/useNewOrderForm'
 
@@ -15,16 +16,27 @@ const teh: PickableItem = { id: 'item-2', name: 'Teh Tarik', priceCents: 240 }
  * test is "what the operator sees and presses", and the money in it must come
  * out of the same estimate the screen will submit.
  */
+const ALL_CHANNEL_OPTIONS = [
+  { value: 'dine_in', label: 'Dine in' },
+  { value: 'takeaway', label: 'Takeaway' },
+  { value: 'delivery', label: 'Delivery' },
+]
+
 function Harness({
   preload = [],
   onSubmit = vi.fn(),
   rejectedItemIds = [],
+  channelOptions = ALL_CHANNEL_OPTIONS,
 }: {
   preload?: PickableItem[]
   onSubmit?: () => void
   rejectedItemIds?: string[]
+  channelOptions?: { value: string; label: string }[]
 }) {
-  const form = useNewOrderForm({ settings: { taxRatePercent: 9, deliveryFeeCents: 500 } })
+  const form = useNewOrderForm({
+    settings: { taxRatePercent: 9, deliveryFeeCents: 500 },
+    enabledChannels: channelOptions.map((option) => option.value as OrderChannel),
+  })
 
   useEffect(() => {
     for (const item of preload) form.addItem(item)
@@ -35,11 +47,7 @@ function Harness({
     <OrderSummaryPanel
       form={form}
       currency="SGD"
-      channelOptions={[
-        { value: 'dine_in', label: 'Dine in' },
-        { value: 'takeaway', label: 'Takeaway' },
-        { value: 'delivery', label: 'Delivery' },
-      ]}
+      channelOptions={channelOptions}
       customerOptions={[{ value: 'cust-1', label: 'Aisha Rahman' }]}
       rejectedItemIds={rejectedItemIds}
       channelError={null}
@@ -105,12 +113,23 @@ describe('OrderSummaryPanel', () => {
     expect(screen.queryByText('Delivery fee')).toBeNull()
     expect(screen.queryByText('S$5.00')).toBeNull()
 
-    // The form defaults to takeaway; switch the channel select to delivery.
-    fireEvent.click(screen.getByText('Takeaway'))
+    // The form defaults to the first enabled channel (dine-in); switch the
+    // channel select to delivery.
+    fireEvent.click(screen.getByText('Dine in'))
     fireEvent.click(screen.getByText('Delivery'))
 
     expect(screen.getByText('Delivery fee')).toBeTruthy()
     expect(screen.getByText('S$5.00')).toBeTruthy()
+  })
+
+  it('says so when every channel is switched off, with the submit disabled', () => {
+    wrap(<Harness preload={[laksa]} channelOptions={[]} />)
+
+    expect(screen.getByText('All channels are switched off in Settings.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Place order/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
   })
 
   it('submits through the button', () => {

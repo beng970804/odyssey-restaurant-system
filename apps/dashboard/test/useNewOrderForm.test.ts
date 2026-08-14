@@ -72,6 +72,56 @@ describe('useNewOrderForm', () => {
     expect(result.current.estimate.totalCents).toBe(0)
   })
 
+  it('defaults to the first enabled channel', () => {
+    const { result } = renderHook(() =>
+      useNewOrderForm({ settings, enabledChannels: ['delivery'] }),
+    )
+
+    expect(result.current.channel).toBe('delivery')
+    expect(result.current.payload.channel).toBe('delivery')
+  })
+
+  it('returns to the first enabled channel on reset', () => {
+    const { result } = renderHook(() =>
+      useNewOrderForm({ settings, enabledChannels: ['dine_in', 'delivery'] }),
+    )
+
+    act(() => {
+      result.current.setChannel('delivery')
+    })
+    expect(result.current.channel).toBe('delivery')
+
+    act(() => {
+      result.current.reset()
+    })
+    expect(result.current.channel).toBe('dine_in')
+  })
+
+  it('falls back when the chosen channel is switched off', () => {
+    // Settings load after mount; the form must follow them, not its first guess.
+    const { result, rerender } = renderHook(
+      (props: Parameters<typeof useNewOrderForm>[0]) => useNewOrderForm(props),
+      { initialProps: { settings, enabledChannels: ['dine_in', 'takeaway', 'delivery'] } },
+    )
+
+    act(() => {
+      result.current.setChannel('delivery')
+    })
+    rerender({ settings, enabledChannels: ['dine_in', 'takeaway'] })
+
+    expect(result.current.channel).toBe('dine_in')
+  })
+
+  it('cannot submit when every channel is switched off', () => {
+    const { result } = renderHook(() => useNewOrderForm({ settings, enabledChannels: [] }))
+
+    act(() => {
+      result.current.addItem(nasiLemak, 1)
+    })
+
+    expect(result.current.isValid).toBe(false)
+  })
+
   it('sends no prices to the server', () => {
     const { result } = renderHook(() => useNewOrderForm({ settings }))
 

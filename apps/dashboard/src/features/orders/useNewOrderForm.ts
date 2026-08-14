@@ -1,5 +1,5 @@
 import { calcTaxCents, sumCents } from '@repo/shared'
-import type { OrderChannel } from '@repo/types'
+import { ORDER_CHANNELS, type OrderChannel } from '@repo/types'
 import { useMemo, useState } from 'react'
 
 export type PickableItem = { id: string; name: string; priceCents: number }
@@ -7,8 +7,23 @@ export type OrderLine = { item: PickableItem; quantity: number; notes?: string }
 
 export type NewOrderSettings = { taxRatePercent: number; deliveryFeeCents: number }
 
-export function useNewOrderForm({ settings }: { settings: NewOrderSettings }) {
-  const [channel, setChannel] = useState<OrderChannel>('takeaway')
+export function useNewOrderForm({
+  settings,
+  enabledChannels = ORDER_CHANNELS,
+}: {
+  settings: NewOrderSettings
+  enabledChannels?: readonly OrderChannel[]
+}) {
+  // Derived, not stored: settings arrive after mount, so a channel held in
+  // state could be one Settings has switched off. `null` means "staff chose
+  // nothing yet — follow Settings".
+  const [chosenChannel, setChosenChannel] = useState<OrderChannel | null>(null)
+  const channel =
+    chosenChannel && enabledChannels.includes(chosenChannel)
+      ? chosenChannel
+      : // With every channel off the value is unsendable anyway — isValid blocks submit.
+        (enabledChannels[0] ?? 'takeaway')
+  const setChannel = setChosenChannel
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState<OrderLine[]>([])
@@ -59,7 +74,7 @@ export function useNewOrderForm({ settings }: { settings: NewOrderSettings }) {
     setLines([])
     setNotes('')
     setCustomerId(null)
-    setChannel('takeaway')
+    setChosenChannel(null)
   }
 
   return {
@@ -75,7 +90,7 @@ export function useNewOrderForm({ settings }: { settings: NewOrderSettings }) {
     setLineNotes,
     estimate,
     reset,
-    isValid: lines.length > 0,
+    isValid: lines.length > 0 && enabledChannels.length > 0,
     payload: {
       channel,
       customerId,
