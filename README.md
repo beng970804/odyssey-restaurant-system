@@ -5,8 +5,30 @@ channels, move them through a kitchen workflow, manage the menu and customers, a
 that govern all of it from a settings page.
 
 It is a pnpm monorepo — a Hono API on Cloudflare Workers over Postgres, and an Expo Router
-dashboard that runs in the browser. The frontend's types and data hooks are **generated from the
-database schema**, not hand-written.
+dashboard that runs in the browser **and on iOS from the same codebase**. The frontend's types and
+data hooks are **generated from the database schema**, not hand-written.
+
+## The short version
+
+Five minutes of a reviewer's attention, spent for them:
+
+- **One schema, zero hand-written API types.** Drizzle schema → Zod → OpenAPI → generated React
+  Query hooks. CI regenerates the contract and fails on any diff, so the claim cannot rot.
+- **A real order state machine.** One transition map imported by both sides — the API enforces it,
+  the UI renders its buttons from it, and the tests iterate it rather than restating it. Actions
+  land optimistically, with a snapshot rollback when the server refuses.
+- **A hand-built design system.** Every colour, space and radius comes from tokens; a test proves
+  light and dark expose identical token paths _and_ clear WCAG AA, so a half-finished dark mode
+  fails the build.
+- **Web, phone-sized web, and native iOS from one codebase.** Every screen adapts down to 390px
+  (tables become two-line lists, the date picker stacks), and the app runs on an iPhone — with a
+  platform-split chart, safe-area handling and a Hermes `Intl` fallback, each verified in a
+  simulator rather than assumed.
+- **Money is integer cents everywhere**, becoming dollars in exactly one place.
+- **550 tests that need no Docker** — the backend suite runs real Postgres in-process (PGlite)
+  through the full route stack.
+- **Built with AI under machine-enforced guardrails** — tests first, contract-drift CI, a banned
+  `fetch` global. The section below has the details.
 
 ## Prerequisites
 
@@ -64,7 +86,7 @@ in a Docker volume; `docker compose down -v` deletes it too.
 ### Running the tests
 
 ```bash
-pnpm test        # 487 tests across every package
+pnpm test        # 550 tests across every package
 ```
 
 The test suite needs neither Docker nor the steps above — it runs Postgres in-process via PGlite.
@@ -158,15 +180,18 @@ review pass visible as its own commit.
 - **Home revenue exceeds the sum of all customers' lifetime spend, and that is correct.** Roughly a
   fifth of seeded orders are walk-ins belonging to no customer. They earn revenue but appear in no
   one's history. This reads as a bug in a demo and is stated here so it reads as a decision.
-- **Native is untested.** The stack is React Native Web and the code has no web-only APIs, but it
-  has only been run in a browser. Claiming iOS support without opening a simulator would be a
-  claim, not a fact.
+- **Native runs in Expo Go, not yet as a standalone binary.** The dashboard runs on an iPhone
+  simulator: the trend chart is a platform split onto the charts library's react-native adapter
+  (ADR 0005, amended), overlays mount a native `Modal` host in place of the web's body portal,
+  full-height surfaces respect the safe areas, and `formatMoney` carries a fallback for the
+  `formatToParts` Hermes does not implement. What remains is `expo run:ios` for an installable
+  build — and Android, which has not been opened.
 - **Order editing after placement** is not supported — only the Actions in the transition map. An
   order whose lines can change after pricing needs a revision model, which is out of scope.
 
 ## Testing
 
-487 tests: 154 backend, 159 design system, 146 dashboard, 28 shared and types.
+550 tests: 154 backend, 187 design system, 180 dashboard, 29 shared and types.
 
 - **Backend** runs against real Postgres via PGlite — real constraints, real transactions, no Docker
   and no network. `createTestApp(db)` exercises the full route stack including validation and the
