@@ -26,4 +26,4 @@ The spec's stack is React Native Web, where there are no HTML tags, so a DOM-SVG
 - `react-native-svg` ships separate native and web builds. Metro picks the web one from `platform=web`; Vitest has no such notion, so `apps/dashboard/vitest.config.ts` needs both an alias to the web entry and those packages inlined. Removing either brings back a Flow parse error from the native build.
 - `ChipGroup` is a new primitive rather than a `Tabs` variant. Tabs switch panels and announce a `tablist`; chips filter a list that stays put and announce a `radiogroup`. One component would have to lie to assistive technology about which is happening.
 - Dark mode's `brand.onBrand` differs from light's. Any component that hardcodes white on the brand colour instead of reading the token will be unreadable in one of the two modes.
-- The greeting on Home names nobody. There is no auth and no operator record, so the header greets without a name and reports the fetch time instead.
+- ~~The greeting on Home names nobody.~~ Superseded by [ADR 0008](0008-the-home-screen-answers-in-place.md): the header now greets a named account from a hardcoded record. There is still no auth.
