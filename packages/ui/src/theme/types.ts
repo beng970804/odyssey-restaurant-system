@@ -42,12 +42,17 @@ export type TypographyStyle = {
   fontFamily?: string
 }
 
-/** Shadow on web and iOS, `elevation` on Android — one token, both platforms. */
+/**
+ * A CSS shadow on web and iOS, `elevation` on Android — one token, both
+ * platforms.
+ *
+ * Written as `boxShadow` rather than React Native's `shadowColor` /
+ * `shadowOpacity` / `shadowRadius` / `shadowOffset`: those are deprecated under
+ * React Native Web, which warns once per render that uses them, and they were
+ * never expressible as a single value anyway.
+ */
 export type ElevationStyle = {
-  shadowColor: string
-  shadowOpacity: number
-  shadowRadius: number
-  shadowOffset: { width: number; height: number }
+  boxShadow: string
   elevation: number
 }
 

@@ -1,4 +1,4 @@
-import { lightTheme } from './tokens'
+import { SHADOW_HUE, boxShadow, lightTheme } from './tokens'
 import type { Theme } from './types'
 
 /**
@@ -79,10 +79,12 @@ export const darkTheme: Theme = {
       neutral: { bg: '#2A2C37', fg: '#C4C8D6', border: '#333543' },
     },
   },
+  // Softer than light mode's: dark mode carries depth on its surface ramp, and
+  // a shadow that reads on cream only muddies a near-black canvas (ADR 0007).
   elevation: {
-    flat: { ...lightTheme.elevation.flat, shadowColor: '#000000' },
-    raised: { ...lightTheme.elevation.raised, shadowColor: '#000000', shadowOpacity: 0.03 },
-    overlay: { ...lightTheme.elevation.overlay, shadowColor: '#000000', shadowOpacity: 0.05 },
-    modal: { ...lightTheme.elevation.modal, shadowColor: '#000000', shadowOpacity: 0.08 },
+    flat: { boxShadow: 'none', elevation: 0 },
+    raised: { boxShadow: boxShadow(SHADOW_HUE.dark, 0.03, 12, 2), elevation: 1 },
+    overlay: { boxShadow: boxShadow(SHADOW_HUE.dark, 0.05, 24, 8), elevation: 4 },
+    modal: { boxShadow: boxShadow(SHADOW_HUE.dark, 0.08, 40, 16), elevation: 12 },
   },
 }

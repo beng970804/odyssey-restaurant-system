@@ -154,13 +154,21 @@ describe('palette discipline', () => {
   })
 
   it('softens shadows in dark mode, where they read poorly', () => {
+    // Read back off the CSS the tokens now carry, which is the artifact that
+    // ships rather than a description of it.
     for (const level of ['raised', 'overlay', 'modal'] as const) {
-      expect(darkTheme.elevation[level].shadowOpacity).toBeLessThanOrEqual(
-        lightTheme.elevation[level].shadowOpacity,
+      expect(shadowAlpha(darkTheme.elevation[level].boxShadow)).toBeLessThanOrEqual(
+        shadowAlpha(lightTheme.elevation[level].boxShadow),
       )
     }
   })
 })
+
+/** The alpha out of `0px 2px 12px rgba(66, 48, 43, 0.06)`. */
+function shadowAlpha(boxShadow: string): number {
+  const alpha = /rgba\([^)]*,\s*([\d.]+)\)/.exec(boxShadow)?.[1]
+  return alpha === undefined ? 0 : Number(alpha)
+}
 
 describe('temperature', () => {
   // Each mode leans one way on purpose, and temperature is the kind of decision

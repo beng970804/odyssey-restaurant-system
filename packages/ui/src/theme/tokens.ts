@@ -15,6 +15,23 @@ import type { Theme } from './types'
  * accent usable on a button rather than only on decoration.
  */
 
+/** Warm on cream, black on slate — a shadow is a darker version of its ground. */
+export const SHADOW_HUE = { light: '#42302B', dark: '#000000' } as const
+
+/**
+ * One shadow, as CSS.
+ *
+ * React Native's `shadow*` props are deprecated under React Native Web, which
+ * warns on every render that carries them, so the tokens are authored in the
+ * form both platforms now take. `x` is a parameter because one caller — the nav
+ * drawer's sliding surface — casts its shadow sideways rather than down.
+ */
+export function boxShadow(hex: string, alpha: number, blur: number, y: number, x = 0): string {
+  if (alpha === 0) return 'none'
+  const [r, g, b] = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16))
+  return `${x}px ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, '2xl': 32, '3xl': 48 } as const
 
 /**
@@ -109,33 +126,9 @@ export const lightTheme: Theme = {
   // as grime. Depth is shared between these and the border tokens — the borders
   // softened when the palette warmed, so the shadows pick up the difference.
   elevation: {
-    flat: {
-      shadowColor: '#42302B',
-      shadowOpacity: 0,
-      shadowRadius: 0,
-      shadowOffset: { width: 0, height: 0 },
-      elevation: 0,
-    },
-    raised: {
-      shadowColor: '#42302B',
-      shadowOpacity: 0.06,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 1,
-    },
-    overlay: {
-      shadowColor: '#42302B',
-      shadowOpacity: 0.1,
-      shadowRadius: 24,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 4,
-    },
-    modal: {
-      shadowColor: '#42302B',
-      shadowOpacity: 0.14,
-      shadowRadius: 40,
-      shadowOffset: { width: 0, height: 16 },
-      elevation: 12,
-    },
+    flat: { boxShadow: 'none', elevation: 0 },
+    raised: { boxShadow: boxShadow(SHADOW_HUE.light, 0.06, 12, 2), elevation: 1 },
+    overlay: { boxShadow: boxShadow(SHADOW_HUE.light, 0.1, 24, 8), elevation: 4 },
+    modal: { boxShadow: boxShadow(SHADOW_HUE.light, 0.14, 40, 16), elevation: 12 },
   },
 }

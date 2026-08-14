@@ -166,7 +166,7 @@ export function ElevationScale() {
         <Surface key={level} elevation={level} padding="lg" bordered style={{ width: 160 }}>
           <Text variant="bodyStrong">{level}</Text>
           <Text variant="caption" color="muted">
-            {`opacity ${theme.elevation[level].shadowOpacity}`}
+            {theme.elevation[level].boxShadow}
           </Text>
         </Surface>
       ))}

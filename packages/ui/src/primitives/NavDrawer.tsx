@@ -10,6 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import { useTheme } from '../theme/ThemeProvider'
+import { SHADOW_HUE, boxShadow } from '../theme/tokens'
 import { SideNav, type SideNavItem } from './SideNav'
 
 export type NavDrawerProps = {
@@ -63,11 +64,8 @@ const REVEAL = {
 } as const
 
 /** Cast leftward, so the surface reads as lifted above the menu it uncovers. */
-const SURFACE_SHADOW = {
-  shadowOpacity: 0.14,
-  shadowRadius: 40,
-  shadowOffset: { width: -8, height: 0 },
-} as const
+/** Cast sideways rather than down: the surface slides, so its edge is what lifts. */
+const SURFACE_SHADOW = { alpha: 0.14, blur: 40, x: -8, y: 0 } as const
 
 /**
  * The nav sits mounted underneath a single moving surface: opening slides the
@@ -204,8 +202,13 @@ export function NavDrawer({
             {
               flex: 1,
               backgroundColor: theme.color.bg.canvas,
-              shadowColor: theme.elevation.modal.shadowColor,
-              ...SURFACE_SHADOW,
+              boxShadow: boxShadow(
+                SHADOW_HUE[theme.mode],
+                SURFACE_SHADOW.alpha,
+                SURFACE_SHADOW.blur,
+                SURFACE_SHADOW.y,
+                SURFACE_SHADOW.x,
+              ),
             },
             surfaceStyle,
           ]}

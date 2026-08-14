@@ -1,5 +1,5 @@
 export { darkTheme } from './dark'
-export { lightTheme } from './tokens'
+export { SHADOW_HUE, boxShadow, lightTheme } from './tokens'
 export {
   ThemeProvider,
   useBreakpoint,
