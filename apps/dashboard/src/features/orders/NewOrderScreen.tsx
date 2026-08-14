@@ -32,6 +32,7 @@ import { useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { PageHeader } from '../../components/PageHeader'
+import { ScreenFooter } from '../../components/ScreenFooter'
 import { ALL_CATEGORIES, CategoryFilter } from '../menu/CategoryFilter'
 import { CHANNEL_LABELS } from './formatting'
 import { MenuPickCard } from './MenuPickCard'
@@ -255,23 +256,22 @@ export function NewOrderScreen() {
         <>
           {picker}
           {/* The bar restates the order so the operator never opens the drawer
-              just to check the total. */}
-          <Surface
-            bordered
-            padding="md"
-            radius="md"
-            style={{ position: 'sticky' as never, bottom: theme.space.md }}
-          >
-            <Inline justify="space-between" align="center">
-              <Text variant="bodyStrong">
-                {`${String(form.lines.length)} item${form.lines.length === 1 ? '' : 's'} · `}
-                <TickingMoney cents={form.estimate.totalCents} currency={currency} />
-              </Text>
-              <Button onPress={() => setReviewing(true)} disabled={!form.isValid}>
-                Review order
-              </Button>
-            </Inline>
-          </Surface>
+              just to check the total. Docked in the shell's footer slot, which
+              is pinned by construction — CSS sticky only ever worked on the
+              web, and on a phone the recap scrolled away with the menu. */}
+          <ScreenFooter>
+            <Surface bordered padding="md" radius="md">
+              <Inline justify="space-between" align="center">
+                <Text variant="bodyStrong">
+                  {`${String(form.lines.length)} item${form.lines.length === 1 ? '' : 's'} · `}
+                  <TickingMoney cents={form.estimate.totalCents} currency={currency} />
+                </Text>
+                <Button onPress={() => setReviewing(true)} disabled={!form.isValid}>
+                  Review order
+                </Button>
+              </Inline>
+            </Surface>
+          </ScreenFooter>
           <Drawer open={reviewing} onClose={() => setReviewing(false)} title="Order summary">
             {summary}
           </Drawer>

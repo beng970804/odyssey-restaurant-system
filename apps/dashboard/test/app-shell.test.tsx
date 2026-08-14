@@ -5,6 +5,7 @@ import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from '../src/components/AppShell'
 import { PageHeader } from '../src/components/PageHeader'
+import { ScreenFooter } from '../src/components/ScreenFooter'
 
 vi.mock('expo-router', () => ({
   usePathname: () => '/orders',
@@ -106,5 +107,30 @@ describe('AppShell', () => {
     )
 
     expect(screen.getByText('7')).toBeTruthy()
+  })
+
+  it('docks a screen footer under the scroller, exactly once', () => {
+    // The New Order recap bar rides this slot. Inside the shell the bar must
+    // render in the dock and not also inline — the inline form is only the
+    // fallback for a screen rendered with no shell around it.
+    const { unmount } = wrap(
+      <AppShell>
+        <Text>Menu grid</Text>
+        <ScreenFooter>
+          <Text>2 items · S$25.07</Text>
+        </ScreenFooter>
+      </AppShell>,
+    )
+
+    expect(screen.getAllByText('2 items · S$25.07')).toHaveLength(1)
+    unmount()
+
+    // No shell, no dock: the bar still exists, in place.
+    wrap(
+      <ScreenFooter>
+        <Text>2 items · S$25.07</Text>
+      </ScreenFooter>,
+    )
+    expect(screen.getAllByText('2 items · S$25.07')).toHaveLength(1)
   })
 })

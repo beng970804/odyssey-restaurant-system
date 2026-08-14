@@ -67,10 +67,13 @@ export function Popover({
 
   // Measured on open, and again whenever the page moves under it: a panel
   // pinned to the viewport has to be told when its control scrolls away.
+  // Web only past the first measure — React Native has a `window` global with
+  // no DOM event API on it, and calling addEventListener there was the crash
+  // behind every filter press on the phone.
   useEffect(() => {
     if (!open) return
     measure()
-    if (typeof window === 'undefined') return
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return
 
     window.addEventListener('scroll', measure, true)
     window.addEventListener('resize', measure)
