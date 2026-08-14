@@ -1,11 +1,10 @@
 import { unwrap, useListOrders } from '@repo/api-client'
-import { Button, Card, EmptyState, Inline, Stack, Text, useBreakpoint } from '@repo/ui'
+import { Button, Card, Inline, Stack, Text } from '@repo/ui'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { useCurrency } from '../../hooks/useCurrency'
 import { useTimezone } from '../../hooks/useTimezone'
 import { OrderDetailDrawer } from '../orders/OrderDetailDrawer'
-import { OrderListCompact } from '../orders/OrderListCompact'
 import { OrdersTable } from '../orders/OrdersTable'
 
 /**
@@ -18,7 +17,6 @@ export function RecentOrdersCard() {
   const router = useRouter()
   const currency = useCurrency()
   const timezone = useTimezone()
-  const { isCompact } = useBreakpoint()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const { data, isLoading, error, refetch } = useListOrders({ pageSize: 5 })
   const rows = unwrap(data)?.data ?? []
@@ -33,37 +31,19 @@ export function RecentOrdersCard() {
           </Button>
         </Inline>
 
-        {/* The table's seven columns leave Total and Status behind a sideways
-            scroll on a phone, so below the breakpoint the same five orders
-            render as a two-line list — status in view, same row press. */}
-        {isCompact ? (
-          <OrderListCompact
-            rows={rows}
-            currency={currency}
-            timezone={timezone}
-            trailing="status"
-            loading={isLoading}
-            error={error as Error | null}
-            onRetry={refetch}
-            onRowPress={(row) => setOpenOrderId(row.id)}
-            emptyState={
-              <EmptyState title="No orders yet" description="New orders will appear here." />
-            }
-          />
-        ) : (
-          <OrdersTable
-            rows={rows}
-            loading={isLoading}
-            error={error as Error | null}
-            onRetry={refetch}
-            onRowPress={(row) => setOpenOrderId(row.id)}
-            currency={currency}
-            timezone={timezone}
-            // Nothing is filtered here, so the empty state is the plain one: no
-            // orders yet, rather than none matching a filter.
-            filtered={false}
-          />
-        )}
+        {/* OrdersTable decides its own phone form, so this card does not. */}
+        <OrdersTable
+          rows={rows}
+          loading={isLoading}
+          error={error as Error | null}
+          onRetry={refetch}
+          onRowPress={(row) => setOpenOrderId(row.id)}
+          currency={currency}
+          timezone={timezone}
+          // Nothing is filtered here, so the empty state is the plain one: no
+          // orders yet, rather than none matching a filter.
+          filtered={false}
+        />
       </Stack>
 
       <OrderDetailDrawer

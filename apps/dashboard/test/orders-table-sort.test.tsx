@@ -2,8 +2,24 @@ import type { OrderRow } from '@repo/api-client'
 import { ThemeProvider } from '@repo/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OrdersTable } from '../src/features/orders/OrdersTable'
+
+// jsdom's 0×0 window reads as compact, where OrdersTable renders the list
+// instead of the sortable table. The width is faked so both can be pinned.
+let viewportWidth = 1440
+
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: viewportWidth, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
+
+beforeEach(() => {
+  viewportWidth = 1440
+})
 
 const wrap = (ui: ReactElement) => render(<ThemeProvider>{ui}</ThemeProvider>)
 
@@ -101,5 +117,17 @@ describe('OrdersTable sorting', () => {
   it('leaves channel unsorted: that is what the channel filter is for', () => {
     table()
     expect(screen.queryByLabelText('Sort by Channel')).toBeNull()
+  })
+
+  it('trades the table for the list on a phone, status still in view', () => {
+    // Seven columns on a 390px screen leave Total and Status behind a sideways
+    // scroll. The compact form is decided here, in the one component every
+    // orders list renders, so no screen writes the swap itself.
+    viewportWidth = 390
+    table()
+
+    expect(screen.queryByRole('columnheader')).toBeNull()
+    expect(screen.getByText('#17 · Bala')).toBeTruthy()
+    expect(screen.getByText('Completed')).toBeTruthy()
   })
 })
