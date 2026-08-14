@@ -90,6 +90,7 @@ vi.mock('react-native-gesture-handler', async () => {
     'onUpdate',
     'onEnd',
     'onFinalize',
+    'onTouchesDown',
     'activeOffsetX',
     'failOffsetY',
     'enabled',

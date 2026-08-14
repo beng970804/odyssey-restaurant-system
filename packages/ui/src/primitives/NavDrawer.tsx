@@ -36,6 +36,14 @@ export type NavDrawerProps = {
  * anything is on screen.
  */
 const GESTURE = {
+  /**
+   * A closed drawer only listens this far from the surface's left edge. The
+   * content has horizontal scrollers of its own — category chips, wide tables —
+   * and a pan that claims sideways swipes anywhere steals theirs: scrolling
+   * the chips dragged the drawer. Platform drawers solved this decades ago
+   * the same way: opening is an *edge* swipe.
+   */
+  edgeWidth: 32,
   /** Sideways travel that claims the gesture from a vertical scroll. */
   activationDistance: 8,
   verticalTolerance: 18,
@@ -107,6 +115,17 @@ export function NavDrawer({
     // Let a vertical scroll through untouched; only claim clear sideways drags.
     .activeOffsetX([-GESTURE.activationDistance, GESTURE.activationDistance])
     .failOffsetY([-GESTURE.verticalTolerance, GESTURE.verticalTolerance])
+    .onTouchesDown((event, manager) => {
+      // Only an edge swipe is ours; anywhere else the finger is on the
+      // content's own scrollers and buttons, which it must keep. The one
+      // exception is an open *overlay* drawer: its scrim already covers the
+      // content, so a closing swipe may start anywhere on it. An open
+      // persistent drawer gets no such exception — its content is live, and
+      // this began as "scrolling the category chips closed the sidebar".
+      const surfaceIsScrim = open && !persistent
+      const touch = event.allTouches[0]
+      if (!surfaceIsScrim && touch !== undefined && touch.x > GESTURE.edgeWidth) manager.fail()
+    })
     .onBegin(() => {
       gestureStartX.value = translateX.value
     })
