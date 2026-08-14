@@ -59,7 +59,7 @@ describe('PendingCard', () => {
   }
 
   it('shows the count as a share of the book, not just a number', () => {
-    wrap(<PendingCard pending={pending} />)
+    wrap(<PendingCard pending={pending} currency="SGD" timezone="Asia/Singapore" />)
 
     const meter = screen.getByRole('progressbar')
     expect(meter).toHaveAttribute('aria-valuemax', '60')
@@ -70,14 +70,20 @@ describe('PendingCard', () => {
   })
 
   it('offers the way through to acting on it', () => {
-    wrap(<PendingCard pending={pending} />)
+    wrap(<PendingCard pending={pending} currency="SGD" timezone="Asia/Singapore" />)
 
     expect(screen.getByText('Awaiting a decision')).toBeTruthy()
     expect(screen.getByText('Review orders')).toBeTruthy()
   })
 
   it('says so plainly when nothing is waiting', () => {
-    wrap(<PendingCard pending={{ ...pending, value: '0', count: 0, tone: 'success' }} />)
+    wrap(
+      <PendingCard
+        pending={{ ...pending, value: '0', count: 0, tone: 'success' }}
+        currency="SGD"
+        timezone="Asia/Singapore"
+      />,
+    )
 
     expect(screen.getByText('Nothing waiting')).toBeTruthy()
   })

@@ -11,7 +11,8 @@ import {
   useCountUp,
 } from '@repo/ui'
 import IconClockHour4 from '@tabler/icons-react-native/IconClockHour4'
-import { useRouter } from 'expo-router'
+import { useState } from 'react'
+import { PendingOrdersModal } from './PendingOrdersModal'
 import type { Pending } from './useHomeSummary'
 
 /** Hoisted: an icon defined inside the card would be a new component per render. */
@@ -24,8 +25,19 @@ const clockIcon = ({ color, size }: { color: string; size: number }) => (
  * is a job rather than a fact, so it is the one that gets the room, the share
  * of the book it represents, and the way through to acting on it.
  */
-export function PendingCard({ pending }: { pending: Pending }) {
-  const router = useRouter()
+export function PendingCard({
+  pending,
+  currency,
+  timezone,
+}: {
+  pending: Pending
+  currency: string
+  timezone: string
+}) {
+  // The queue opens over the dashboard rather than navigating away from it: the
+  // question "what is waiting?" is worth answering without losing the screen
+  // that asked it.
+  const [reviewing, setReviewing] = useState(false)
   // One clock for the number and the bar beneath it, so they arrive together.
   const counted = useCountUp(pending.count)
 
@@ -59,11 +71,18 @@ export function PendingCard({ pending }: { pending: Pending }) {
           <Badge tone={pending.tone}>
             {pending.count > 0 ? 'Awaiting a decision' : 'Nothing waiting'}
           </Badge>
-          <Button variant="ghost" size="sm" onPress={() => router.push('/orders')}>
+          <Button variant="ghost" size="sm" onPress={() => setReviewing(true)}>
             Review orders
           </Button>
         </Inline>
       </Stack>
+      {reviewing ? (
+        <PendingOrdersModal
+          onClose={() => setReviewing(false)}
+          currency={currency}
+          timezone={timezone}
+        />
+      ) : null}
     </Card>
   )
 }

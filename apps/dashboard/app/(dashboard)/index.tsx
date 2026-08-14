@@ -36,7 +36,7 @@ export default function HomeScreen() {
               : [
                   ...kpis.map((kpi) => <KpiCard key={kpi.label} kpi={kpi} />),
                   <GridItem key="pending" span={2}>
-                    <PendingCard pending={pending} />
+                    <PendingCard pending={pending} currency={currency} timezone={timezone} />
                   </GridItem>,
                 ]}
           </Grid>
