@@ -12,7 +12,7 @@ export type Kpi = { label: string; value: string; tone?: StatusTone; hint?: stri
  * compose, they do not compute.
  */
 export function useHomeSummary() {
-  const { data, isLoading, error, refetch, dataUpdatedAt } = useGetStatsSummary()
+  const { data, isLoading, error, refetch } = useGetStatsSummary()
   const currency = useCurrency()
   const timezone = useTimezone()
   const summary = unwrap(data)
@@ -48,7 +48,5 @@ export function useHomeSummary() {
     topItems: summary?.topItems ?? [],
     currency,
     timezone,
-    // When the board last heard from the server — 0 until the first fetch lands.
-    updatedAt: dataUpdatedAt,
   }
 }

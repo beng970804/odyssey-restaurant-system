@@ -4,6 +4,7 @@ import { Text } from 'react-native'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from '../src/components/AppShell'
+import { PageHeader } from '../src/components/PageHeader'
 
 vi.mock('expo-router', () => ({
   usePathname: () => '/orders',
@@ -30,8 +31,14 @@ function setViewport(width: number) {
   window.dispatchEvent(new Event('resize'))
 }
 
+/**
+ * A screen, not a bare node: the drawer toggle lives on the screen's header row
+ * now, so a shell wrapped around nothing has no toggle to press — which is what
+ * these tests drive.
+ */
 const shell = () => (
   <AppShell>
+    <PageHeader title="Orders" />
     <Text>Today's orders</Text>
   </AppShell>
 )
