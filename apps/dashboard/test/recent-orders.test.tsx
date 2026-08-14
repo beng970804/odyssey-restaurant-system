@@ -2,11 +2,23 @@ import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecentOrdersCard } from '../src/features/home/RecentOrdersCard'
 
 const push = vi.fn()
 vi.mock('expo-router', () => ({ useRouter: () => ({ push }) }))
+
+// jsdom's 0×0 window reads as compact, and the compact card swaps the table
+// for a list. The width is faked so both layouts can be pinned.
+let viewportWidth = 1440
+
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: viewportWidth, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
 
 const row = {
   id: 'order-1',
@@ -50,6 +62,11 @@ const wrap = (ui: ReactElement) =>
 
 const card = () => <RecentOrdersCard />
 
+beforeEach(() => {
+  viewportWidth = 1440
+  push.mockClear()
+})
+
 describe('RecentOrdersCard', () => {
   it('is the Orders screen table, not a thinner copy of it', () => {
     // Same component, so the columns cannot drift apart: Channel and Items were
@@ -76,5 +93,22 @@ describe('RecentOrdersCard', () => {
 
     fireEvent.click(screen.getByText('View all'))
     expect(push).toHaveBeenCalledWith('/orders')
+  })
+
+  it('trades the table for a list on a phone, status still in view', () => {
+    // Seven columns on a 390px screen leave Total and Status behind a sideways
+    // scroll. The list keeps a whole order on the screen at once — and unlike
+    // the pending queue, this one mixes statuses, so each row shows its own.
+    viewportWidth = 390
+    wrap(card())
+
+    expect(screen.queryByRole('columnheader')).toBeNull()
+    expect(screen.getByText('#168 · Aisyah Rahman')).toBeTruthy()
+    expect(screen.getByText('S$83.79')).toBeTruthy()
+    expect(screen.getByText('Accepted')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('#168 · Aisyah Rahman'))
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(push).not.toHaveBeenCalled()
   })
 })

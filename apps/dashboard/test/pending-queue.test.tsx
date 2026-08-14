@@ -2,10 +2,26 @@ import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PendingOrdersModal } from '../src/features/home/PendingOrdersModal'
 
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
+// jsdom's 0×0 window reads as compact, and the compact queue is a different
+// component. The width is faked so both layouts can be pinned.
+let viewportWidth = 1440
+
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: viewportWidth, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
+
+beforeEach(() => {
+  viewportWidth = 1440
+})
 
 const order = (
   id: string,
@@ -90,6 +106,30 @@ describe('PendingOrdersModal', () => {
       expect(screen.getByText('Ready by')).toBeTruthy()
       expect(screen.getByText('13 Aug, 22:30')).toBeTruthy()
       expect(screen.getByText(/13 Aug, 21:40.*overdue/)).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('trades the table for a list on a phone, keeping the same facts', () => {
+    // Five columns on a 390px screen put "Ready by" — the column the queue is
+    // triaged on — behind a sideways scroll. The list keeps every fact on the
+    // screen at once.
+    viewportWidth = 390
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-13T14:00:00Z'))
+    try {
+      wrap(modal())
+
+      expect(screen.queryByRole('columnheader')).toBeNull()
+      expect(screen.getByText('#166 · Marcus Lim')).toBeTruthy()
+      expect(screen.getByText('#167 · Walk-in')).toBeTruthy()
+      expect(screen.getByText('Ready by 13 Aug, 22:30')).toBeTruthy()
+      expect(screen.getByText('Ready by 13 Aug, 21:40 · overdue')).toBeTruthy()
+
+      // The same row press, the same drawer.
+      fireEvent.click(screen.getByText('#166 · Marcus Lim'))
+      expect(screen.getByRole('dialog', { name: 'Order' })).toBeTruthy()
     } finally {
       vi.useRealTimers()
     }

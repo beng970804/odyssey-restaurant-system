@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ScrollView } from 'react-native'
+import { ScrollView, useWindowDimensions } from 'react-native'
 import { useTheme } from '../theme/ThemeProvider'
 import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
 import { OverlayPanel } from './OverlayPanel'
@@ -43,6 +43,16 @@ export function Drawer({ open, onClose, title, children, footer, width = 480 }: 
  * published: a drawer arrives by sliding in from the edge it is anchored to,
  * on the same clock as the backdrop behind it.
  */
+/**
+ * Never wider than the viewport minus a gutter. A 480px drawer on a 390px
+ * phone covers the whole page, and a drawer that covers the page is a page:
+ * nothing behind it says "you have not navigated away", and the tap-to-close
+ * backdrop has nowhere left to be tapped. The floor keeps a zero-width test
+ * viewport from collapsing the panel entirely.
+ */
+const EDGE_GUTTER = 48
+const MIN_WIDTH = 280
+
 function DrawerSurface({
   title,
   width,
@@ -58,6 +68,8 @@ function DrawerSurface({
 }) {
   const theme = useTheme()
   const { shown, enterMs, exitMs } = useOverlayMotion()
+  const viewport = useWindowDimensions().width
+  const effectiveWidth = Math.min(width, Math.max(MIN_WIDTH, viewport - EDGE_GUTTER))
 
   return (
     <OverlayPanel
@@ -67,10 +79,10 @@ function DrawerSurface({
       style={[
         // Closed, the panel sits one full width past the edge; open, it is
         // flush with it.
-        { transform: [{ translateX: shown ? 0 : width }] },
+        { transform: [{ translateX: shown ? 0 : effectiveWidth }] },
         overlayTransition('transform', shown ? enterMs : exitMs),
         {
-          width,
+          width: effectiveWidth,
           maxWidth: '100%',
           height: '100%',
           backgroundColor: theme.color.bg.overlay,

@@ -1,4 +1,3 @@
-import type { ViewStyle } from 'react-native'
 import type { InteractionState } from './useInteractionState'
 import type { Theme } from '../theme/types'
 
@@ -25,10 +24,23 @@ export function focusRingBleed(theme: Theme): number {
   return RING_OFFSET + theme.borderWidth.medium
 }
 
+/**
+ * Only the properties the ring actually sets, not the whole of `ViewStyle` —
+ * consumers in other packages type against their own copy of react-native, and
+ * two copies' `ViewStyle`s are not assignable to each other. This narrow shape
+ * is assignable to both.
+ */
+export type FocusRing = {
+  outlineStyle?: 'solid'
+  outlineWidth?: number
+  outlineColor?: string
+  outlineOffset?: number
+}
+
 export function focusRingStyle(
   theme: Theme,
   state: Pick<InteractionState, 'focused' | 'pressed'>,
-): ViewStyle {
+): FocusRing {
   if (!state.focused || state.pressed) return { outlineWidth: 0 }
 
   return {

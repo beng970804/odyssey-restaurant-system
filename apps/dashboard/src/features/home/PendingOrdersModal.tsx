@@ -1,10 +1,11 @@
 import { getListOrdersQueryKey, unwrap, useListOrders } from '@repo/api-client'
-import { Button, EmptyState, Modal, Table } from '@repo/ui'
+import { Button, EmptyState, Modal, Table, useBreakpoint } from '@repo/ui'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
 import { useCurrency } from '../../hooks/useCurrency'
 import { useTimezone } from '../../hooks/useTimezone'
 import { OrderDetailDrawer } from '../orders/OrderDetailDrawer'
+import { OrderListCompact } from '../orders/OrderListCompact'
 import { pickOrderColumns } from '../orders/orderColumns'
 
 /** The whole queue, not a page of it — five pending orders is a busy lunch. */
@@ -27,6 +28,7 @@ export function PendingOrdersModal({ open, onClose }: { open: boolean; onClose: 
   const router = useRouter()
   const currency = useCurrency()
   const timezone = useTimezone()
+  const { isCompact } = useBreakpoint()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
 
   // Mounted whether or not it is open, so it can animate out — but the queue is
@@ -35,6 +37,10 @@ export function PendingOrdersModal({ open, onClose }: { open: boolean; onClose: 
     query: { enabled: open, queryKey: getListOrdersQueryKey(PENDING_QUERY) },
   })
   const rows = unwrap(data)?.data ?? []
+
+  const empty = (
+    <EmptyState title="Nothing waiting" description="Every order has been accepted or closed." />
+  )
 
   return (
     <>
@@ -49,21 +55,33 @@ export function PendingOrdersModal({ open, onClose }: { open: boolean; onClose: 
         title="Orders awaiting a decision"
         width={640}
       >
-        <Table
-          columns={pickOrderColumns({ currency, timezone }, COLUMNS)}
-          data={rows}
-          keyExtractor={(row) => row.id}
-          loading={isLoading}
-          error={error as Error | null}
-          onRetry={refetch}
-          onRowPress={(row) => setOpenOrderId(row.id)}
-          emptyState={
-            <EmptyState
-              title="Nothing waiting"
-              description="Every order has been accepted or closed."
-            />
-          }
-        />
+        {/* On a phone the five columns hide "Ready by" — the one the queue is
+            triaged on — behind a sideways scroll, so the table gives way to a
+            two-line list with the same facts and the same row press. */}
+        {isCompact ? (
+          <OrderListCompact
+            rows={rows}
+            currency={currency}
+            timezone={timezone}
+            trailing="readyBy"
+            loading={isLoading}
+            error={error as Error | null}
+            onRetry={refetch}
+            onRowPress={(row) => setOpenOrderId(row.id)}
+            emptyState={empty}
+          />
+        ) : (
+          <Table
+            columns={pickOrderColumns({ currency, timezone }, COLUMNS)}
+            data={rows}
+            keyExtractor={(row) => row.id}
+            loading={isLoading}
+            error={error as Error | null}
+            onRetry={refetch}
+            onRowPress={(row) => setOpenOrderId(row.id)}
+            emptyState={empty}
+          />
+        )}
 
         <Button
           variant="ghost"

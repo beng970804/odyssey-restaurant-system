@@ -18,12 +18,18 @@ export type OrderColumnKey =
 /** Statuses where the kitchen still owes the food, so a past estimate is late. */
 const STILL_COOKING = ['pending', 'accepted', 'preparing']
 
+/** One rule for "late", shared by this table and the compact list. */
+export function isOverdue(row: OrderRow): boolean {
+  if (!row.estimatedReadyAt) return false
+  return STILL_COOKING.includes(row.status) && new Date(row.estimatedReadyAt) < new Date()
+}
+
 function ReadyByCell({ row, timezone }: { row: OrderRow; timezone: string }) {
   const theme = useTheme()
   if (!row.estimatedReadyAt) return <Text color="muted">—</Text>
 
-  const overdue = STILL_COOKING.includes(row.status) && new Date(row.estimatedReadyAt) < new Date()
-  if (!overdue) return <Text color="muted">{formatTime(row.estimatedReadyAt, timezone)}</Text>
+  if (!isOverdue(row))
+    return <Text color="muted">{formatTime(row.estimatedReadyAt, timezone)}</Text>
   return (
     <Text style={{ color: theme.color.status.danger.fg }}>
       {`${formatTime(row.estimatedReadyAt, timezone)} · overdue`}

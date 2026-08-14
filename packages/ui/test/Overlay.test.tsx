@@ -75,9 +75,11 @@ describe('Overlay', () => {
       </Drawer>,
     )
 
-    // Closed, the panel sits one full width past the right edge.
+    // Closed, the panel sits one full width past the right edge. jsdom's
+    // zero-width window clamps the 480 to the drawer's floor; the clamp itself
+    // is Drawer.test.tsx's subject.
     const panel = screen.getByRole('dialog')
-    expect(panel).toHaveStyle({ transform: 'translateX(480px)' })
+    expect(panel).toHaveStyle({ transform: 'translateX(280px)' })
 
     // A tick later it is flush, and the transition is what carries it there:
     // longer than a dialog's, because it crosses its own width to arrive. The
