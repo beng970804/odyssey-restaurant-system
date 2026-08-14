@@ -17,6 +17,7 @@ const COLUMNS = [
 export function OrdersTable({
   rows,
   loading,
+  refreshing = false,
   error,
   onRetry,
   onRowPress,
@@ -26,6 +27,7 @@ export function OrdersTable({
 }: {
   rows: OrderRow[]
   loading: boolean
+  refreshing?: boolean
   error: Error | null
   onRetry: () => void
   onRowPress: (row: OrderRow) => void
@@ -56,6 +58,7 @@ export function OrdersTable({
         timezone={timezone}
         trailing="status"
         loading={loading}
+        refreshing={refreshing}
         error={error}
         onRetry={onRetry}
         onRowPress={onRowPress}
@@ -70,6 +73,7 @@ export function OrdersTable({
       data={rows}
       keyExtractor={(row) => row.id}
       loading={loading}
+      refreshing={refreshing}
       error={error}
       onRetry={onRetry}
       onRowPress={onRowPress}

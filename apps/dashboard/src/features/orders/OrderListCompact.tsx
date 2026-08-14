@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
   focusRingStyle,
+  refreshingStyle,
   useInteractionState,
   useTheme,
 } from '@repo/ui'
@@ -36,6 +37,8 @@ export type OrderListCompactProps = {
    */
   trailing: 'readyBy' | 'status'
   loading?: boolean
+  /** Mid-refetch with the previous rows still worth showing: dim, never blank. */
+  refreshing?: boolean
   error?: Error | null
   onRetry?: () => void
   onRowPress?: (row: OrderRow) => void
@@ -48,6 +51,7 @@ export function OrderListCompact({
   timezone,
   trailing,
   loading = false,
+  refreshing = false,
   error = null,
   onRetry,
   onRowPress,
@@ -59,7 +63,7 @@ export function OrderListCompact({
   if (rows.length === 0) return <>{emptyState ?? <EmptyState title="Nothing here yet" />}</>
 
   return (
-    <View>
+    <View aria-busy={refreshing} style={refreshingStyle(refreshing)}>
       {rows.map((row) => (
         <CompactRow
           key={row.id}

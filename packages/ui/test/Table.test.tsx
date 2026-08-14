@@ -198,3 +198,24 @@ describe('Table sorting', () => {
     expect(namesInOrder()).toEqual(['Chen', 'Bala', 'Aisha'])
   })
 })
+
+describe('Table refreshing', () => {
+  it('keeps the loaded rows on screen instead of blanking to skeletons', () => {
+    // A filter or page change refetches under a new key. The rows it replaces
+    // are still the best thing to show until the new ones land.
+    wrap(<Table columns={columns} data={rows} keyExtractor={keyExtractor} refreshing />)
+
+    expect(screen.getByText('Nasi Lemak')).toBeTruthy()
+    expect(screen.queryAllByTestId('skeleton')).toHaveLength(0)
+  })
+
+  it('dims the rows so the refetch is visible', () => {
+    wrap(<Table columns={columns} data={rows} keyExtractor={keyExtractor} refreshing />)
+    expect(screen.getByTestId('table-body')).toHaveStyle({ opacity: 0.6 })
+  })
+
+  it('renders at full strength once the refetch settles', () => {
+    wrap(<Table columns={columns} data={rows} keyExtractor={keyExtractor} />)
+    expect(screen.getByTestId('table-body')).toHaveStyle({ opacity: 1 })
+  })
+})

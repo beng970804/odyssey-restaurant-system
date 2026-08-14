@@ -12,8 +12,16 @@ export default function CrmScreen() {
   const [creating, setCreating] = useState(false)
 
   const currency = useCurrency()
-  const { searchInput, setSearchInput, searching, customers, isLoading, error, refetch } =
-    useCustomers()
+  const {
+    searchInput,
+    setSearchInput,
+    searching,
+    customers,
+    isLoading,
+    refreshing,
+    error,
+    refetch,
+  } = useCustomers()
 
   return (
     <>
@@ -33,6 +41,7 @@ export default function CrmScreen() {
         <CustomerTable
           customers={customers}
           loading={isLoading}
+          refreshing={refreshing}
           error={error}
           onRetry={refetch}
           onRowPress={(customer) => setOpenId(customer.id)}

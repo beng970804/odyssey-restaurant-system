@@ -10,6 +10,7 @@ import {
   Table,
   Text,
   focusRingStyle,
+  refreshingStyle,
   useBreakpoint,
   useInteractionState,
   useTheme,
@@ -20,6 +21,8 @@ import { Pressable, View } from 'react-native'
 type CustomerTableProps = {
   customers: CustomerWithStats[]
   loading: boolean
+  /** Mid-refetch with the previous rows still worth showing: dim, never blank. */
+  refreshing?: boolean
   error: Error | null
   onRetry: () => void
   onRowPress: (customer: CustomerWithStats) => void
@@ -44,6 +47,7 @@ export function CustomerTable(props: CustomerTableProps) {
 function CustomerTableWide({
   customers,
   loading,
+  refreshing = false,
   error,
   onRetry,
   onRowPress,
@@ -96,6 +100,7 @@ function CustomerTableWide({
       data={customers}
       keyExtractor={(row) => row.id}
       loading={loading}
+      refreshing={refreshing}
       error={error}
       onRetry={onRetry}
       onRowPress={onRowPress}
@@ -130,6 +135,7 @@ function customerLine(row: CustomerWithStats): string {
 function CustomerListCompact({
   customers,
   loading,
+  refreshing = false,
   error,
   onRetry,
   onRowPress,
@@ -144,7 +150,7 @@ function CustomerListCompact({
   }
 
   return (
-    <View>
+    <View aria-busy={refreshing} style={refreshingStyle(refreshing)}>
       {customers.map((row) => (
         <CustomerRowCompact
           key={row.id}

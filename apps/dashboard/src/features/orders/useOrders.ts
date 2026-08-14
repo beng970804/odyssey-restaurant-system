@@ -1,4 +1,5 @@
-import { unwrap, useGetSettings, useListOrders } from '@repo/api-client'
+import { getListOrdersQueryKey, unwrap, useGetSettings, useListOrders } from '@repo/api-client'
+import { keepPreviousData } from '@tanstack/react-query'
 import { useOrderFilters } from './useOrderFilters'
 
 /**
@@ -14,7 +15,14 @@ export function useOrders() {
   const timezone = settings?.timezone ?? 'Asia/Singapore'
 
   const filters = useOrderFilters(timezone)
-  const { data, isLoading, error, refetch } = useListOrders(filters.query)
+  // A filter or page change is a new query key. Without a placeholder the list
+  // blanks to skeletons on every chip press; with the previous page held it
+  // stays put, dimmed by `refreshing`, until the new rows land.
+  const { data, isLoading, isFetching, error, refetch } = useListOrders(filters.query, {
+    // The key restates what the generated hook would derive — the options type
+    // requires it whenever any query option is overridden.
+    query: { queryKey: getListOrdersQueryKey(filters.query), placeholderData: keepPreviousData },
+  })
   const list = unwrap(data)
 
   return {
@@ -22,6 +30,7 @@ export function useOrders() {
     orders: list?.data ?? [],
     meta: list?.meta,
     isLoading,
+    refreshing: isFetching && !isLoading,
     error: error as Error | null,
     refetch,
     currency: settings?.currency ?? 'SGD',

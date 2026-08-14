@@ -10,6 +10,7 @@ import {
   Switch,
   Table,
   Text,
+  refreshingStyle,
   useBreakpoint,
   useTheme,
   type Column,
@@ -19,6 +20,8 @@ import { View } from 'react-native'
 type MenuItemTableProps = {
   items: MenuItemWithCategory[]
   loading: boolean
+  /** Mid-refetch with the previous rows still worth showing: dim, never blank. */
+  refreshing?: boolean
   error: Error | null
   onRetry: () => void
   onToggleAvailability: (item: MenuItemWithCategory, isAvailable: boolean) => void
@@ -43,6 +46,7 @@ export function MenuItemTable(props: MenuItemTableProps) {
 function MenuItemTableWide({
   items,
   loading,
+  refreshing = false,
   error,
   onRetry,
   onToggleAvailability,
@@ -106,6 +110,7 @@ function MenuItemTableWide({
       data={items}
       keyExtractor={(row) => row.id}
       loading={loading}
+      refreshing={refreshing}
       error={error}
       onRetry={onRetry}
     />
@@ -116,6 +121,7 @@ function MenuItemTableWide({
 function MenuItemListCompact({
   items,
   loading,
+  refreshing = false,
   error,
   onRetry,
   onToggleAvailability,
@@ -130,7 +136,7 @@ function MenuItemListCompact({
   if (items.length === 0) return <EmptyState title="Nothing here yet" />
 
   return (
-    <View>
+    <View aria-busy={refreshing} style={refreshingStyle(refreshing)}>
       {items.map((row) => (
         <Stack
           key={row.id}

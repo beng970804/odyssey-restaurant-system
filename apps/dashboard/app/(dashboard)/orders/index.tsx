@@ -11,7 +11,8 @@ export default function OrdersScreen() {
   const router = useRouter()
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
 
-  const { filters, orders, meta, isLoading, error, refetch, currency, timezone } = useOrders()
+  const { filters, orders, meta, isLoading, refreshing, error, refetch, currency, timezone } =
+    useOrders()
 
   return (
     <>
@@ -27,6 +28,7 @@ export default function OrdersScreen() {
         <OrdersTable
           rows={orders}
           loading={isLoading}
+          refreshing={refreshing}
           error={error}
           onRetry={refetch}
           onRowPress={(row) => setOpenOrderId(row.id)}

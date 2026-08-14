@@ -21,6 +21,7 @@ export default function MenuScreen() {
     categories,
     items,
     isLoading,
+    refreshing,
     error,
     refetch,
     toggleAvailability,
@@ -40,6 +41,7 @@ export default function MenuScreen() {
         <MenuItemTable
           items={items}
           loading={isLoading}
+          refreshing={refreshing}
           error={error}
           onRetry={refetch}
           onToggleAvailability={toggleAvailability}

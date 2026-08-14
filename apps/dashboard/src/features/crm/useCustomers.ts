@@ -1,4 +1,5 @@
-import { unwrap, useListCustomers } from '@repo/api-client'
+import { getListCustomersQueryKey, unwrap, useListCustomers } from '@repo/api-client'
+import { keepPreviousData } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -19,9 +20,13 @@ export function useCustomers() {
     return () => clearTimeout(timer)
   }, [searchInput])
 
-  const { data, isLoading, error, refetch } = useListCustomers({
-    ...(search && { search }),
-    pageSize: PAGE_SIZE,
+  // Each search term is a new query key; the previous result holds the screen,
+  // dimmed by `refreshing`, so typing never blanks the list to skeletons.
+  const query = { ...(search && { search }), pageSize: PAGE_SIZE }
+  const { data, isLoading, isFetching, error, refetch } = useListCustomers(query, {
+    // The key restates what the generated hook would derive — the options type
+    // requires it whenever any query option is overridden.
+    query: { queryKey: getListCustomersQueryKey(query), placeholderData: keepPreviousData },
   })
 
   return {
@@ -30,6 +35,7 @@ export function useCustomers() {
     searching: Boolean(search),
     customers: unwrap(data)?.data ?? [],
     isLoading,
+    refreshing: isFetching && !isLoading,
     error: error as Error | null,
     refetch,
   }

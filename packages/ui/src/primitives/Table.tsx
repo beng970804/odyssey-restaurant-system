@@ -14,6 +14,7 @@ import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
 import { EmptyState } from './EmptyState'
 import { ErrorState } from './ErrorState'
+import { overlayTransition } from './Overlay'
 import { Skeleton } from './Skeleton'
 import { Text } from './Text'
 
@@ -69,12 +70,45 @@ export type TableProps<T extends Row> = {
   data: T[]
   keyExtractor: (row: T) => string
   loading?: boolean
+  /**
+   * A refetch running under rows worth keeping — a filter or page change with
+   * the old page still in hand. Dims the body rather than blanking it: the
+   * skeleton is for the first load, when there is genuinely nothing to show.
+   */
+  refreshing?: boolean
   error?: Error | null
   onRetry?: () => void
   emptyState?: ReactNode
   onRowPress?: (row: T) => void
   defaultSort?: { key: string; desc: boolean }
 }
+
+/** How far the kept rows recede while their replacements are fetched. */
+const REFRESH_DIM = 0.6
+
+const REFRESH_DIM_MS = 150
+
+/**
+ * Only the properties the dim actually sets, not the whole of `ViewStyle` —
+ * consumers in other packages type against their own copy of react-native, and
+ * two copies' `ViewStyle`s are not assignable to each other (see `FocusRing`).
+ * The transition strings are web-only and ignored on native, like the overlay's.
+ */
+export type RefreshingStyle = {
+  opacity: number
+  transitionProperty?: string
+  transitionDuration?: string
+  transitionTimingFunction?: string
+}
+
+/**
+ * Shared with the compact lists, which are the same tables in their phone form:
+ * one answer to "what does a list look like mid-refetch", wherever it renders.
+ */
+export const refreshingStyle = (refreshing: boolean): RefreshingStyle => ({
+  opacity: refreshing ? REFRESH_DIM : 1,
+  ...(overlayTransition('opacity', REFRESH_DIM_MS) as Omit<RefreshingStyle, 'opacity'>),
+})
 
 /**
  * The highest-leverage primitive in the app: loading, error, empty and loaded
@@ -89,6 +123,7 @@ export function Table<T extends Row>({
   data,
   keyExtractor,
   loading = false,
+  refreshing = false,
   error = null,
   onRetry,
   emptyState,
@@ -168,21 +203,23 @@ export function Table<T extends Row>({
           })}
         </View>
 
-        {table.getRowModel().rows.map((row) => (
-          <TableRow
-            key={row.id}
-            // Cells render straight from `Column.render`. TanStack Table is
-            // here to model rows, not to own the markup — the moment it did,
-            // this primitive would stop being renderer-agnostic.
-            cells={columns.map((column) => ({
-              key: column.key,
-              width: column.width,
-              align: column.align,
-              content: column.render(row.original),
-            }))}
-            onPress={onRowPress ? () => onRowPress(row.original) : undefined}
-          />
-        ))}
+        <View testID="table-body" aria-busy={refreshing} style={refreshingStyle(refreshing)}>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              // Cells render straight from `Column.render`. TanStack Table is
+              // here to model rows, not to own the markup — the moment it did,
+              // this primitive would stop being renderer-agnostic.
+              cells={columns.map((column) => ({
+                key: column.key,
+                width: column.width,
+                align: column.align,
+                content: column.render(row.original),
+              }))}
+              onPress={onRowPress ? () => onRowPress(row.original) : undefined}
+            />
+          ))}
+        </View>
       </View>
     </ScrollView>
   )
