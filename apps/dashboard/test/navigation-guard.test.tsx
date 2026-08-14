@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -6,6 +6,9 @@ import {
   useGuardedNavigation,
   useNavigationGuard,
 } from '../src/components/NavigationGuard'
+
+/** Lets history traversals queued by unmounting guards land before the next test. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
 
 /** Stands in for the Sidebar: something that wants to navigate. */
 function Trigger({ action }: { action: () => void }) {
@@ -42,7 +45,7 @@ describe('NavigationGuard', () => {
     expect(action).toHaveBeenCalledOnce()
   })
 
-  it('hands navigation to the guard, which can release it later', () => {
+  it('hands navigation to the guard, which can release it later', async () => {
     const action = vi.fn()
     render(
       <NavigationGuardProvider>
@@ -56,7 +59,8 @@ describe('NavigationGuard', () => {
     expect(action).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Leave anyway'))
-    expect(action).toHaveBeenCalledOnce()
+    // Released — after the sentinel history entry has been collapsed.
+    await waitFor(() => expect(action).toHaveBeenCalledOnce())
   })
 
   it('unregisters with the screen that owns it', () => {
@@ -84,5 +88,73 @@ describe('NavigationGuard', () => {
 
     fireEvent.click(screen.getByText('Go'))
     expect(action).toHaveBeenCalledOnce()
+  })
+
+  it('intercepts the browser back button and releases it on request', async () => {
+    // Let any history traversal queued by earlier tests land first.
+    await settle()
+    // Arrived at /settings from somewhere — the entry a back press would reach.
+    window.history.pushState({}, '', '/before')
+    window.history.pushState({}, '', '/settings')
+    render(
+      <NavigationGuardProvider>
+        <DirtyScreen dirty />
+      </NavigationGuardProvider>,
+    )
+
+    window.history.back()
+
+    // The sentinel absorbed the back press: still here, the guard asking.
+    const leave = await screen.findByText('Leave anyway')
+    expect(window.location.pathname).toBe('/settings')
+
+    const popped = vi.fn()
+    window.addEventListener('popstate', popped)
+    fireEvent.click(leave)
+    await waitFor(() => expect(popped).toHaveBeenCalled())
+    window.removeEventListener('popstate', popped)
+    // Past the sentinel and the page both: where the back press was headed.
+    expect(window.location.pathname).toBe('/before')
+  })
+
+  it('lets the browser back button pass when no guard is registered', async () => {
+    await settle()
+    window.history.pushState({}, '', '/before')
+    window.history.pushState({}, '', '/settings')
+    render(
+      <NavigationGuardProvider>
+        <DirtyScreen dirty={false} />
+      </NavigationGuardProvider>,
+    )
+
+    const popped = vi.fn()
+    window.addEventListener('popstate', popped)
+    window.history.back()
+    await waitFor(() => expect(popped).toHaveBeenCalled())
+    window.removeEventListener('popstate', popped)
+
+    expect(window.location.pathname).toBe('/before')
+    expect(screen.queryByText('Leave anyway')).toBeNull()
+  })
+
+  it('blocks tab close while guarded, and only then', () => {
+    const { rerender } = render(
+      <NavigationGuardProvider>
+        <DirtyScreen dirty />
+      </NavigationGuardProvider>,
+    )
+
+    const guardedClose = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(guardedClose)
+    expect(guardedClose.defaultPrevented).toBe(true)
+
+    rerender(
+      <NavigationGuardProvider>
+        <DirtyScreen dirty={false} />
+      </NavigationGuardProvider>,
+    )
+    const freeClose = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(freeClose)
+    expect(freeClose.defaultPrevented).toBe(false)
   })
 })

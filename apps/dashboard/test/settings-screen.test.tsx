@@ -1,6 +1,13 @@
 import { ApiProvider } from '@repo/api-client'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
-import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SettingsScreen from '../app/(dashboard)/settings/index'
@@ -135,18 +142,30 @@ describe('SettingsScreen', () => {
     expect(navAction).not.toHaveBeenCalled()
   })
 
-  it('discards and leaves from the dialog', () => {
+  it('discards and leaves from the dialog', async () => {
     wrap(guarded())
     dirty()
 
     fireEvent.click(screen.getByText('Nav away'))
     fireEvent.click(screen.getByText('Discard changes'))
 
+    // Navigation lands once the guard's history sentinel has collapsed.
+    await waitFor(() => expect(navAction).toHaveBeenCalledOnce())
     expect(mutate).not.toHaveBeenCalled()
-    expect(navAction).toHaveBeenCalledOnce()
   })
 
-  it('saves and leaves from the dialog', () => {
+  it('asks when the browser itself goes back', async () => {
+    window.history.pushState({}, '', '/settings')
+    wrap(guarded())
+    dirty()
+
+    window.history.back()
+
+    expect(await screen.findByText('Unsaved changes')).toBeTruthy()
+    expect(window.location.pathname).toBe('/settings')
+  })
+
+  it('saves and leaves from the dialog', async () => {
     wrap(guarded())
     dirty()
 
@@ -161,6 +180,6 @@ describe('SettingsScreen', () => {
     expect(navAction).not.toHaveBeenCalled()
     const options = mutate.mock.calls[0]?.[1] as { onSuccess?: () => void }
     act(() => options.onSuccess?.())
-    expect(navAction).toHaveBeenCalledOnce()
+    await waitFor(() => expect(navAction).toHaveBeenCalledOnce())
   })
 })
