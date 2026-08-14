@@ -1,5 +1,6 @@
 import { getGetSettingsQueryKey, unwrap, useGetSettings, useUpdateSettings } from '@repo/api-client'
 import type { OpeningHours } from '@repo/shared'
+import type { SupportedCurrency } from '@repo/types'
 import { useToast } from '@repo/ui'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
@@ -12,7 +13,7 @@ export type SettingsDraft = {
   deliveryEnabled: boolean
   deliveryFeeCents: number
   taxRatePercent: number
-  currency: string
+  currency: SupportedCurrency
   timezone: string
   openingHours: OpeningHours
 }
@@ -53,7 +54,9 @@ export function useSettingsForm() {
       deliveryEnabled: loaded.deliveryEnabled,
       deliveryFeeCents: loaded.deliveryFeeCents,
       taxRatePercent: loaded.taxRatePercent,
-      currency: loaded.currency,
+      // The response model types it as string; the allowlist is enforced
+      // server-side, so a stored value is always one of ours.
+      currency: loaded.currency as SupportedCurrency,
       timezone: loaded.timezone,
       openingHours: loaded.openingHours as OpeningHours,
     })
@@ -114,7 +117,7 @@ export function useSettingsForm() {
         deliveryEnabled: loaded.deliveryEnabled,
         deliveryFeeCents: loaded.deliveryFeeCents,
         taxRatePercent: loaded.taxRatePercent,
-        currency: loaded.currency,
+        currency: loaded.currency as SupportedCurrency,
         timezone: loaded.timezone,
         openingHours: loaded.openingHours as OpeningHours,
       })

@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { OpeningHours } from './openingHours';
+import type { UpdateSettingsCurrency } from './updateSettingsCurrency';
 
 export interface UpdateSettings {
   /** @exclusiveMinimum 0 */
@@ -20,11 +21,7 @@ export interface UpdateSettings {
      * @maximum 100
      */
   taxRatePercent?: number;
-  /**
-     * @minLength 3
-     * @maxLength 3
-     */
-  currency?: string;
+  currency?: UpdateSettingsCurrency;
   timezone?: string;
   openingHours?: OpeningHours;
 }

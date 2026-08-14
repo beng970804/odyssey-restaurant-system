@@ -1,5 +1,6 @@
 import { createSelectSchema } from 'drizzle-zod'
 import { z } from '@hono/zod-openapi'
+import { SUPPORTED_CURRENCIES } from '@repo/types'
 import { settings } from '../db/schema'
 import { isoDateTime } from './common'
 
@@ -70,7 +71,9 @@ export const updateSettingsSchema = z
     deliveryEnabled: z.boolean(),
     deliveryFeeCents: z.number().int().nonnegative(),
     taxRatePercent: z.number().int().min(0).max(100),
-    currency: z.string().length(3),
+    // A closed list, not "any 3 letters": the value reaches Intl.NumberFormat
+    // at every money call site, and "XXX" formats — as nonsense.
+    currency: z.enum(SUPPORTED_CURRENCIES),
     timezone: timezoneString,
     openingHours: openingHoursSchema,
   })

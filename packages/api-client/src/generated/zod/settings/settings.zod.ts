@@ -107,9 +107,6 @@ export const updateSettingsBodyDeliveryFeeCentsMin = 0;
 export const updateSettingsBodyTaxRatePercentMin = 0;
 export const updateSettingsBodyTaxRatePercentMax = 100;
 
-export const updateSettingsBodyCurrencyMin = 3;
-export const updateSettingsBodyCurrencyMax = 3;
-
 export const updateSettingsBodyOpeningHoursMonTwoOpenRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
 export const updateSettingsBodyOpeningHoursMonTwoCloseRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
 export const updateSettingsBodyOpeningHoursTueTwoOpenRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
@@ -134,7 +131,7 @@ export const UpdateSettingsBody = zod.object({
   "deliveryEnabled": zod.boolean().optional(),
   "deliveryFeeCents": zod.int().min(updateSettingsBodyDeliveryFeeCentsMin).optional(),
   "taxRatePercent": zod.int().min(updateSettingsBodyTaxRatePercentMin).max(updateSettingsBodyTaxRatePercentMax).optional(),
-  "currency": zod.string().min(updateSettingsBodyCurrencyMin).max(updateSettingsBodyCurrencyMax).optional(),
+  "currency": zod.enum(['SGD', 'MYR', 'IDR', 'THB', 'PHP', 'VND', 'USD', 'EUR', 'GBP', 'AUD', 'JPY']).optional(),
   "timezone": zod.string().optional(),
   "openingHours": zod.object({
   "mon": zod.union([zod.object({

@@ -1,3 +1,4 @@
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@repo/types'
 import {
   Button,
   Card,
@@ -5,6 +6,7 @@ import {
   Field,
   Inline,
   Input,
+  Select,
   Skeleton,
   Stack,
   Switch,
@@ -112,9 +114,12 @@ export default function SettingsScreen() {
             />
           </Field>
           <Field label="Currency">
-            <Input
+            {/* A closed list — the server rejects anything outside it, and a
+                typo like "XXX" would format as nonsense at every price. */}
+            <Select
+              options={SUPPORTED_CURRENCIES.map((code) => ({ value: code, label: code }))}
               value={draft.currency}
-              onChangeText={(value) => set('currency', value.toUpperCase())}
+              onChange={(value) => set('currency', value as SupportedCurrency)}
             />
           </Field>
           <Field label="Timezone" hint="An IANA name, e.g. Asia/Singapore">

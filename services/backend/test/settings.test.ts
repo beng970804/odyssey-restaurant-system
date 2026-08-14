@@ -135,6 +135,22 @@ describe('updating settings', () => {
     expect((await patch({ openingHours: missingSunday })).status).toBe(422)
   })
 
+  it('rejects a currency outside the supported list', async () => {
+    // "XXX" is three letters — it would sail through a length check and then
+    // render as nonsense at every Intl.NumberFormat call site.
+    const res = await patch({ currency: 'XXX' })
+    expect(res.status).toBe(422)
+    expect(await errorCode(res)).toBe('VALIDATION_FAILED')
+  })
+
+  it('accepts a supported currency', async () => {
+    const res = await patch({ currency: 'MYR' })
+    expect(res.status).toBe(200)
+    expect((await getSettings()).currency).toBe('MYR')
+
+    await patch({ currency: 'SGD' })
+  })
+
   it('rejects a timezone the runtime cannot resolve', async () => {
     // The opening-hours rule is only as good as this field: an unresolvable
     // zone would throw inside Intl on every order placed.

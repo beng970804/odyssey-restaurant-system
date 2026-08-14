@@ -952,8 +952,19 @@
           },
           "currency": {
             "type": "string",
-            "minLength": 3,
-            "maxLength": 3
+            "enum": [
+              "SGD",
+              "MYR",
+              "IDR",
+              "THB",
+              "PHP",
+              "VND",
+              "USD",
+              "EUR",
+              "GBP",
+              "AUD",
+              "JPY"
+            ]
           },
           "timezone": {
             "type": "string"
