@@ -29,7 +29,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { useMemo, useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 import { PageHeader } from '../../components/PageHeader'
 import { ALL_CATEGORIES, CategoryFilter } from '../menu/CategoryFilter'
 import { CHANNEL_LABELS } from './formatting'
@@ -223,10 +223,10 @@ export function NewOrderScreen() {
       ) : (
         <Inline gap="lg" align="flex-start">
           {picker}
+          {/* No scroller of its own: the page already scrolls, and a nested one
+              clips the focus rings off the panel's own controls. */}
           <View style={{ width: SUMMARY_WIDTH }}>
-            <Card padding="lg">
-              <ScrollView>{summary}</ScrollView>
-            </Card>
+            <Card padding="lg">{summary}</Card>
           </View>
         </Inline>
       )}
