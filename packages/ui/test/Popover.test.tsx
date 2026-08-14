@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Pressable, Text as RNText } from 'react-native'
 import { describe, expect, it } from 'vitest'
 import { wrap } from './helpers'
-import { Popover } from '../src/primitives/Popover'
+import { Popover, clampPanelLeft } from '../src/primitives/Popover'
 import { Select } from '../src/primitives/Select'
 
 function Harness() {
@@ -62,6 +62,18 @@ describe('Popover', () => {
     expect(screen.getByText('Trigger').parentElement?.contains(screen.getByText('Panel'))).toBe(
       false,
     )
+  })
+
+  it('slides a panel left rather than off the viewport', () => {
+    // A 420px panel anchored at x=90 on a 390px phone ran to 510 — the date
+    // picker's calendar half sat past the edge, unreachable. jsdom cannot
+    // measure, so the arithmetic is pinned directly.
+    expect(clampPanelLeft(90, 420, 390)).toBe(12)
+    // Where there is room, the panel stays put under its control.
+    expect(clampPanelLeft(90, 420, 1440)).toBe(90)
+    // Before the first measurement the width reads as 0 and the clamp must
+    // not fling the panel to the margin for nothing.
+    expect(clampPanelLeft(90, 0, 390)).toBe(90)
   })
 })
 

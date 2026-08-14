@@ -1,7 +1,23 @@
 import { fireEvent, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
 import { DateRangePicker } from '../src/primitives/DateRangePicker'
+
+// jsdom's 0×0 window reads as compact, where the panel stacks. The width is
+// faked so both layouts can be pinned.
+let viewportWidth = 1440
+
+vi.mock('react-native', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-native')>()
+  return {
+    ...actual,
+    useWindowDimensions: () => ({ width: viewportWidth, height: 900, scale: 1, fontScale: 1 }),
+  }
+})
+
+beforeEach(() => {
+  viewportWidth = 1440
+})
 
 const TODAY = '2026-08-14'
 
@@ -111,5 +127,28 @@ describe('DateRangePicker', () => {
 
     expect(screen.getByText('July 2026')).toBeTruthy()
     expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('sits the presets beside the calendar where there is room', () => {
+    wrap(<DateRangePicker value={{ from: null, to: null }} onChange={vi.fn()} today={TODAY} />)
+    open()
+
+    const panel = screen.getByLabelText('Choose a date range')
+    expect(panel.firstElementChild).toHaveStyle({ flexDirection: 'row' })
+  })
+
+  it('stacks the presets above the calendar on a phone', () => {
+    // Presets beside the calendar come to ~420px, which no phone has: the
+    // calendar sat past the right edge, unreachable — the picker looked like a
+    // preset menu with a large blank corner.
+    viewportWidth = 390
+    wrap(<DateRangePicker value={{ from: null, to: null }} onChange={vi.fn()} today={TODAY} />)
+    open()
+
+    const panel = screen.getByLabelText('Choose a date range')
+    expect(panel.firstElementChild).toHaveStyle({ flexDirection: 'column' })
+    // Both halves are still there — presets to answer fast, grid for the rest.
+    expect(screen.getByText('Last 7 days')).toBeTruthy()
+    expect(screen.getByText('August 2026')).toBeTruthy()
   })
 })

@@ -56,6 +56,7 @@ export function Popover({
   const triggerRef = useRef<HostInstance | null>(null)
   const contentRef = useRef<HostInstance | null>(null)
   const [anchor, setAnchor] = useState<Anchor | null>(null)
+  const [panelWidth, setPanelWidth] = useState(0)
 
   const measure = useCallback(() => {
     triggerRef.current?.measureInWindow(
@@ -78,6 +79,25 @@ export function Popover({
       window.removeEventListener('resize', measure)
     }
   }, [open, measure])
+
+  // The panel's own width, which the horizontal clamp needs: a panel anchored
+  // to a control near the right edge has to know how wide it is to know how
+  // far left to slide. Watched rather than measured once, because a calendar
+  // paging between months can change size while open.
+  useEffect(() => {
+    if (!open) return
+    const node = contentRef.current as unknown as HTMLElement | null
+    if (!node || typeof node.getBoundingClientRect !== 'function') return
+
+    setPanelWidth(node.getBoundingClientRect().width)
+    if (typeof ResizeObserver === 'undefined') return
+
+    const observer = new ResizeObserver(() => {
+      setPanelWidth(node.getBoundingClientRect().width)
+    })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [open])
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return
@@ -114,7 +134,7 @@ export function Popover({
       ref={contentRef}
       aria-label={label}
       style={[
-        placement(anchor, matchTriggerWidth, align),
+        placement(anchor, matchTriggerWidth, align, panelWidth),
         {
           borderRadius: theme.radius.md,
           borderWidth: theme.borderWidth.thin,
@@ -141,6 +161,23 @@ export function Popover({
 }
 
 /**
+ * Slide a panel left just far enough to stay inside the viewport. Anchored to
+ * its control's left edge, a panel wider than the room to its right — the date
+ * picker on a phone — ran off the screen, calendar and all. Pure and exported
+ * so the arithmetic is testable without a browser to measure in.
+ */
+export function clampPanelLeft(
+  anchorLeft: number,
+  panelWidth: number,
+  viewportWidth: number,
+): number {
+  return Math.max(
+    VIEWPORT_MARGIN,
+    Math.min(anchorLeft, viewportWidth - panelWidth - VIEWPORT_MARGIN),
+  )
+}
+
+/**
  * Where the panel sits. Before the first measurement — and on native, where
  * there is no portal to escape into — it falls back to hanging off the control
  * in ordinary flow, which is both correct there and invisible here: `open`
@@ -150,6 +187,7 @@ function placement(
   anchor: Anchor | null,
   matchTriggerWidth: boolean,
   align: 'start' | 'end',
+  panelWidth: number,
 ): ViewStyle {
   if (anchor === null || Platform.OS !== 'web') {
     return { position: 'absolute', top: '100%', left: 0, right: 0, marginTop: GAP, zIndex: 50 }
@@ -169,10 +207,15 @@ function placement(
     ...(flipUp
       ? { bottom: viewportHeight - anchor.top + GAP }
       : { top: anchor.top + anchor.height + GAP }),
+    // Never wider than the viewport leaves room for, whatever the content asks.
+    maxWidth: viewportWidth - VIEWPORT_MARGIN * 2,
     ...(matchTriggerWidth
       ? { left: anchor.left, width: anchor.width }
       : align === 'end'
         ? { right: Math.max(VIEWPORT_MARGIN, viewportWidth - (anchor.left + anchor.width)) }
-        : { left: anchor.left, minWidth: anchor.width }),
+        : {
+            left: clampPanelLeft(anchor.left, panelWidth, viewportWidth),
+            minWidth: Math.min(anchor.width, viewportWidth - VIEWPORT_MARGIN * 2),
+          }),
   }
 }

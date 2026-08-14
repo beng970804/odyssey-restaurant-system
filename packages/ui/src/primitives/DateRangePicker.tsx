@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
-import { useTheme } from '../theme/ThemeProvider'
+import { useBreakpoint, useTheme } from '../theme/ThemeProvider'
 import { Calendar, monthOf, type DateKey } from './Calendar'
 import { Divider } from './Divider'
 import { Popover } from './Popover'
@@ -77,6 +77,7 @@ export function DateRangePicker({
   placeholder = 'Any date',
 }: DateRangePickerProps) {
   const theme = useTheme()
+  const { isCompact } = useBreakpoint()
   const { state, handlers } = useInteractionState()
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState(() => monthOf(value.from ?? today))
@@ -112,33 +113,61 @@ export function DateRangePicker({
   const text = label(value, placeholder)
   const chosen = value.from !== null || value.to !== null
 
-  const panel = (
-    <View style={{ flexDirection: 'row' }}>
-      <View style={{ padding: theme.space.xs, gap: 2, minWidth: 132 }}>
-        <PresetRow label="Today" onPress={preset(today, today)} />
-        <PresetRow label="Last 7 days" onPress={preset(shiftDay(today, -6), today)} />
-        <PresetRow label="Last 30 days" onPress={preset(shiftDay(today, -29), today)} />
-        <PresetRow label="This month" onPress={preset(firstOfMonth(today), today)} />
-        <Divider />
-        <PresetRow
-          label="Any date"
-          muted
-          onPress={() => {
-            onChange({ from: null, to: null })
-            setOpen(false)
-          }}
-        />
-      </View>
-      <Divider orientation="vertical" />
-      <Calendar
-        month={month}
-        onMonthChange={setMonth}
-        from={value.from}
-        to={value.to}
-        onSelectDay={selectDay}
-        today={today}
-        maxDate={today}
+  const presets = (
+    <>
+      <PresetRow label="Today" onPress={preset(today, today)} />
+      <PresetRow label="Last 7 days" onPress={preset(shiftDay(today, -6), today)} />
+      <PresetRow label="Last 30 days" onPress={preset(shiftDay(today, -29), today)} />
+      <PresetRow label="This month" onPress={preset(firstOfMonth(today), today)} />
+      <Divider orientation={isCompact ? 'vertical' : 'horizontal'} />
+      <PresetRow
+        label="Any date"
+        muted
+        onPress={() => {
+          onChange({ from: null, to: null })
+          setOpen(false)
+        }}
       />
+    </>
+  )
+
+  const calendar = (
+    <Calendar
+      month={month}
+      onMonthChange={setMonth}
+      from={value.from}
+      to={value.to}
+      onSelectDay={selectDay}
+      today={today}
+      maxDate={today}
+    />
+  )
+
+  // Side by side the presets and the grid come to ~420px, which no phone has:
+  // the calendar sat past the right edge, unreachable. Compact stacks them —
+  // presets first, wrapping into short rows, because they still carry most of
+  // the real traffic.
+  const panel = isCompact ? (
+    <View style={{ flexDirection: 'column' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          padding: theme.space.xs,
+          gap: 2,
+        }}
+      >
+        {presets}
+      </View>
+      <Divider />
+      {calendar}
+    </View>
+  ) : (
+    <View style={{ flexDirection: 'row' }}>
+      <View style={{ padding: theme.space.xs, gap: 2, minWidth: 132 }}>{presets}</View>
+      <Divider orientation="vertical" />
+      {calendar}
     </View>
   )
 
