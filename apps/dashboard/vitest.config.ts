@@ -11,13 +11,24 @@ export default defineConfig({
     // Vitest leaves node_modules to Node, which resolves extensionless imports
     // literally and so never sees the `.web.js` builds below. Inlining these
     // two hands them to Vite, which does.
-    server: { deps: { inline: ['react-native-svg', '@tabler/icons-react-native'] } },
+    server: {
+      deps: {
+        inline: [
+          'react-native-svg',
+          '@tabler/icons-react-native',
+          'react-native-safe-area-context',
+        ],
+      },
+    },
   },
   resolve: {
     alias: {
-      // Ordered: the svg entry must be caught before the react-native prefix
-      // rule sees it. Metro reaches this build via `platform=web`.
+      // Ordered: the specific entries must be caught before the react-native
+      // prefix rule sees them. Metro reaches these builds via `platform=web`.
       'react-native-svg': 'react-native-svg/lib/module/ReactNativeSVG.web.js',
+      // Its main field is a CJS build whose `require('react-native')` reaches
+      // bare Flow source; the ESM build resolves through the alias below.
+      'react-native-safe-area-context': 'react-native-safe-area-context/lib/module/index.js',
       'react-native': 'react-native-web',
     },
     /**

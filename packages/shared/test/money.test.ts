@@ -14,6 +14,22 @@ describe('formatMoney', () => {
   it('formats zero', () => {
     expect(formatMoney(0, 'SGD')).toBe('S$0.00')
   })
+
+  it('formats without formatToParts, which Hermes on iOS has not got', () => {
+    // The native build's first crash: every KPI card calls formatMoney, and
+    // Hermes implements Intl.NumberFormat.format but not formatToParts. The
+    // fallback must produce the same string, override included.
+    const original = Intl.NumberFormat.prototype.formatToParts
+    // @ts-expect-error -- simulating an engine without the method
+    delete Intl.NumberFormat.prototype.formatToParts
+    try {
+      expect(formatMoney(2602, 'SGD')).toBe('S$26.02')
+      expect(formatMoney(0, 'SGD')).toBe('S$0.00')
+      expect(formatMoney(341203, 'EUR')).toBe('€3,412.03')
+    } finally {
+      Intl.NumberFormat.prototype.formatToParts = original
+    }
+  })
 })
 
 describe('calcTaxCents', () => {
