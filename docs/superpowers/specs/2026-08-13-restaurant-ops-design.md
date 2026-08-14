@@ -471,14 +471,16 @@ pnpm test
 | **Multi-tenancy** | One restaurant, one Settings row. Multi-tenancy touches every query. |
 | **Realtime / websockets** | React Query polling on the Orders screen gives the same feel for a fraction of the cost. |
 | **Payments, refunds, delivery tracking** | Whole domains, unrequested. |
-| **Charting library** | The 7-day trend is a hand-rolled bar row from tokens. A charting dependency under React Native Web is a time sink. |
+| ~~**Charting library**~~ | **Reversed — see ADR 0005.** The original reasoning ("a charting dependency under React Native Web is a time sink") assumed the dependency had to work on native. The brief makes web the requirement and native an explicit bonus, so TanStack Charts' DOM adapter is enough, and the 7-day trend is a real chart. The native adapter exists and is the work a native build would need. |
 
 ### Known trade-offs, to be stated in the README
 
 - Revenue exceeds the sum of Lifetime Spend, because walk-in Orders belong to no Customer. Intentional (§4.4).
 - Deleting a Menu Item archives it rather than removing it, to preserve historical Order links.
 - No pagination on CRM — the seeded dataset doesn't need it, and Orders demonstrates the pattern.
-- Native (iOS/Android) is a bonus, attempted only if the web build is finished and polished.
+- Native (iOS/Android) is a bonus, attempted only if the web build is finished and polished. One
+  component now blocks it outright: `TrendChart` uses TanStack Charts' DOM adapter, and a native
+  build would have to move it to the library's `react-native` adapter (ADR 0005).
 
 ### Stretch, in priority order
 
