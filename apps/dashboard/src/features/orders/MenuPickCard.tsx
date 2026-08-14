@@ -1,6 +1,14 @@
 import type { MenuItemWithCategory } from '@repo/api-client'
 import { formatMoney } from '@repo/shared'
-import { IconButton, Inline, Surface, Text, useTheme } from '@repo/ui'
+import {
+  IconButton,
+  Inline,
+  Surface,
+  Text,
+  overlayTransition,
+  useInteractionState,
+  useTheme,
+} from '@repo/ui'
 import { Image, Pressable, View } from 'react-native'
 
 export type MenuPickCardProps = {
@@ -14,6 +22,9 @@ export type MenuPickCardProps = {
 
 const PHOTO_HEIGHT = 96
 
+/** How far the card sinks under a press — felt, not watched. */
+const PRESS_SCALE = 0.98
+
 /**
  * One card per dish, and the whole card is the Add button: at the pass, the
  * fastest path from "customer said laksa" to a line on the order is one press
@@ -21,7 +32,8 @@ const PHOTO_HEIGHT = 96
  *
  * Once the item is in the order the card's footer becomes a stepper, mirroring
  * the summary panel — either side can adjust and the other follows, because
- * both write to the same form.
+ * both write to the same form. The footer's row is reserved from the start and
+ * faded in, so the first add changes what the card shows, not how tall it is.
  */
 export function MenuPickCard({
   item,
@@ -31,19 +43,35 @@ export function MenuPickCard({
   onSetQuantity,
 }: MenuPickCardProps) {
   const theme = useTheme()
+  const { state, handlers } = useInteractionState()
   const unavailable = !item.isAvailable
+  const inOrder = quantity > 0
+  const interactive = !unavailable
 
   return (
     <Surface
       bordered
       radius="md"
-      style={{ overflow: 'hidden', opacity: unavailable ? 0.5 : 1, flex: 1 }}
+      style={[
+        {
+          overflow: 'hidden',
+          opacity: unavailable ? 0.5 : 1,
+          flex: 1,
+          // The card is the button, so the card carries the feedback: a
+          // brighter edge under the pointer, a sink while pressed.
+          borderColor:
+            interactive && state.hovered ? theme.color.border.strong : theme.color.border.default,
+          transform: [{ scale: interactive && state.pressed ? PRESS_SCALE : 1 }],
+        },
+        overlayTransition('transform, border-color', 120),
+      ]}
     >
       <Pressable
         role="button"
         aria-label={unavailable ? item.name : `Add ${item.name}`}
         aria-disabled={unavailable}
         disabled={unavailable}
+        {...handlers}
         onPress={() => onAdd(item)}
       >
         {item.imageUrl ? (
@@ -89,7 +117,14 @@ export function MenuPickCard({
         </View>
       </Pressable>
 
-      {quantity > 0 ? (
+      {/* Reserved even at zero: invisible and inert rather than absent, so the
+          stepper fades in where it was always going to be. */}
+      <View
+        testID="stepper-row"
+        aria-hidden={!inOrder}
+        pointerEvents={inOrder ? 'auto' : 'none'}
+        style={[{ opacity: inOrder ? 1 : 0 }, overlayTransition('opacity', 150)]}
+      >
         <Inline
           justify="space-between"
           style={{
@@ -100,6 +135,7 @@ export function MenuPickCard({
           <IconButton
             label={`Remove one ${item.name}`}
             size="sm"
+            disabled={!inOrder}
             onPress={() => onSetQuantity(item.id, quantity - 1)}
           >
             <Text>−</Text>
@@ -108,12 +144,13 @@ export function MenuPickCard({
           <IconButton
             label={`Add one ${item.name}`}
             size="sm"
+            disabled={!inOrder}
             onPress={() => onSetQuantity(item.id, quantity + 1)}
           >
             <Text>+</Text>
           </IconButton>
         </Inline>
-      ) : null}
+      </View>
     </Surface>
   )
 }

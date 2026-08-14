@@ -94,6 +94,50 @@ describe('MenuPickCard', () => {
     expect(screen.getByText('L')).toBeTruthy()
   })
 
+  it('reserves the stepper row before anything is added, so adding shifts nothing', () => {
+    // The stepper used to mount on the first add, shoving the card taller mid
+    // press. The row is always there now — invisible until it has a quantity.
+    wrap(
+      <MenuPickCard
+        item={item()}
+        quantity={0}
+        currency="SGD"
+        onAdd={vi.fn()}
+        onSetQuantity={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('stepper-row')).toHaveStyle({ opacity: 0 })
+  })
+
+  it('keeps the hidden stepper unpressable', () => {
+    const onSetQuantity = vi.fn()
+    wrap(
+      <MenuPickCard
+        item={item()}
+        quantity={0}
+        currency="SGD"
+        onAdd={vi.fn()}
+        onSetQuantity={onSetQuantity}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('Add one Laksa'))
+    expect(onSetQuantity).not.toHaveBeenCalled()
+  })
+
+  it('shows the stepper at full strength once the item is in the order', () => {
+    wrap(
+      <MenuPickCard
+        item={item()}
+        quantity={2}
+        currency="SGD"
+        onAdd={vi.fn()}
+        onSetQuantity={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('stepper-row')).toHaveStyle({ opacity: 1 })
+  })
+
   it('shows the photo when there is one', () => {
     wrap(
       <MenuPickCard

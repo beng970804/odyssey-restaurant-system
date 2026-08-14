@@ -24,6 +24,24 @@ export const OVERLAY_EXIT_MS = 150
 const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 /**
+ * Only the transition properties, not the whole of `ViewStyle` — consumers in
+ * other packages type against their own copy of react-native, and two copies'
+ * `ViewStyle`s are not assignable to each other (see `FocusRing`). On native
+ * the properties are unknown and ignored: the styles land settled.
+ */
+export type OverlayTransition = {
+  /**
+   * Never set here. `ViewStyle` is all-optional, and TypeScript's weak-type
+   * rule rejects a type that overlaps it in nothing — this one property is the
+   * overlap that lets the transition sit in any style array.
+   */
+  opacity?: number
+  transitionProperty: string
+  transitionDuration: string
+  transitionTimingFunction: string
+}
+
+/**
  * The motion is a CSS transition rather than a Reanimated worklet, which is a
  * deliberate departure from the nav drawer beside it.
  *
@@ -36,12 +54,11 @@ const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
  * browser owns it, and where it is unsupported the element simply lands on its
  * final style.
  */
-export const overlayTransition = (property: string, ms: number) =>
-  ({
-    transitionProperty: property,
-    transitionDuration: `${ms}ms`,
-    transitionTimingFunction: EASING,
-  }) as ViewStyle
+export const overlayTransition = (property: string, ms: number): OverlayTransition => ({
+  transitionProperty: property,
+  transitionDuration: `${ms}ms`,
+  transitionTimingFunction: EASING,
+})
 
 export type OverlayMotion = {
   /** False while closed and for the first frame of opening, true once at rest. */

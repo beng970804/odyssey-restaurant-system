@@ -89,17 +89,10 @@ const REFRESH_DIM = 0.6
 const REFRESH_DIM_MS = 150
 
 /**
- * Only the properties the dim actually sets, not the whole of `ViewStyle` —
- * consumers in other packages type against their own copy of react-native, and
- * two copies' `ViewStyle`s are not assignable to each other (see `FocusRing`).
- * The transition strings are web-only and ignored on native, like the overlay's.
+ * Narrow like `overlayTransition`'s own return type, and for the same
+ * cross-package reason.
  */
-export type RefreshingStyle = {
-  opacity: number
-  transitionProperty?: string
-  transitionDuration?: string
-  transitionTimingFunction?: string
-}
+export type RefreshingStyle = { opacity: number } & ReturnType<typeof overlayTransition>
 
 /**
  * Shared with the compact lists, which are the same tables in their phone form:
@@ -107,7 +100,7 @@ export type RefreshingStyle = {
  */
 export const refreshingStyle = (refreshing: boolean): RefreshingStyle => ({
   opacity: refreshing ? REFRESH_DIM : 1,
-  ...(overlayTransition('opacity', REFRESH_DIM_MS) as Omit<RefreshingStyle, 'opacity'>),
+  ...overlayTransition('opacity', REFRESH_DIM_MS),
 })
 
 /**

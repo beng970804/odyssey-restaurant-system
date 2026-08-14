@@ -41,6 +41,7 @@ export {
   useOverlayMotion,
   type OverlayMotion,
   type OverlayProps,
+  type OverlayTransition,
 } from './Overlay'
 export { OverlayPanel, type OverlayPanelProps } from './OverlayPanel'
 export { Pagination, type PaginationProps } from './Pagination'
