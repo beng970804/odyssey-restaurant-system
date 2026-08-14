@@ -80,3 +80,70 @@ describe('ChipGroup', () => {
     expect(screen.getByText('Pizza')).toBeTruthy()
   })
 })
+
+describe('ChipGroup drag-to-scroll', () => {
+  it('scrolls the row by dragging it with the pointer', () => {
+    wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
+    const scroller = screen.getByTestId('chip-scroller')
+
+    fireEvent.pointerDown(scroller, { button: 0, clientX: 200 })
+    fireEvent.pointerMove(scroller, { clientX: 120 })
+
+    // Dragged 80px left, so the row scrolled 80px right.
+    expect(scroller.scrollLeft).toBe(80)
+    fireEvent.pointerUp(scroller)
+  })
+
+  it('resumes from where the row already is', () => {
+    wrap(<ChipGroup chips={chips} value="all" onChange={vi.fn()} />)
+    const scroller = screen.getByTestId('chip-scroller')
+    scroller.scrollLeft = 40
+
+    fireEvent.pointerDown(scroller, { button: 0, clientX: 200 })
+    fireEvent.pointerMove(scroller, { clientX: 180 })
+
+    expect(scroller.scrollLeft).toBe(60)
+    fireEvent.pointerUp(scroller)
+  })
+
+  it('does not select the chip a drag happens to end on', () => {
+    const onChange = vi.fn()
+    wrap(<ChipGroup chips={chips} value="all" onChange={onChange} />)
+    const scroller = screen.getByTestId('chip-scroller')
+
+    const chip = screen.getByTestId('chip-coffee')
+    fireEvent.pointerDown(chip, { button: 0, clientX: 200 })
+    fireEvent.pointerMove(chip, { clientX: 120 })
+    fireEvent.pointerUp(chip)
+    fireEvent.click(chip)
+
+    expect(onChange).not.toHaveBeenCalled()
+    expect(scroller.scrollLeft).toBe(80)
+  })
+
+  it('still selects on a plain press, no drag involved', () => {
+    const onChange = vi.fn()
+    wrap(<ChipGroup chips={chips} value="all" onChange={onChange} />)
+
+    const chip = screen.getByTestId('chip-coffee')
+    fireEvent.pointerDown(chip, { button: 0, clientX: 200 })
+    fireEvent.pointerUp(chip)
+    fireEvent.click(chip)
+
+    expect(onChange).toHaveBeenCalledWith('coffee')
+  })
+
+  it('ignores a drag that wobbles less than the threshold', () => {
+    const onChange = vi.fn()
+    wrap(<ChipGroup chips={chips} value="all" onChange={onChange} />)
+
+    const chip = screen.getByTestId('chip-coffee')
+    fireEvent.pointerDown(chip, { button: 0, clientX: 200 })
+    fireEvent.pointerMove(chip, { clientX: 197 })
+    fireEvent.pointerUp(chip)
+    fireEvent.click(chip)
+
+    // Three pixels of wobble is a press with a shaky hand, not a drag.
+    expect(onChange).toHaveBeenCalledWith('coffee')
+  })
+})

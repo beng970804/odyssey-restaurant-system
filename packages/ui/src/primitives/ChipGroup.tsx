@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, View } from 'react-native'
+import { useRef, type ComponentRef } from 'react'
+import { Platform, Pressable, ScrollView, View, type PointerEvent } from 'react-native'
 import { focusRingBleed, focusRingStyle } from '../hooks/useFocusRing'
 import { useInteractionState } from '../hooks/useInteractionState'
 import { useTheme } from '../theme/ThemeProvider'
@@ -26,6 +27,58 @@ export type ChipGroupProps<T extends string> = {
  * Sharing an implementation would mean lying to assistive technology about
  * which of those is happening, so the two stay separate components.
  */
+/** Less sideways travel than this is a press with a shaky hand, not a drag. */
+const DRAG_THRESHOLD = 5
+
+const swallowClick = (click: Event) => {
+  click.stopPropagation()
+  click.preventDefault()
+}
+
+/**
+ * Web only: a mouse drag scrolls nothing natively — drag-to-scroll is a touch
+ * behaviour the browser does not extend to pointers. Without this, the row
+ * only moves for whoever knows about shift-scroll, which is nobody at a till.
+ *
+ * The scroll is driven directly (scrollLeft on the DOM node) rather than
+ * through state, and the move/up listeners live on the window so a drag that
+ * leaves the row keeps scrolling it.
+ */
+function useDragToScroll(getNode: () => HTMLElement | null) {
+  const drag = useRef({ startX: 0, startScrollLeft: 0 })
+
+  if (Platform.OS !== 'web') return undefined
+
+  return (event: PointerEvent) => {
+    const { button, clientX } = event.nativeEvent
+    if (button !== 0) return
+    const node = getNode()
+    if (!node) return
+
+    drag.current = { startX: clientX, startScrollLeft: node.scrollLeft }
+    let moved = false
+
+    const onMove = (move: globalThis.PointerEvent) => {
+      const dx = move.clientX - drag.current.startX
+      if (Math.abs(dx) > DRAG_THRESHOLD) moved = true
+      node.scrollLeft = drag.current.startScrollLeft - dx
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      if (!moved) return
+      // The drag is about to land as a click on whichever chip it ended over;
+      // swallow that one click, and disarm if none follows.
+      window.addEventListener('click', swallowClick, { capture: true, once: true })
+      setTimeout(() => window.removeEventListener('click', swallowClick, { capture: true }), 0)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+}
+
 export function ChipGroup<T extends string>({
   chips,
   value,
@@ -33,6 +86,12 @@ export function ChipGroup<T extends string>({
   scrollable = true,
 }: ChipGroupProps<T>) {
   const theme = useTheme()
+  const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null)
+  const onPointerDown = useDragToScroll(() => {
+    // Typed as a native node handle; on web it is the scrollable DOM element.
+    const node: unknown = scrollRef.current?.getScrollableNode()
+    return node instanceof HTMLElement ? node : null
+  })
 
   const row = (
     <View role="radiogroup" style={{ flexDirection: 'row', gap: theme.space.sm }}>
@@ -59,10 +118,13 @@ export function ChipGroup<T extends string>({
 
   return (
     <ScrollView
+      ref={scrollRef}
+      testID="chip-scroller"
       horizontal
       showsHorizontalScrollIndicator={false}
       style={{ flexGrow: 0, flexShrink: 0, marginHorizontal: -bleed }}
       contentContainerStyle={{ padding: bleed }}
+      onPointerDown={onPointerDown}
     >
       {row}
     </ScrollView>
