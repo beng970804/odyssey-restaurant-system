@@ -4,24 +4,19 @@ import {
   useCreateMenuItem,
   useListCategories,
   useUpdateMenuItem,
-  type MenuItem,
 } from '@repo/api-client'
 import { Button, Field, Input, Modal, Select, Switch, useToast } from '@repo/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useMenuItemForm, type EditableItem, type MenuItemBody } from './useMenuItemForm'
 
-/**
- * Derived from the generated `MenuItem`, not redeclared: the form edits the
- * fields the API accepts, and a renamed column breaks the build here.
- */
-export type EditableItem = Pick<
-  MenuItem,
-  'id' | 'name' | 'categoryId' | 'description' | 'priceCents' | 'isAvailable'
->
+export type { EditableItem }
 
 /**
  * One component for create and edit. A create form and an edit form that start
  * as copies are how the two drift apart.
+ *
+ * Renders only: values, validation and the money boundary belong to
+ * `useMenuItemForm`, and the request belongs to the generated mutations.
  */
 export function MenuItemFormModal({
   open,
@@ -36,21 +31,6 @@ export function MenuItemFormModal({
   const queryClient = useQueryClient()
   const categories = unwrap(useListCategories().data)
 
-  const [name, setName] = useState('')
-  const [categoryId, setCategoryId] = useState<string | null>(null)
-  const [price, setPrice] = useState('')
-  const [description, setDescription] = useState('')
-  const [isAvailable, setIsAvailable] = useState(true)
-
-  useEffect(() => {
-    setName(item?.name ?? '')
-    setCategoryId(item?.categoryId ?? null)
-    // Cents in the model, dollars at the boundary — the one place it converts.
-    setPrice(item ? (item.priceCents / 100).toFixed(2) : '')
-    setDescription(item?.description ?? '')
-    setIsAvailable(item?.isAvailable ?? true)
-  }, [item, open])
-
   const settled = () => {
     queryClient.invalidateQueries({ queryKey: getListMenuItemsQueryKey() })
     toast.show(item ? 'Item updated' : 'Item created', 'success')
@@ -60,22 +40,13 @@ export function MenuItemFormModal({
   const create = useCreateMenuItem({ mutation: { onSuccess: settled } })
   const update = useUpdateMenuItem({ mutation: { onSuccess: settled } })
 
-  const priceCents = Math.round(Number(price) * 100)
-  const isValid =
-    name.trim().length > 0 && categoryId !== null && Number.isFinite(priceCents) && priceCents >= 0
+  const submit = (body: MenuItemBody) =>
+    item ? update.mutateAsync({ id: item.id, data: body }) : create.mutateAsync({ data: body })
 
-  const submit = () => {
-    if (!categoryId) return
-    const data = {
-      name: name.trim(),
-      categoryId,
-      description: description.trim() || null,
-      priceCents,
-      isAvailable,
-    }
-    if (item) update.mutate({ id: item.id, data })
-    else create.mutate({ data })
-  }
+  const { form, priceInput, setPriceInput, fieldErrors } = useMenuItemForm({
+    item,
+    onSubmit: submit,
+  })
 
   return (
     <Modal
@@ -88,8 +59,7 @@ export function MenuItemFormModal({
             Cancel
           </Button>
           <Button
-            onPress={submit}
-            disabled={!isValid}
+            onPress={() => form.handleSubmit()}
             loading={create.isPending || update.isPending}
           >
             {item ? 'Save changes' : 'Create item'}
@@ -97,36 +67,69 @@ export function MenuItemFormModal({
         </>
       }
     >
-      <Field label="Name" required>
-        <Input value={name} onChangeText={setName} placeholder="Nasi Lemak" />
-      </Field>
-      <Field label="Category" required>
-        <Select
-          options={(categories?.data ?? []).map((category) => ({
-            value: category.id,
-            label: category.name,
-          }))}
-          value={categoryId}
-          onChange={setCategoryId}
-          placeholder="Choose a category"
-        />
-      </Field>
-      <Field label="Price" required hint="In dollars — stored as cents">
+      <form.Field name="name">
+        {(field) => (
+          <Field label="Name" required error={fieldErrors.name}>
+            <Input
+              value={field.state.value}
+              onChangeText={field.handleChange}
+              placeholder="Nasi Lemak"
+            />
+          </Field>
+        )}
+      </form.Field>
+
+      <form.Field name="categoryId">
+        {(field) => (
+          <Field label="Category" required error={fieldErrors.categoryId}>
+            <Select
+              options={(categories?.data ?? []).map((category) => ({
+                value: category.id,
+                label: category.name,
+              }))}
+              value={field.state.value || null}
+              onChange={(value) => field.handleChange(value ?? '')}
+              placeholder="Choose a category"
+            />
+          </Field>
+        )}
+      </form.Field>
+
+      <Field
+        label="Price"
+        required
+        hint="In dollars — stored as cents"
+        error={fieldErrors.priceCents}
+      >
         <Input
-          value={price}
-          onChangeText={setPrice}
+          value={priceInput}
+          onChangeText={setPriceInput}
           placeholder="8.50"
           keyboardType="decimal-pad"
         />
       </Field>
-      <Field label="Description">
-        <Input
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Coconut rice, sambal, egg"
-        />
-      </Field>
-      <Switch value={isAvailable} onValueChange={setIsAvailable} label="Available to order" />
+
+      <form.Field name="description">
+        {(field) => (
+          <Field label="Description" error={fieldErrors.description}>
+            <Input
+              value={field.state.value ?? ''}
+              onChangeText={field.handleChange}
+              placeholder="Coconut rice, sambal, egg"
+            />
+          </Field>
+        )}
+      </form.Field>
+
+      <form.Field name="isAvailable">
+        {(field) => (
+          <Switch
+            value={field.state.value ?? true}
+            onValueChange={field.handleChange}
+            label="Available to order"
+          />
+        )}
+      </form.Field>
     </Modal>
   )
 }
