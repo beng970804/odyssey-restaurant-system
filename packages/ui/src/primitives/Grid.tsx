@@ -21,6 +21,12 @@ export type GridItemProps = {
  * A span marker, not a wrapper: `Grid` reads the span off it and renders the
  * children into its own cell. Declaring the span on the child is what lets a
  * screen say "this one is twice as wide" without doing arithmetic on widths.
+ *
+ * It only works as a *direct* child of a `Grid`, because that is the only place
+ * anything reads it — wrapped in another component, or used outside a grid, it
+ * renders its children and the span silently does nothing. The alternative was
+ * a `spans={[1, 1, 2]}` prop on the grid, which puts the layout of a cell
+ * somewhere other than the cell.
  */
 export function GridItem({ children }: GridItemProps) {
   return <>{children}</>

@@ -1,6 +1,7 @@
 export * from './theme'
 export * from './primitives'
-export { useCountUp, prefersReducedMotion } from './hooks/useCountUp'
+export { useCountUp } from './hooks/useCountUp'
+export { prefersReducedMotion, frameClockRuns } from './hooks/motion'
 export { useDomFocusRing } from './hooks/useDomFocusRing'
 export { focusRingStyle } from './hooks/useFocusRing'
 export { useInteractionState, type InteractionState } from './hooks/useInteractionState'

@@ -27,7 +27,14 @@ export { Modal, type ModalProps } from './Modal'
 export { NavDrawer, type NavDrawerProps } from './NavDrawer'
 export { NavGroup, type NavGroupProps } from './NavGroup'
 export { NavItem, type NavItemIcon, type NavItemProps } from './NavItem'
-export { Overlay, type OverlayProps } from './Overlay'
+export {
+  Overlay,
+  overlayTransition,
+  useOverlayMotion,
+  type OverlayMotion,
+  type OverlayProps,
+} from './Overlay'
+export { OverlayPanel, type OverlayPanelProps } from './OverlayPanel'
 export { Pagination, type PaginationProps } from './Pagination'
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export { Select, type SelectOption, type SelectProps } from './Select'

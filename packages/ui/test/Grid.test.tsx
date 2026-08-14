@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { wrap } from './helpers'
@@ -20,6 +21,9 @@ vi.mock('react-native', async (importOriginal) => {
 
 const cells = [0, 1, 2, 3].map((index) => <View key={index} testID={`cell-${index}`} />)
 const cell = (index: number) => screen.getByTestId(`cell-${index}`).parentElement
+
+/** Anything at all between the grid and its item is enough to hide the span. */
+const Wrapped = ({ children }: { children: ReactNode }) => <>{children}</>
 const gutter = lightTheme.space.lg / 2
 
 beforeEach(() => {
@@ -92,5 +96,23 @@ describe('Grid', () => {
     )
 
     expect(cell(0)?.style.flex).toBe('1 1 100%')
+  })
+
+  it('only spans as a direct child, which is the whole of the contract', () => {
+    // Wrapped in anything, the marker is invisible to the grid and the cell
+    // falls back to one column. Documented rather than fixed: the fix is a
+    // spans prop on the grid, which puts a cell's layout somewhere other than
+    // the cell.
+    wrap(
+      <Grid columns={4}>
+        <Wrapped>
+          <GridItem span={2}>
+            <View testID="cell-0" />
+          </GridItem>
+        </Wrapped>
+      </Grid>,
+    )
+
+    expect(cell(0)?.style.flex).toBe('1 1 25%')
   })
 })

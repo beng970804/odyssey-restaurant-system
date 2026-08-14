@@ -1,11 +1,8 @@
 import type { ReactNode } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView } from 'react-native'
 import { useTheme } from '../theme/ThemeProvider'
-import { Divider } from './Divider'
-import { IconButton } from './IconButton'
-import { Inline } from './Inline'
 import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
-import { Text } from './Text'
+import { OverlayPanel } from './OverlayPanel'
 
 export type DrawerProps = {
   open: boolean
@@ -63,9 +60,10 @@ function DrawerSurface({
   const { shown, enterMs, exitMs } = useOverlayMotion()
 
   return (
-    <View
-      role="dialog"
-      aria-label={title}
+    <OverlayPanel
+      title={title}
+      onClose={onClose}
+      footer={footer}
       style={[
         // Closed, the panel sits one full width past the edge; open, it is
         // flush with it.
@@ -82,26 +80,9 @@ function DrawerSurface({
         theme.elevation.modal,
       ]}
     >
-      <Inline justify="space-between" style={{ padding: theme.space.lg }}>
-        <Text variant="h2">{title}</Text>
-        <IconButton label="Close" onPress={onClose}>
-          <Text variant="body" color="muted">
-            ✕
-          </Text>
-        </IconButton>
-      </Inline>
-      <Divider />
       <ScrollView contentContainerStyle={{ padding: theme.space.lg, gap: theme.space.lg }}>
         {children}
       </ScrollView>
-      {footer ? (
-        <>
-          <Divider />
-          <Inline justify="flex-end" gap="sm" style={{ padding: theme.space.lg }}>
-            {footer}
-          </Inline>
-        </>
-      ) : null}
-    </View>
+    </OverlayPanel>
   )
 }

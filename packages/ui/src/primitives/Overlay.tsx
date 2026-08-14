@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { Platform, Pressable, View, type ViewStyle } from 'react-native'
 import { createPortal } from 'react-dom'
-import { prefersReducedMotion } from '../hooks/useCountUp'
+import { prefersReducedMotion } from '../hooks/motion'
 import { useTheme } from '../theme/ThemeProvider'
 
 /**

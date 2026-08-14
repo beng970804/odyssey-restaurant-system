@@ -1,12 +1,8 @@
 import type { ReactNode } from 'react'
-import { View } from 'react-native'
 import { useTheme } from '../theme/ThemeProvider'
-import { Divider } from './Divider'
-import { IconButton } from './IconButton'
-import { Inline } from './Inline'
 import { Overlay, overlayTransition, useOverlayMotion } from './Overlay'
+import { OverlayPanel } from './OverlayPanel'
 import { Stack } from './Stack'
-import { Text } from './Text'
 
 export type ModalProps = {
   open: boolean
@@ -52,9 +48,10 @@ function ModalSurface({
   const { shown, enterMs, exitMs } = useOverlayMotion()
 
   return (
-    <View
-      role="dialog"
-      aria-label={title}
+    <OverlayPanel
+      title={title}
+      onClose={onClose}
+      footer={footer}
       style={[
         {
           transform: [{ translateY: shown ? 0 : RISE }, { scale: shown ? 1 : START_SCALE }],
@@ -72,26 +69,9 @@ function ModalSurface({
         theme.elevation.modal,
       ]}
     >
-      <Inline justify="space-between" style={{ padding: theme.space.lg }}>
-        <Text variant="h2">{title}</Text>
-        <IconButton label="Close" onPress={onClose}>
-          <Text variant="body" color="muted">
-            ✕
-          </Text>
-        </IconButton>
-      </Inline>
-      <Divider />
       <Stack gap="md" style={{ padding: theme.space.lg }}>
         {children}
       </Stack>
-      {footer ? (
-        <>
-          <Divider />
-          <Inline justify="flex-end" gap="sm" style={{ padding: theme.space.lg }}>
-            {footer}
-          </Inline>
-        </>
-      ) : null}
-    </View>
+    </OverlayPanel>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { prefersReducedMotion } from './motion'
 
 /** Fast out of the gate, gentle into the final digit. */
 const easeOutCubic = (progress: number) => 1 - (1 - progress) ** 3
@@ -7,14 +8,6 @@ const DEFAULT_DURATION = 900
 
 /** Grace before the failsafe decides the frame clock is not coming. */
 const FAILSAFE_SLACK = 250
-
-/**
- * Motion is a preference, not a given. Read at each run rather than once, so a
- * mid-session change to the system setting is honoured.
- */
-export const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
 /**
  * Counts from where it is to where it is told, on the frame clock.
