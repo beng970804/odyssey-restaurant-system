@@ -344,7 +344,8 @@ export function ComponentGallery() {
           <View style={{ width: 220 }}>
             <SearchInput value={searchValue} onChangeText={setSearchValue} />
           </View>
-          <View style={{ width: 300 }}>
+          {/* Capped at the viewport: 300 fixed ran off a phone's edge. */}
+          <View style={{ width: 300, maxWidth: '100%' }}>
             <Textarea
               value={noteValue}
               onChangeText={setNoteValue}
@@ -561,7 +562,12 @@ function Overlays() {
         ))}
       </Inline>
 
-      <Surface elevation="raised" bordered style={{ width: 360, borderRadius: theme.radius.lg }}>
+      {/* Capped at the viewport: 360 fixed ran off a phone's edge. */}
+      <Surface
+        elevation="raised"
+        bordered
+        style={{ width: 360, maxWidth: '100%', borderRadius: theme.radius.lg }}
+      >
         <OverlayPanel
           title="OverlayPanel"
           onClose={() => {}}
@@ -623,7 +629,9 @@ function NavDrawerStates() {
   const demo = (isOpen: boolean, onOpenChange: (next: boolean) => void) => (
     <View
       style={{
+        // Capped at the viewport: 360 fixed ran off a phone's edge.
         width: 360,
+        maxWidth: '100%',
         height: 260,
         borderWidth: theme.borderWidth.thin,
         borderColor: theme.color.border.default,

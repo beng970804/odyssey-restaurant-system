@@ -29,8 +29,11 @@ export default function UiLibraryScreen() {
         alignSelf: 'center',
       }}
     >
-      <Inline justify="space-between" style={{ marginBottom: theme.space.xl }}>
-        <Stack gap="xs">
+      {/* The column that gives — a row child does not shrink by default under
+          React Native, so on a phone the intro pushed the mode toggle off the
+          right edge rather than wrapping beside it. */}
+      <Inline justify="space-between" gap="md" style={{ marginBottom: theme.space.xl }}>
+        <Stack gap="xs" flex={1}>
           <Text variant="display">UI Library</Text>
           <Text color="muted">
             Tokens and primitives, rendered from the theme. Tab through the examples to check focus.
