@@ -1,9 +1,16 @@
-import { ApiProvider } from '@repo/api-client'
+import {
+  ApiProvider,
+  createQueryClient,
+  getGetOrderQueryKey,
+  getListOrdersQueryKey,
+  type OrderRow,
+} from '@repo/api-client'
 import { ORDER_STATUSES, type OrderStatus } from '@repo/types'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
-import { render, screen } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OrderActionBar } from '../src/features/orders/OrderActionBar'
 
 const wrap = (ui: ReactElement) =>
@@ -60,5 +67,97 @@ describe('OrderActionBar', () => {
     }[status]
 
     expect(rendered.toSorted()).toEqual(expected.toSorted())
+  })
+})
+
+/** A full list row, so the cache looks exactly like a fetched page. */
+const row = (status: OrderStatus): OrderRow => ({
+  id: 'order-1',
+  orderNumber: 42,
+  customerId: null,
+  customerName: 'Walk-in',
+  itemCount: 2,
+  channel: 'dine_in',
+  status,
+  subtotalCents: 1000,
+  taxCents: 90,
+  deliveryFeeCents: 0,
+  totalCents: 1090,
+  notes: null,
+  cancellationReason: null,
+  estimatedReadyAt: null,
+  placedAt: '2026-08-14T02:00:00.000Z',
+  updatedAt: '2026-08-14T02:00:00.000Z',
+})
+
+const LIST_KEY = getListOrdersQueryKey({ status: 'pending', pageSize: 20 })
+const DETAIL_KEY = getGetOrderQueryKey('order-1')
+
+const seededClient = () => {
+  const client = createQueryClient()
+  client.setQueryData(LIST_KEY, {
+    status: 200,
+    data: { data: [row('pending')], meta: { page: 1, pageSize: 20, total: 1 } },
+  })
+  client.setQueryData(DETAIL_KEY, { status: 200, data: { ...row('pending'), items: [] } })
+  return client
+}
+
+const listStatus = (client: ReturnType<typeof createQueryClient>) =>
+  (client.getQueryData(LIST_KEY) as { data: { data: OrderRow[] } }).data.data[0]?.status
+
+const detailStatus = (client: ReturnType<typeof createQueryClient>) =>
+  (client.getQueryData(DETAIL_KEY) as { data: OrderRow }).data.status
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('optimistic order actions', () => {
+  it('moves the order in every cache before the server answers', async () => {
+    // The pass acts on an order and looks straight back at the board. Waiting
+    // for the round trip leaves a button that looks ignored for as long as the
+    // network takes — the cache moves first, and the server confirms.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {})),
+    )
+    const client = seededClient()
+    render(
+      <ThemeProvider>
+        <QueryClientProvider client={client}>
+          <ToastProvider>
+            <OrderActionBar order={order('pending')} />
+          </ToastProvider>
+        </QueryClientProvider>
+      </ThemeProvider>,
+    )
+
+    fireEvent.click(screen.getByText('Accept'))
+
+    await waitFor(() => expect(listStatus(client)).toBe('accepted'))
+    expect(detailStatus(client)).toBe('accepted')
+  })
+
+  it('puts every cache back when the server refuses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('network down'))),
+    )
+    const client = seededClient()
+    render(
+      <ThemeProvider>
+        <QueryClientProvider client={client}>
+          <ToastProvider>
+            <OrderActionBar order={order('pending')} />
+          </ToastProvider>
+        </QueryClientProvider>
+      </ThemeProvider>,
+    )
+
+    fireEvent.click(screen.getByText('Accept'))
+
+    // The failure undoes the optimistic write everywhere, and says so.
+    await waitFor(() => expect(screen.getByText('Something went wrong')).toBeTruthy())
+    expect(listStatus(client)).toBe('pending')
+    expect(detailStatus(client)).toBe('pending')
   })
 })
