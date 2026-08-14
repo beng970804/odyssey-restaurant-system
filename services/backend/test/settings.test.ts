@@ -74,7 +74,10 @@ describe('reading settings', () => {
       'tue',
       'wed',
     ])
-    expect(body.openingHours.sun).toEqual({ closed: true })
+    // Each day is a readable pair, not a string the client has to parse. The
+    // seed opens every day (see seedOpeningHours), so the closed variant is
+    // covered by the PATCH tests below rather than asserted here.
+    expect(body.openingHours.sun).toEqual({ open: '00:00', close: '23:59' })
     expect(body.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 })

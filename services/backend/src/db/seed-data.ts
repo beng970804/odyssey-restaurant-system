@@ -272,14 +272,24 @@ export const seedCustomers = [
   { name: 'Benjamin Sim', phone: '+65 8678 9014', email: 'ben.sim@example.com', notes: null },
 ]
 
+/**
+ * Open around the clock, every day — a seed, not a real trading week.
+ *
+ * A demo runs from whatever timezone the viewer sits in, and the API's
+ * opening-hours check is deliberately absolute: 11:00–22:00 in Asia/Singapore
+ * is 05:00–16:00 in Europe/Paris, so a European afternoon would meet nothing
+ * but OUTSIDE_OPENING_HOURS and read as a broken app. The rule still has teeth
+ * — close any day in Settings and the refusal is one order away — but it is
+ * demonstrated on purpose rather than tripped over.
+ */
 export const seedOpeningHours: OpeningHours = {
-  mon: { open: '11:00', close: '22:00' },
-  tue: { open: '11:00', close: '22:00' },
-  wed: { open: '11:00', close: '22:00' },
-  thu: { open: '11:00', close: '22:00' },
-  fri: { open: '11:00', close: '23:00' },
-  sat: { open: '11:00', close: '23:00' },
-  sun: { closed: true },
+  mon: { open: '00:00', close: '23:59' },
+  tue: { open: '00:00', close: '23:59' },
+  wed: { open: '00:00', close: '23:59' },
+  thu: { open: '00:00', close: '23:59' },
+  fri: { open: '00:00', close: '23:59' },
+  sat: { open: '00:00', close: '23:59' },
+  sun: { open: '00:00', close: '23:59' },
 }
 
 export const seedCancellationReasons = [
