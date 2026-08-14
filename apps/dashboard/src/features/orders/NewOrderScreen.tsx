@@ -9,7 +9,7 @@ import {
   useListCustomers,
   useListMenuItems,
 } from '@repo/api-client'
-import { formatMoney } from '@repo/shared'
+import { formatMoney, isWithinOpeningHours, type OpeningHours } from '@repo/shared'
 import { ORDER_CHANNELS } from '@repo/types'
 import {
   Button,
@@ -87,6 +87,14 @@ export function NewOrderScreen() {
   const [channelError, setChannelError] = useState<string | null>(null)
 
   const currency = settings?.currency ?? 'SGD'
+
+  // The server's opening-hours check, run here first — the same shared helper,
+  // so the warning and the refusal cannot disagree. Warns rather than blocks:
+  // the hours could change (or the clock roll past opening) before submit.
+  const closedNow = Boolean(
+    settings &&
+    !isWithinOpeningHours(new Date(), settings.openingHours as OpeningHours, settings.timezone),
+  )
 
   const channelOptions = enabledChannels.map((value) => ({
     value,
@@ -201,6 +209,24 @@ export function NewOrderScreen() {
           </Button>
         }
       />
+
+      {closedNow ? (
+        <Surface
+          bordered
+          padding="md"
+          radius="md"
+          style={{
+            backgroundColor: theme.color.status.warning.bg,
+            borderColor: theme.color.status.warning.border,
+            marginBottom: theme.space.md,
+          }}
+        >
+          <Text style={{ color: theme.color.status.warning.fg }}>
+            The restaurant is closed right now — the API will refuse this order until opening hours.
+            Adjust them in Settings if the kitchen is actually open.
+          </Text>
+        </Surface>
+      ) : null}
 
       {isCompact ? (
         <>

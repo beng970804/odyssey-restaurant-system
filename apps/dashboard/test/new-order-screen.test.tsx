@@ -1,8 +1,9 @@
 import { ApiError, ApiProvider } from '@repo/api-client'
+import type { OpeningHours } from '@repo/shared'
 import { ThemeProvider, ToastProvider } from '@repo/ui'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NewOrderScreen } from '../src/features/orders/NewOrderScreen'
 
 vi.mock('expo-router', () => ({
@@ -49,21 +50,43 @@ const mutate = vi.fn()
 /** The options the screen hands useCreateOrder, so a test can fire its onError. */
 let createOrderOptions: { mutation?: { onError?: (error: unknown) => void } } | undefined
 
+const day = (open: string, close: string) => ({ open, close })
+const openAllWeek: OpeningHours = {
+  mon: day('00:00', '23:59'),
+  tue: day('00:00', '23:59'),
+  wed: day('00:00', '23:59'),
+  thu: day('00:00', '23:59'),
+  fri: day('00:00', '23:59'),
+  sat: day('00:00', '23:59'),
+  sun: day('00:00', '23:59'),
+}
+const closedAllWeek: OpeningHours = {
+  mon: { closed: true },
+  tue: { closed: true },
+  wed: { closed: true },
+  thu: { closed: true },
+  fri: { closed: true },
+  sat: { closed: true },
+  sun: { closed: true },
+}
+
+const baseSettings = {
+  currency: 'SGD',
+  taxRatePercent: 9,
+  deliveryFeeCents: 500,
+  dineInEnabled: false,
+  takeawayEnabled: true,
+  deliveryEnabled: false,
+  timezone: 'Asia/Singapore',
+  openingHours: openAllWeek,
+}
+
+/** Mutable so a test can close the restaurant; beforeEach reopens it. */
+let settingsData: typeof baseSettings = baseSettings
+
 vi.mock('@repo/api-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@repo/api-client')>()),
-  useGetSettings: () => ({
-    data: {
-      status: 200,
-      data: {
-        currency: 'SGD',
-        taxRatePercent: 9,
-        deliveryFeeCents: 500,
-        dineInEnabled: false,
-        takeawayEnabled: true,
-        deliveryEnabled: false,
-      },
-    },
-  }),
+  useGetSettings: () => ({ data: { status: 200, data: settingsData } }),
   useListMenuItems: () => ({
     data: { status: 200, data: { data: items, meta: { page: 1, pageSize: 100, total: 3 } } },
     isLoading: false,
@@ -99,6 +122,10 @@ const wrap = (ui: ReactElement) =>
   )
 
 describe('NewOrderScreen', () => {
+  beforeEach(() => {
+    settingsData = baseSettings
+  })
+
   it('adds a card press straight into the summary — one form drives both panes', () => {
     wrap(<NewOrderScreen />)
 
@@ -162,6 +189,20 @@ describe('NewOrderScreen', () => {
         }),
       }),
     )
+  })
+
+  it('warns up front when the restaurant is closed right now', () => {
+    settingsData = { ...baseSettings, openingHours: closedAllWeek }
+    wrap(<NewOrderScreen />)
+
+    // The warning appears before anyone builds an order the API will refuse.
+    expect(screen.getByText(/closed right now/)).toBeTruthy()
+  })
+
+  it('shows no closed warning during opening hours', () => {
+    wrap(<NewOrderScreen />)
+
+    expect(screen.queryByText(/closed right now/)).toBeNull()
   })
 
   it('surfaces the closed-restaurant refusal against the channel field', () => {

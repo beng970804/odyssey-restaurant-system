@@ -39,6 +39,13 @@ vi.mock('@repo/api-client', async (importOriginal) => ({
         dineInEnabled: true,
         takeawayEnabled: true,
         deliveryEnabled: true,
+        timezone: 'Asia/Singapore',
+        openingHours: Object.fromEntries(
+          ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((day) => [
+            day,
+            { open: '00:00', close: '23:59' },
+          ]),
+        ),
       },
     },
   }),
